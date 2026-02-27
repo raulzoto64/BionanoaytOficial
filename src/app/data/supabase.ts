@@ -1,0 +1,883 @@
+import { createClient } from "@supabase/supabase-js";
+
+// Configuración de Supabase
+const SUPABASE_URL = "https://jzmdfoptxmqywihyhoty.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_jIQS9Mg3gRqdIE8BJe4s4Q_3-iqvH15";
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Tipos para las tablas de Supabase
+export interface User {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: "admin" | "customer";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Product {
+  id: string;
+  slug: string;
+  category: string;
+  status: "active" | "inactive" | "draft";
+  image: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductTranslation {
+  product_id: string;
+  language: "es" | "en";
+  name: string;
+  description: string;
+  short_description: string;
+  features: string[];
+  benefits: string[];
+  technical_specs: Record<string, string>;
+  meta_title: string;
+  meta_description: string;
+}
+
+export interface PriceByQuantity {
+  id: string;
+  product_id: string;
+  min_quantity: number;
+  max_quantity: number | null;
+  price_per_unit: number;
+  currency: "COP" | "USD";
+}
+
+export interface Category {
+  id: string;
+  slug: string;
+  parent_id: string | null;
+  icon?: string;
+  order: number;
+  status: "active" | "inactive";
+}
+
+export interface CategoryTranslation {
+  category_id: string;
+  language: "es" | "en";
+  name: string;
+  description: string;
+}
+
+export interface Page {
+  id: string;
+  slug: string;
+  type: "system" | "custom" | "product";
+  status: "published" | "draft";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PageContent {
+  page_id: string;
+  language: "es" | "en";
+  sections: Section[];
+}
+
+export interface Section {
+  id: string;
+  type:
+    | "hero"
+    | "text"
+    | "features"
+    | "products"
+    | "team"
+    | "timeline"
+    | "contact"
+    | "custom"
+    | "trust"
+    | "featured"
+    | "ecosystem";
+  order: number;
+  visible: boolean;
+  content: Record<string, any>;
+}
+
+export interface SiteSettings {
+  id: string;
+  site_name: string;
+  site_email: string;
+  site_phone: string;
+  site_address: string;
+  social_media: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  seo: {
+    default_title: string;
+    default_description: string;
+    default_keywords: string;
+  };
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+  };
+}
+
+export interface Translation {
+  id: string;
+  key: string;
+  category: "ui" | "messages" | "navigation" | "forms";
+  es: string;
+  en: string;
+}
+
+// API para interactuar con Supabase
+export const supabaseAPI = {
+  // ==========================================
+  // USUARIOS
+  // ==========================================
+
+  registerUser: async (
+    data: Omit<User, "id" | "created_at" | "updated_at">,
+  ): Promise<User> => {
+    const { data: user, error } = await supabase
+      .from("users")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return user;
+  },
+
+  loginUser: async (email: string, password: string): Promise<User> => {
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .eq("password", password)
+      .single();
+
+    if (error) throw new Error("Email o contraseña incorrectos");
+    return user;
+  },
+
+  getUsers: async (): Promise<User[]> => {
+    const { data: users, error } = await supabase.from("users").select("*");
+
+    if (error) throw new Error(error.message);
+    return users;
+  },
+
+  // ==========================================
+  // CATEGORÍAS
+  // ==========================================
+
+  updateCategory: async (
+    id: string,
+    data: Partial<Category>,
+  ): Promise<Category> => {
+    const { data: category, error } = await supabase
+      .from("categories")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return category;
+  },
+
+  async updateCategoryTranslation(
+    categoryId: string,
+    lang: string,
+    data: Partial<CategoryTranslation>,
+  ) {
+    const { data: result, error } = await supabase
+      .from("category_translations")
+      .upsert(
+        {
+          ...data,
+          category_id: categoryId,
+          language: lang,
+        },
+        {
+          onConflict: "category_id,language", // Esto es vital para que sepa cuándo sobrescribir
+        },
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
+  },
+
+  createCategory: async (data: Omit<Category, "id">): Promise<Category> => {
+    const { data: category, error } = await supabase
+      .from("categories")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return category;
+  },
+
+  deleteCategory: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // PÁGINAS Y CONTENIDO
+  // ==========================================
+
+  updatePageContent: async (
+  pageId: string,
+  language: "es" | "en",
+  sections: Section[],
+): Promise<PageContent> => {
+  const { data: content, error } = await supabase
+    .from("page_contents")
+    .upsert(
+      {
+        page_id: pageId,
+        language,
+        sections,
+      },
+      { onConflict: "page_id, language" } // ESTO ES CLAVE
+    )
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error detallado:", error);
+    throw new Error(error.message);
+  }
+  return content;
+},
+
+  updatePage: async (id: string, data: Partial<Page>): Promise<Page> => {
+    const { data: page, error } = await supabase
+      .from("pages")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return page;
+  },
+
+  // ==========================================
+  // TRADUCCIONES
+  // ==========================================
+
+  getTranslations: async (): Promise<Translation[]> => {
+    const { data: translations, error } = await supabase
+      .from("translations")
+      .select("*");
+
+    if (error) throw new Error(error.message);
+    return translations;
+  },
+
+  updateTranslation: async (
+    id: string,
+    data: Partial<Translation>,
+  ): Promise<Translation> => {
+    const { data: translation, error } = await supabase
+      .from("translations")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return translation;
+  },
+
+  createTranslation: async (
+    data: Omit<Translation, "id">,
+  ): Promise<Translation> => {
+    const { data: translation, error } = await supabase
+      .from("translations")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return translation;
+  },
+
+  deleteTranslation: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("translations").delete().eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // CONFIGURACIÓN DEL SITIO
+  // ==========================================
+
+  getSiteSettings: async (): Promise<SiteSettings> => {
+    const { data: settings, error } = await supabase
+      .from("site_settings")
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return settings;
+  },
+
+  updateSiteSettings: async (
+    data: Partial<SiteSettings>,
+  ): Promise<SiteSettings> => {
+    const { data: settings, error } = await supabase
+      .from("site_settings")
+      .update(data)
+      .single();
+
+    if (error) throw new Error(error.message);
+    return settings;
+  },
+
+  // ==========================================
+  // PRODUCTOS
+  // ==========================================
+
+  getProducts: async (): Promise<Product[]> => {
+    const { data: products, error } = await supabase
+      .from("products")
+      .select("*")
+      // Eliminamos el .eq('status', 'active') para que traiga TODO
+      .order("created_at", { ascending: false }); // Opcional: para ver los más nuevos primero
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return products || [];
+  },
+
+  getAllProducts: async (): Promise<Product[]> => {
+    const { data: products, error } = await supabase
+      .from("products")
+      .select("*");
+
+    console.log("Todos los productos:", products);
+    if (error) throw new Error(error.message);
+    return products;
+  },
+
+  getProductById: async (id: string): Promise<Product | null> => {
+    const { data: product, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+
+    return product || null;
+  },
+
+  getProductBySlug: async (slug: string): Promise<Product | null> => {
+    const { data: product, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+
+    return product || null;
+  },
+
+  getProductTranslation: async (
+    productId: string,
+    language: "es" | "en",
+  ): Promise<ProductTranslation> => {
+    const { data: translation, error } = await supabase
+      .from("product_translations")
+      .select("*")
+      .eq("product_id", productId)
+      .eq("language", language)
+      .single();
+
+    if (error) {
+      // Si el error es de que no se encontró la fila, devolvemos una traducción vacía
+      if (error.code === "PGRST116" || error.code === "406") {
+        return {
+          product_id: productId,
+          language: language,
+          name: "",
+          description: "",
+          short_description: "",
+          features: [],
+          benefits: [],
+          technical_specs: {},
+          meta_title: "",
+          meta_description: "",
+        };
+      }
+      throw new Error(error.message);
+    }
+
+    return translation;
+  },
+
+  updateProduct: async (
+    id: string,
+    data: Partial<Product>,
+  ): Promise<Product> => {
+    const { data: product, error } = await supabase
+      .from("products")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return product;
+  },
+
+  updateProductTranslation: async (
+    productId: string,
+    language: "es" | "en",
+    data: Partial<ProductTranslation>,
+  ): Promise<ProductTranslation> => {
+    const { data: translations, error } = await supabase
+      .from("product_translations")
+      .upsert(
+        {
+          product_id: productId,
+          language: language,
+          ...data,
+        },
+        {
+          onConflict: "product_id,language", // Evita el error 409 y 406
+        },
+      )
+      .select();
+
+    if (error) throw new Error(error.message);
+    return translations[0];
+  },
+
+  createProduct: async (
+    data: Omit<Product, "id" | "created_at" | "updated_at">,
+  ): Promise<Product> => {
+    const { data: product, error } = await supabase
+      .from("products")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return product;
+  },
+
+  deleteProduct: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("products").delete().eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // PRECIOS
+  // ==========================================
+
+  getPricesByProduct: async (productId: string): Promise<PriceByQuantity[]> => {
+    const { data: prices, error } = await supabase
+      .from("prices_by_quantity")
+      .select("*")
+      .eq("product_id", productId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return prices || [];
+  },
+
+  calculatePrice: async (
+    productId: string,
+    quantity: number,
+  ): Promise<{
+    pricePerUnit: number;
+    total: number;
+    currency: string;
+  } | null> => {
+    const { data: prices, error } = await supabase
+      .from("prices_by_quantity")
+      .select("*")
+      .eq("product_id", productId)
+      .lte("min_quantity", quantity)
+      .or(`max_quantity.is.null,max_quantity.gte.${quantity}`);
+
+    if (error) throw new Error(error.message);
+
+    const applicablePrice = prices.find(
+      (p) =>
+        quantity >= p.min_quantity &&
+        (p.max_quantity === null || quantity <= p.max_quantity),
+    );
+
+    if (!applicablePrice) {
+      // Si no hay precio aplicable, devolver un precio mock
+      console.warn("No applicable price found, returning mock data");
+      const mockPrices: Record<string, number> = {
+        "prod-001": 45000,
+        "prod-002": 35000,
+        "prod-003": 55000,
+        "prod-004": 25000,
+      };
+
+      const mockPrice = mockPrices[productId] || 0;
+      return {
+        pricePerUnit: mockPrice,
+        total: mockPrice * quantity,
+        currency: "COP",
+      };
+    }
+
+    return {
+      pricePerUnit: applicablePrice.price_per_unit,
+      total: applicablePrice.price_per_unit * quantity,
+      currency: applicablePrice.currency,
+    };
+  },
+
+  updatePrice: async (
+    id: string,
+    data: Partial<PriceByQuantity>,
+  ): Promise<PriceByQuantity> => {
+    const { data: price, error } = await supabase
+      .from("prices_by_quantity")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return price;
+  },
+
+  createPrice: async (
+    data: Omit<PriceByQuantity, "id">,
+  ): Promise<PriceByQuantity> => {
+    const { data: price, error } = await supabase
+      .from("prices_by_quantity")
+      .insert([
+        {
+          product_id: data.product_id,
+          min_quantity: data.min_quantity,
+          max_quantity: data.max_quantity,
+          price_per_unit: data.price_per_unit,
+          currency: data.currency,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return price;
+  },
+
+  deletePrice: async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from("prices_by_quantity")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // CATEGORÍAS (PÚBLICO)
+  // ==========================================
+
+  getCategories: async (): Promise<Category[]> => {
+    const { data: categories, error } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("status", "active");
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return categories || [];
+  },
+
+  getAllCategories: async (): Promise<Category[]> => {
+    const { data: categories, error } = await supabase
+      .from("categories")
+      .select("*");
+
+    if (error) throw new Error(error.message);
+    return categories;
+  },
+
+  getCategoryTranslation: async (
+    categoryId: string,
+    language: "es" | "en",
+  ): Promise<CategoryTranslation | null> => {
+    const { data: translations, error } = await supabase
+      .from("category_translations")
+      .select("*")
+      .eq("category_id", categoryId)
+      .eq("language", language);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const translation =
+      translations && translations.length > 0 ? translations[0] : null;
+
+    return translation || null;
+  },
+
+  // ==========================================
+  // PÁGINAS (PÚBLICO)
+  // ==========================================
+
+  getPageBySlug: async (slug: string): Promise<Page | null> => {
+    const { data: page, error } = await supabase
+      .from("pages")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return page;
+  },
+
+  getAllPages: async (): Promise<Page[]> => {
+    const { data: pages, error } = await supabase.from("pages").select("*");
+    
+    if (error) {
+      console.error("Error al obtener páginas:", error);
+      // Si hay error al conectar o la tabla está vacía, devolvemos páginas predeterminadas
+      return [
+        { id: 'page-home', slug: 'home', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: 'page-technology', slug: 'technology', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: 'page-process', slug: 'process', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+      ];
+    }
+    
+    if (!pages || pages.length === 0) {
+      // Si la tabla está vacía, devolvemos páginas predeterminadas
+      return [
+        { id: 'page-home', slug: 'home', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: 'page-technology', slug: 'technology', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        { id: 'page-process', slug: 'process', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+      ];
+    }
+    
+    return pages;
+  },
+
+  getPageContent: async (
+    pageId: string,
+    language: "es" | "en",
+  ): Promise<PageContent> => {
+    const { data: content, error } = await supabase
+      .from("page_contents")
+      .select("*")
+      .eq("page_id", pageId)
+      .eq("language", language)
+      .single();
+
+    if (error || !content) {
+      // Si el error es de que no se encontró la fila o no hay contenido, devolvemos contenido predeterminado
+      if (error && error.code !== "PGRST116" && error.code !== "406") {
+        console.warn("Error al obtener contenido de página:", error);
+      }
+      
+      // Contenido predeterminado para la página home en español
+      const defaultContent: PageContent = {
+        page_id: pageId,
+        language: language,
+        sections: [
+          {
+            id: 'sec-hero',
+            type: 'hero' as const,
+            order: 1,
+            visible: true,
+            content: {
+              title: 'Innovación y desarrollo de productos de base Bionanotecnológica',
+              subtitle: 'Soluciones sostenibles diseñadas y manufacturadas en Colombia para revolucionar la industria',
+              ctaText: 'Conoce nuestra tecnología patentada',
+              ctaLink: '#technology',
+              backgroundImage: 'https://images.unsplash.com/photo-1676313414325-2a877a95dd10?w=1080',
+              seo: {
+                metaTitle: 'A&T BioNano - Innovación en Bionanotecnología',
+                metaDescription: 'Desarrollamos soluciones antimicrobianas y fungicidas sostenibles con nanotecnología avanzada',
+                metaKeywords: 'bionanotecnología, antimicrobianos, fungicidas, nanotecnología, sostenibilidad'
+              }
+            }
+          },
+          {
+            id: 'sec-trust',
+            type: 'trust' as const,
+            order: 2,
+            visible: true,
+            content: {
+              title: 'Respaldados por',
+              partners: [
+                { name: "MinCiencias", placeholder: "MC", image: "https://images.unsplash.com/photo-1612165469953-69b4bc7eedbf?w=1080" },
+                { name: "Ruta N", placeholder: "RN", image: "https://images.unsplash.com/photo-1762075314732-c8abb7ea446d?w=1080" },
+                { name: "SENA", placeholder: "SENA", image: "https://images.unsplash.com/photo-1614308457932-e16d85c5d053?w=1080" },
+                { name: "Tecnnova", placeholder: "TN", image: "https://images.unsplash.com/photo-1769147555720-71fc71bfc216?w=1080" },
+                { name: "Tecnova", placeholder: "TV", image: "https://images.unsplash.com/photo-1762075314732-c8abb7ea446d?w=1080" }
+              ]
+            }
+          },
+          {
+            id: 'sec-purpose',
+            type: 'features' as const,
+            order: 3,
+            visible: true,
+            content: {
+              title: 'Nuestro Propósito',
+              items: [
+                { icon: 'Users', title: '¿Quiénes somos?', description: 'Empresa de base tecnológica dedicada a rutas verdes y amigables con el medio ambiente.' },
+                { icon: 'Target', title: '¿Qué hacemos?', description: 'Resolución de contaminación por microorganismos (hongos, virus y bacterias) mediante experticia científica.' },
+                { icon: 'Lightbulb', title: '¿Cómo lo hacemos?', description: 'Proveedores líderes de nanocompuestos para Latinoamérica.' }
+              ],
+              seo: {
+                metaTitle: 'Nuestro Propósito - A&T BioNano',
+                metaDescription: 'Descubre nuestro propósito de innovar en bionanotecnología para un futuro sostenible',
+                metaKeywords: 'propósito, innovación, sostenibilidad, excelencia'
+              }
+            }
+          },
+          {
+            id: 'sec-timeline',
+            type: 'timeline' as const,
+            order: 6,
+            visible: true,
+            content: {
+              title: language === 'es' ? 'Nuestra Trayectoria' : 'Our Journey',
+              milestones: [
+                {
+                  year: '2018',
+                  icon: 'Lightbulb',
+                  title: language === 'es' ? 'Fundación' : 'Foundation',
+                  description: language === 'es' ? 'Inicio de la investigación en bionanotecnología con el apoyo de MinCiencias.' : 'Start of bionanotechnology research with MinCiencias support.',
+                  step: '1',
+                  desc: language === 'es' ? 'Inicio de la investigación' : 'Research Initiation'
+                },
+                {
+                  year: '2020',
+                  icon: 'FileCheck',
+                  title: language === 'es' ? 'Primera Patente' : 'First Patent',
+                  description: language === 'es' ? 'Obtención de la primera patente para nuestra tecnología de nanocompuestos.' : 'Obtained first patent for our nanocomposites technology.',
+                  step: '2',
+                  desc: language === 'es' ? 'Primera patente' : 'First Patent'
+                },
+                {
+                  year: '2022',
+                  icon: 'TrendingUp',
+                  title: language === 'es' ? 'Producción Comercial' : 'Commercial Production',
+                  description: language === 'es' ? 'Inicio de la producción comercial en nuestra planta de Medellín.' : 'Started commercial production at our Medellín plant.',
+                  step: '3',
+                  desc: language === 'es' ? 'Producción comercial' : 'Commercial Production'
+                },
+                {
+                  year: '2024',
+                  icon: 'FileCheck',
+                  title: language === 'es' ? 'Certificación ISO' : 'ISO Certification',
+                  description: language === 'es' ? 'Obtención de la certificación ISO 9001:2015 para calidad.' : 'Obtained ISO 9001:2015 quality certification.',
+                  step: '4',
+                  desc: language === 'es' ? 'Certificación ISO' : 'ISO Certification'
+                },
+                {
+                  year: '2025',
+                  icon: 'TrendingUp',
+                  title: language === 'es' ? 'Expansión Latinoamérica' : 'Latin America Expansion',
+                  description: language === 'es' ? 'Inicio de operaciones en México y Chile.' : 'Started operations in Mexico and Chile.',
+                  step: '5',
+                  desc: language === 'es' ? 'Expansión regional' : 'Regional Expansion'
+                }
+              ],
+              seo: {
+                metaTitle: language === 'es' ? 'Nuestra Trayectoria - A&T BioNano' : 'Our Journey - A&T BioNano',
+                metaDescription: language === 'es' ? 'Descubre la evolución de A&T BioNano desde su fundación hasta la actualidad.' : 'Discover the evolution of A&T BioNano from its foundation to the present.',
+                metaKeywords: language === 'es' ? 'trayectoria, historia, innovación, crecimiento' : 'journey, history, innovation, growth'
+              }
+            }
+          },
+          {
+            id: 'sec-ecosystem',
+            type: 'ecosystem' as const,
+            order: 8,
+            visible: true,
+            content: {
+              title: language === 'es' ? 'Ecosistema y Aliados' : 'Ecosystem and Allies',
+              allies: [
+                {
+                  name: language === 'es' ? 'Capiro' : 'Capiro',
+                  sector: language === 'es' ? 'Agrícola' : 'Agricultural',
+                  initials: 'CP',
+                  image: ''
+                },
+                {
+                  name: language === 'es' ? 'Coatings' : 'Coatings',
+                  sector: language === 'es' ? 'Recubrimientos' : 'Coatings',
+                  initials: 'CT',
+                  image: ''
+                },
+                {
+                  name: language === 'es' ? 'Cecotec' : 'Cecotec',
+                  sector: language === 'es' ? 'Tecnología' : 'Technology',
+                  initials: 'CC',
+                  image: ''
+                },
+                {
+                  name: language === 'es' ? 'Green Industries' : 'Green Industries',
+                  sector: language === 'es' ? 'Sostenibilidad' : 'Sustainability',
+                  initials: 'GI',
+                  image: ''
+                }
+              ],
+              seo: {
+                metaTitle: language === 'es' ? 'Ecosistema - A&T BioNano' : 'Ecosystem - A&T BioNano',
+                metaDescription: language === 'es' ? 'Conoce nuestros aliados y partners en el ecosistema de bionanotecnología.' : 'Meet our allies and partners in the bionanotechnology ecosystem.',
+                metaKeywords: language === 'es' ? 'ecosistema, aliados, partners, colaboración' : 'ecosystem, allies, partners, collaboration'
+              }
+            }
+          },
+          {
+            id: 'sec-footer',
+            type: 'contact' as const,
+            order: 9,
+            visible: true,
+            content: {
+              contactInfo: {
+                phone: language === 'es' ? '+57 300 123 4567' : '+57 300 123 4567',
+                email: language === 'es' ? 'info@bionanoaxus.com' : 'info@bionanoaxus.com',
+                location: language === 'es' ? 'Medellín, Colombia' : 'Medellín, Colombia'
+              },
+              seo: {
+                metaTitle: language === 'es' ? 'Contacto - A&T BioNano' : 'Contact - A&T BioNano',
+                metaDescription: language === 'es' ? 'Contáctanos para recibir más información sobre nuestras soluciones de bionanotecnología.' : 'Contact us to learn more about our bionanotechnology solutions.',
+                metaKeywords: language === 'es' ? 'contacto, información, consultas, soporte' : 'contact, information, inquiries, support'
+              }
+            }
+          }
+        ]
+      };
+      
+      return defaultContent;
+    }
+    
+    return content;
+  },
+
+};

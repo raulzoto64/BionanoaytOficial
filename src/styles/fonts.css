@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Sansation:wght@400;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/codec-pro');
+
+:root {
+  --font-heading: 'Sansation', sans-serif;
+  --font-body: 'Codec Pro', sans-serif;
+}

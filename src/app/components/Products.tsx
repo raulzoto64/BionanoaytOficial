@@ -1,0 +1,111 @@
+import { ShoppingCart, Check, ArrowRight } from "lucide-react";
+import { Button } from "./ui/button";
+import { Link } from "react-router";
+
+interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  image: string;
+  features: string[];
+  popular: boolean;
+}
+
+interface ProductsProps {
+  products: Product[];
+  title: string;
+  subtitle: string;
+}
+
+export function Products({ products, title, subtitle }: ProductsProps) {
+  return (
+    <section className="py-20 bg-white">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4">
+            Catálogo
+          </div>
+          <h2 className="text-4xl md:text-5xl mb-4 text-[#1C5D15]">
+            {title}
+          </h2>
+          <p className="text-xl text-[#629960] max-w-3xl mx-auto">
+            {subtitle}
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {products.map((product) => (
+            <Link
+              key={product.id}
+              to={`/products/${product.slug}`}
+              className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#629960]/20 hover:border-[#19FF00] group relative flex flex-col"
+            >
+              {product.popular && (
+                <div className="absolute top-4 right-4 z-10 bg-[#19FF00] text-[#1C5D15] px-3 py-1 rounded-full text-sm">
+                  Más Popular
+                </div>
+              )}
+              
+              {/* Product Image */}
+              <div className="relative h-56 overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960]">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-300"
+                />
+              </div>
+
+              {/* Product Details */}
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="text-[#629960] text-sm mb-2">{product.category}</div>
+                <h3 className="text-2xl mb-3 text-[#1C5D15]">{product.name}</h3>
+                <p className="text-[#629960] mb-6 leading-relaxed line-clamp-3">
+                  {product.description}
+                </p>
+
+                {/* Features */}
+                <ul className="space-y-2 mb-6">
+                  {product.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-[#629960]">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA Button - NO MUESTRA PRECIO */}
+                <div className="mt-auto">
+                  <Button 
+                    className="w-full bg-[#1C5D15] text-white hover:bg-[#1C5D15]/90 group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-colors"
+                    asChild
+                  >
+                    <span>
+                      Ver detalles y precios
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </span>
+                  </Button>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Additional CTA */}
+        <div className="text-center mt-12">
+          <Button 
+            size="lg"
+            variant="outline"
+            className="border-[#1C5D15] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white"
+            asChild
+          >
+            <Link to="/store">
+              Ver Catálogo Completo
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
