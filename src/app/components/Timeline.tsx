@@ -1,5 +1,6 @@
 import { Lightbulb, FileCheck, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import Slider from "react-slick";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function NextArrow(props: any) {
   const { onClick } = props;
@@ -37,6 +38,8 @@ interface TimelineProps {
 }
 
 export function Timeline({ milestones }: TimelineProps) {
+  const { t } = useLanguage();
+  
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
       case 'Lightbulb':
@@ -84,7 +87,7 @@ export function Timeline({ milestones }: TimelineProps) {
     <section className="py-20 bg-[#1C5D15] text-white pb-16">
       <div className="max-w-6xl mx-auto px-6">
         <h2 className="text-4xl md:text-5xl text-center mb-16">
-          Nuestra Trayectoria
+          {t('timeline.title')}
         </h2>
 
         <div className="relative px-12">

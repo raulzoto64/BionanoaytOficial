@@ -8,15 +8,7 @@ interface Feature {
 }
 
 interface FeaturedProductProps {
-  content: {
-    title: string;
-    productName: string;
-    productDescription: string;
-    features: Feature[];
-    productImage: string;
-    ctaText: string;
-    ctaLink: string;
-  };
+  content: Record<string, any>;
 }
 
 export function FeaturedProduct({ content }: FeaturedProductProps) {
@@ -61,7 +53,7 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
             </p>
             
             <div className="space-y-4 mb-8">
-              {content.features.map((feature, index) => {
+              {content.features.map((feature: any, index: number) => {
                 const IconComponent = getIconComponent(feature.icon);
                 return (
                   <div key={index} className="flex items-start gap-3">

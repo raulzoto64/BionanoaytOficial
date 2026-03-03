@@ -52,26 +52,32 @@ export function Navigation() {
             {/* Conócenos Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
-                Conócenos <ChevronDown className="w-4 h-4" />
+                {t('nav.about')} <ChevronDown className="w-4 h-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white">
                 <DropdownMenuItem onClick={() => scrollToSection("purpose")}>
-                  Propósito empresarial
+                  {language === 'es' ? 'Propósito empresarial' : 'Business purpose'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("featured")}>
+                  {language === 'es' ? 'Producto estrella: Bionanoaxus' : 'Star product: Bionanoaxus'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("products")}>
+                  {t('nav.products_catalog')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("team")}>
-                  Equipo de trabajo
+                  {language === 'es' ? 'Equipo de trabajo' : 'Work team'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("allies")}>
-                  Empresas aliadas
+                  {language === 'es' ? 'Empresas aliadas' : 'Allied companies'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("ecosystem")}>
-                  Ecosistema colaborativo
+                  {language === 'es' ? 'Ecosistema colaborativo' : 'Collaborative ecosystem'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/process")}>
-                  Nuestro proceso
+                  {language === 'es' ? 'Nuestro proceso' : 'Our process'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("contact")}>
-                  Contáctanos
+                  {t('footer.contact')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -79,14 +85,14 @@ export function Navigation() {
             {/* Tecnología Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
-                Tecnología <ChevronDown className="w-4 h-4" />
+                {t('nav.technology')} <ChevronDown className="w-4 h-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white">
                 <DropdownMenuItem onClick={() => navigate("/technology")}>
-                  Nuestra tecnología
+                  {language === 'es' ? 'Nuestra tecnología' : 'Our technology'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("timeline")}>
-                  Trayectoria
+                  {language === 'es' ? 'Trayectoria' : 'Timeline'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -94,15 +100,9 @@ export function Navigation() {
             {/* Productos Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
-                Productos <ChevronDown className="w-4 h-4" />
+                {t('nav.products')} <ChevronDown className="w-4 h-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white">
-                <DropdownMenuItem onClick={() => scrollToSection("products")}>
-                  Catálogo de productos
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("featured")}>
-                  Producto estrella: Bionanoaxus
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -111,12 +111,10 @@ export function Navigation() {
               to="/store" 
               className="hover:text-[#19FF00] transition-colors"
             >
-              Tienda
+              {t('nav.store')}
             </Link>
 
-            {/* Cart & Login */}
-            <div className="flex items-center gap-3">
-              {/* Language Selector */}
+            {/* Language Selector */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
                   <Globe className="w-4 h-4" />
@@ -132,6 +130,8 @@ export function Navigation() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+            {/* Cart & Login */}
+            <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
                 size="sm"
@@ -147,8 +147,9 @@ export function Navigation() {
                 onClick={() => navigate("/login")}
               >
                 <User className="w-4 h-4 mr-2" />
-                Ingresar
+                {t('nav.login')}
               </Button>
+
             </div>
           </div>
 
@@ -170,7 +171,7 @@ export function Navigation() {
                 className="hover:text-[#19FF00] transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Inicio
+                {language === 'es' ? 'Inicio' : 'Home'}
               </Link>
               <button 
                 className="hover:text-[#19FF00] transition-colors text-left"
@@ -179,7 +180,7 @@ export function Navigation() {
                   setMobileMenuOpen(false);
                 }}
               >
-                Propósito empresarial
+                {language === 'es' ? 'Propósito empresarial' : 'Business purpose'}
               </button>
               <button 
                 className="hover:text-[#19FF00] transition-colors text-left"
@@ -188,7 +189,7 @@ export function Navigation() {
                   setMobileMenuOpen(false);
                 }}
               >
-                Equipo de trabajo
+                {language === 'es' ? 'Equipo de trabajo' : 'Work team'}
               </button>
               <button 
                 className="hover:text-[#19FF00] transition-colors text-left"
@@ -197,28 +198,28 @@ export function Navigation() {
                   setMobileMenuOpen(false);
                 }}
               >
-                Productos
+                {t('nav.products')}
               </button>
               <Link 
                 to="/technology" 
                 className="hover:text-[#19FF00] transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Tecnología
+                {t('nav.technology')}
               </Link>
               <Link 
                 to="/store" 
                 className="hover:text-[#19FF00] transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Tienda
+                {t('nav.store')}
               </Link>
               <Link 
                 to="/login" 
                 className="hover:text-[#19FF00] transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Ingresar
+                {t('nav.login')}
               </Link>
             </div>
           </div>

@@ -831,7 +831,7 @@ function SectionEditor({
                         <div key={idx} className="border p-4 rounded-lg mb-4">
                           <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                              <Label className="text-[#1C5D15]">Nombre</Label>
+                              <Label className="text-[#1C5D15]">Nombre (Español)</Label>
                               <Input
                                 type="text"
                                 value={partner.name || ''}
@@ -844,7 +844,30 @@ function SectionEditor({
                               />
                             </div>
                             <div>
-                              <Label className="text-[#1C5D15]">Abreviatura</Label>
+                              <Label className="text-[#1C5D15]">Nombre (English)</Label>
+                              <Input
+                                type="text"
+                                value={(section as any).contentEN?.partners?.[idx]?.name || ''}
+                                onChange={(e) => {
+                                  const currentContentEN = (section as any).contentEN || {};
+                                  const currentPartnersEN = currentContentEN.partners || [];
+                                  if (!currentPartnersEN[idx]) {
+                                    currentPartnersEN[idx] = {};
+                                  }
+                                  currentPartnersEN[idx].name = e.target.value;
+                                  (section as any).contentEN = {
+                                    ...currentContentEN,
+                                    partners: currentPartnersEN
+                                  };
+                                  onUpdate(section);
+                                }}
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                              <Label className="text-[#1C5D15]">Abreviatura (Español)</Label>
                               <Input
                                 type="text"
                                 value={partner.placeholder || ''}
@@ -852,6 +875,27 @@ function SectionEditor({
                                   const newPartners = [...section.content.partners];
                                   newPartners[idx].placeholder = e.target.value;
                                   onUpdateContent('partners', newPartners);
+                                }}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[#1C5D15]">Abreviatura (English)</Label>
+                              <Input
+                                type="text"
+                                value={(section as any).contentEN?.partners?.[idx]?.placeholder || ''}
+                                onChange={(e) => {
+                                  const currentContentEN = (section as any).contentEN || {};
+                                  const currentPartnersEN = currentContentEN.partners || [];
+                                  if (!currentPartnersEN[idx]) {
+                                    currentPartnersEN[idx] = {};
+                                  }
+                                  currentPartnersEN[idx].placeholder = e.target.value;
+                                  (section as any).contentEN = {
+                                    ...currentContentEN,
+                                    partners: currentPartnersEN
+                                  };
+                                  onUpdate(section);
                                 }}
                                 className="mt-1"
                               />

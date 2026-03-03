@@ -23,6 +23,7 @@ export interface Product {
   category: string;
   status: "active" | "inactive" | "draft";
   image: string;
+  featured: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -354,6 +355,21 @@ export const supabaseAPI = {
       .select("*")
       // Eliminamos el .eq('status', 'active') para que traiga TODO
       .order("created_at", { ascending: false }); // Opcional: para ver los más nuevos primero
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return products || [];
+  },
+
+  getFeaturedProducts: async (): Promise<Product[]> => {
+    const { data: products, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("featured", true)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
 
     if (error) {
       throw new Error(error.message);

@@ -1,3 +1,5 @@
+import { useLanguage } from "../contexts/LanguageContext";
+
 interface TeamMember {
   name: string;
   role: string;
@@ -11,12 +13,14 @@ interface LeadershipProps {
 }
 
 export function Leadership({ members, title, subtitle }: LeadershipProps) {
+  const { t } = useLanguage();
+  
   return (
     <section className="py-20 bg-white">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-12">
           <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4">
-            Liderazgo Femenino
+            {t('leadership.title')}
           </div>
           <h2 className="text-4xl md:text-5xl mb-4 text-[#1C5D15]">
             {title}

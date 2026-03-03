@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabaseAPI } from '../data/supabase';
 
 type Language = 'es' | 'en';
 
@@ -6,11 +7,18 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  isLoading: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const translations = {
+// Tipo para las traducciones con signatura de índice
+type Translations = {
+  [key: string]: string;
+};
+
+// Traducciones predeterminadas en caso de que la base de datos no responda
+const defaultTranslations: { [key in Language]: Translations } = {
   es: {
     // Navegación
     'nav.about': 'Conócenos',
@@ -19,6 +27,7 @@ const translations = {
     'nav.store': 'Tienda',
     'nav.cart': 'Carrito',
     'nav.login': 'Ingresar',
+    'nav.products_catalog': 'Catálogo de productos',
     
     // Botones
     'btn.learn_more': 'Conocer más',
@@ -27,6 +36,9 @@ const translations = {
     'btn.add_to_cart': 'Agregar al carrito',
     'btn.quote': 'Solicitar cotización',
     'btn.view_details': 'Ver detalles',
+    'btn.view_details_prices': 'Ver detalles y precios',
+    'btn.view_full_catalog': 'Ver Catálogo Completo',
+    'btn.send_message': 'Enviar Mensaje',
     
     // Productos
     'products.title': 'Nuestros Productos',
@@ -37,6 +49,8 @@ const translations = {
     'products.features': 'Características',
     'products.benefits': 'Beneficios',
     'products.specs': 'Especificaciones Técnicas',
+    'products.catalog': 'Catálogo',
+    'products.most_popular': 'Más Popular',
     
     // Precios
     'price.from': 'Desde',
@@ -49,6 +63,25 @@ const translations = {
     'footer.email': 'Correo electrónico',
     'footer.phone': 'Teléfono',
     'footer.address': 'Dirección',
+    'footer.information': 'Información',
+    
+    // Formularios
+    'form.name': 'Nombre',
+    'form.email': 'Email',
+    'form.message': 'Mensaje',
+    'form.submit': 'Enviar',
+    
+    // Timeline
+    'timeline.title': 'Nuestra Trayectoria',
+    
+    // Ecosystem
+    'ecosystem.title': 'Ecosistema y Aliados',
+    
+    // Leadership
+    'leadership.title': 'Liderazgo Femenino',
+    
+    // Trust Bar
+    'trustbar.title': 'Respaldados por',
     
     // Admin
     'admin.dashboard': 'Panel de Control',
@@ -66,6 +99,7 @@ const translations = {
     'nav.store': 'Store',
     'nav.cart': 'Cart',
     'nav.login': 'Login',
+    'nav.products_catalog': 'Products Catalog',
     
     // Buttons
     'btn.learn_more': 'Learn more',
@@ -74,6 +108,9 @@ const translations = {
     'btn.add_to_cart': 'Add to cart',
     'btn.quote': 'Request quote',
     'btn.view_details': 'View details',
+    'btn.view_details_prices': 'View details and prices',
+    'btn.view_full_catalog': 'View Full Catalog',
+    'btn.send_message': 'Send Message',
     
     // Products
     'products.title': 'Our Products',
@@ -84,6 +121,8 @@ const translations = {
     'products.features': 'Features',
     'products.benefits': 'Benefits',
     'products.specs': 'Technical Specifications',
+    'products.catalog': 'Catalog',
+    'products.most_popular': 'Most Popular',
     
     // Prices
     'price.from': 'From',
@@ -96,6 +135,25 @@ const translations = {
     'footer.email': 'Email',
     'footer.phone': 'Phone',
     'footer.address': 'Address',
+    'footer.information': 'Information',
+    
+    // Formularios
+    'form.name': 'Name',
+    'form.email': 'Email',
+    'form.message': 'Message',
+    'form.submit': 'Submit',
+    
+    // Timeline
+    'timeline.title': 'Our Journey',
+    
+    // Ecosystem
+    'ecosystem.title': 'Ecosystem and Allies',
+    
+    // Leadership
+    'leadership.title': 'Female Leadership',
+    
+    // Trust Bar
+    'trustbar.title': 'Backed by',
     
     // Admin
     'admin.dashboard': 'Dashboard',
@@ -109,6 +167,8 @@ const translations = {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('es');
+  const [translations, setTranslations] = useState(defaultTranslations);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Cargar idioma desde localStorage solo en el cliente
@@ -118,6 +178,37 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLanguageState(savedLanguage);
       }
     }
+
+    // Cargar traducciones desde la base de datos
+    const loadTranslations = async () => {
+      try {
+        const translationsData = await supabaseAPI.getTranslations();
+        
+        // Convertir las traducciones a la estructura necesaria
+        const newTranslations = {
+          es: { ...defaultTranslations.es },
+          en: { ...defaultTranslations.en },
+        };
+
+        translationsData.forEach(translation => {
+          if (newTranslations.es[translation.key]) {
+            newTranslations.es[translation.key] = translation.es;
+          }
+          if (newTranslations.en[translation.key]) {
+            newTranslations.en[translation.key] = translation.en;
+          }
+        });
+
+        setTranslations(newTranslations);
+      } catch (error) {
+        console.error('Error al cargar las traducciones:', error);
+        // Si hay error, se mantienen las traducciones predeterminadas
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTranslations();
   }, []);
 
   const setLanguage = (lang: Language) => {
@@ -132,7 +223,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, isLoading }}>
       {children}
     </LanguageContext.Provider>
   );

@@ -1,13 +1,7 @@
 import { Button } from "./ui/button";
 
 interface HeroProps {
-  content: {
-    title: string;
-    subtitle: string;
-    ctaText: string;
-    ctaLink: string;
-    backgroundImage: string;
-  };
+  content: Record<string, any>;
 }
 
 export function Hero({ content }: HeroProps) {

@@ -4,6 +4,7 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface ContactInfo {
   phone: string;
@@ -16,6 +17,8 @@ interface FooterProps {
 }
 
 export function Footer({ contactInfo }: FooterProps) {
+  const { t } = useLanguage();
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -34,12 +37,12 @@ export function Footer({ contactInfo }: FooterProps) {
         <div className="grid md:grid-cols-2 gap-12">
           {/* Contact Form */}
           <div>
-            <h3 className="text-3xl mb-6">Contáctanos</h3>
+            <h3 className="text-3xl mb-6">{t('footer.contact')}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Input
                   type="text"
-                  placeholder="Nombre"
+                  placeholder={t('form.name')}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -49,7 +52,7 @@ export function Footer({ contactInfo }: FooterProps) {
               <div>
                 <Input
                   type="email"
-                  placeholder="Email"
+                  placeholder={t('form.email')}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
@@ -58,7 +61,7 @@ export function Footer({ contactInfo }: FooterProps) {
               </div>
               <div>
                 <Textarea
-                  placeholder="Mensaje"
+                  placeholder={t('form.message')}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   required
@@ -70,21 +73,21 @@ export function Footer({ contactInfo }: FooterProps) {
                 type="submit"
                 className="w-full bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90"
               >
-                Enviar Mensaje
+                {t('btn.send_message')}
               </Button>
             </form>
           </div>
 
           {/* Contact Information */}
           <div>
-            <h3 className="text-3xl mb-6">Información</h3>
+            <h3 className="text-3xl mb-6">{t('footer.information')}</h3>
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-[#19FF00]/20 rounded-lg">
                   <Phone className="w-6 h-6 text-[#19FF00]" />
                 </div>
-                <div>
-                  <h4 className="mb-1">Teléfono</h4>
+              <div>
+                  <h4 className="mb-1">{t('footer.phone')}</h4>
                   <p className="text-white/80">{contactInfo.phone}</p>
                 </div>
               </div>
@@ -94,7 +97,7 @@ export function Footer({ contactInfo }: FooterProps) {
                   <Mail className="w-6 h-6 text-[#19FF00]" />
                 </div>
                 <div>
-                  <h4 className="mb-1">Email</h4>
+                  <h4 className="mb-1">{t('footer.email')}</h4>
                   <p className="text-white/80">{contactInfo.email}</p>
                 </div>
               </div>
@@ -104,7 +107,7 @@ export function Footer({ contactInfo }: FooterProps) {
                   <MapPin className="w-6 h-6 text-[#19FF00]" />
                 </div>
                 <div>
-                  <h4 className="mb-1">Ubicación</h4>
+                  <h4 className="mb-1">{t('footer.address')}</h4>
                   <p className="text-white/80">{contactInfo.location}</p>
                 </div>
               </div>
@@ -114,7 +117,7 @@ export function Footer({ contactInfo }: FooterProps) {
 
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-white/20 text-center text-white/60">
-          <p>&copy; {new Date().getFullYear()} Bionanoaxus. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Bionanoaxus. All rights reserved.</p>
         </div>
       </div>
     </footer>

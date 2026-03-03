@@ -1,3 +1,5 @@
+import { useLanguage } from "../contexts/LanguageContext";
+
 interface Partner {
   name: string;
   placeholder: string;
@@ -9,11 +11,13 @@ interface TrustBarProps {
 }
 
 export function TrustBar({ partners }: TrustBarProps) {
+  const { t } = useLanguage();
+  
   return (
     <section className="bg-[#1C5D15] py-12">
       <div className="max-w-6xl mx-auto px-6">
         <h3 className="text-center text-white/70 mb-8 text-sm tracking-wider uppercase">
-          Respaldados por
+          {t('trustbar.title')}
         </h3>
         <div className="flex flex-wrap justify-center items-center gap-12">
           {partners.map((partner) => (

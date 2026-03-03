@@ -77,6 +77,7 @@ export function AdminProducts() {
       category: 'cat-001',
       status: 'draft',
       image: '',
+      featured: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -132,6 +133,7 @@ export function AdminProducts() {
       category: editingProduct.category || 'cat-001',
       status: editingProduct.status,
       image: editingProduct.image, // URL ya subida por Cloudinary
+      featured: editingProduct.featured || false,
     };
 
     if (!productId) {
@@ -381,6 +383,25 @@ export function AdminProducts() {
                     <SelectItem value="active">Activo</SelectItem>
                     <SelectItem value="inactive">Inactivo</SelectItem>
                     <SelectItem value="draft">Borrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Featured */}
+              <div>
+                <Label>Destacado</Label>
+                <Select
+                  value={editingProduct.featured ? '1' : '0'}
+                  onValueChange={(val: '1' | '0') =>
+                    setEditingProduct({ ...editingProduct, featured: val === '1' })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">No</SelectItem>
+                    <SelectItem value="1">Sí</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

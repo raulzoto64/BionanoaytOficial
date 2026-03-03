@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Slider from "react-slick";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function NextArrow(props: any) {
   const { onClick } = props;
@@ -37,6 +38,8 @@ interface EcosystemProps {
 }
 
 export function Ecosystem({ allies }: EcosystemProps) {
+  const { t } = useLanguage();
+  
   const settings = {
     dots: true,
     infinite: true,
@@ -73,7 +76,7 @@ export function Ecosystem({ allies }: EcosystemProps) {
     <section className="py-20 bg-[#629960]/10 pb-16">
       <div className="max-w-6xl mx-auto px-6">
         <h2 className="text-4xl md:text-5xl text-center mb-12 text-[#1C5D15]">
-          Ecosistema y Aliados
+          {t('ecosystem.title')}
         </h2>
         
         <div className="relative px-12">
