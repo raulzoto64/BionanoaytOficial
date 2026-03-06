@@ -129,7 +129,7 @@ export function ProductDetail() {
           <div className="relative">
             <div className="aspect-square bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-[#629960]/20">
               <img
-                src={`https://images.unsplash.com/photo-1576834976341-53b1b975c6f9?w=800`}
+                src={product.image || `https://images.unsplash.com/photo-1576834976341-53b1b975c6f9?w=800`}
                 alt={translation.name}
                 className="w-full h-full object-cover"
               />
@@ -243,12 +243,15 @@ export function ProductDetail() {
 
         {/* Tabs de información */}
         <Tabs defaultValue="description" className="mb-16">
-          <TabsList className="grid w-full grid-cols-3 bg-[#629960]/20">
+          <TabsList className="grid w-full grid-cols-4 bg-[#629960]/20">
             <TabsTrigger value="description" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
               {language === 'es' ? 'Descripción' : 'Description'}
             </TabsTrigger>
             <TabsTrigger value="features" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
               {t('products.features')}
+            </TabsTrigger>
+            <TabsTrigger value="benefits" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
+              {t('products.benefits')}
             </TabsTrigger>
             <TabsTrigger value="specs" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
               {t('products.specs')}
@@ -257,38 +260,44 @@ export function ProductDetail() {
 
           <TabsContent value="description" className="mt-6">
             <Card className="p-6 bg-white">
-              <p className="text-lg leading-relaxed text-[#1C5D15]">{translation.description}</p>
+              {/* Separar descripción en parrafos de 4 líneas */}
+              <div className="space-y-4">
+                {translation.description.split(/\n\n|(?<=\.{3})|(?<=\.)(?=\s[A-Z])/).map((paragraph, index) => {
+                  if (paragraph.trim()) {
+                    return <p key={index} className="text-lg leading-relaxed text-[#1C5D15]">{paragraph.trim()}</p>;
+                  }
+                  return null;
+                })}
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="features" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Características */}
-              <Card className="p-6 bg-white">
-                <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('products.features')}</h3>
-                <ul className="space-y-3">
-                  {translation.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-1" />
-                      <span className="text-[#1C5D15]">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+            <Card className="p-6 bg-white">
+              <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('products.features')}</h3>
+              <ul className="space-y-3">
+                {translation.features.map((feature, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-1" />
+                    <span className="text-[#1C5D15]">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </TabsContent>
 
-              {/* Beneficios */}
-              <Card className="p-6 bg-white">
-                <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('products.benefits')}</h3>
-                <ul className="space-y-3">
-                  {translation.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-1" />
-                      <span className="text-[#1C5D15]">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </div>
+          <TabsContent value="benefits" className="mt-6">
+            <Card className="p-6 bg-white">
+              <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('products.benefits')}</h3>
+              <ul className="space-y-3">
+                {translation.benefits.map((benefit, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-1" />
+                    <span className="text-[#1C5D15]">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
           </TabsContent>
 
           <TabsContent value="specs" className="mt-6">

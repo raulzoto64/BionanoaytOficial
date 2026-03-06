@@ -678,30 +678,16 @@ export const supabaseAPI = {
     
     if (error) {
       console.error("Error al obtener páginas:", error);
-      // Si hay error al conectar o la tabla está vacía, devolvemos páginas predeterminadas
-      return [
-        { id: 'page-home', slug: 'home', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: 'page-technology', slug: 'technology', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: 'page-process', slug: 'process', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
-      ];
+      return [];
     }
     
-    if (!pages || pages.length === 0) {
-      // Si la tabla está vacía, devolvemos páginas predeterminadas
-      return [
-        { id: 'page-home', slug: 'home', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: 'page-technology', slug: 'technology', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: 'page-process', slug: 'process', type: 'system' as const, status: 'published' as const, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
-      ];
-    }
-    
-    return pages;
+    return pages || [];
   },
 
   getPageContent: async (
     pageId: string,
     language: "es" | "en",
-  ): Promise<PageContent> => {
+  ): Promise<PageContent | null> => {
     const { data: content, error } = await supabase
       .from("page_contents")
       .select("*")
@@ -710,187 +696,10 @@ export const supabaseAPI = {
       .single();
 
     if (error || !content) {
-      // Si el error es de que no se encontró la fila o no hay contenido, devolvemos contenido predeterminado
       if (error && error.code !== "PGRST116" && error.code !== "406") {
         console.warn("Error al obtener contenido de página:", error);
       }
-      
-      // Contenido predeterminado para la página home en español
-      const defaultContent: PageContent = {
-        page_id: pageId,
-        language: language,
-        sections: [
-          {
-            id: 'sec-hero',
-            type: 'hero' as const,
-            order: 1,
-            visible: true,
-            content: {
-              title: 'Innovación y desarrollo de productos de base Bionanotecnológica',
-              subtitle: 'Soluciones sostenibles diseñadas y manufacturadas en Colombia para revolucionar la industria',
-              ctaText: 'Conoce nuestra tecnología patentada',
-              ctaLink: '#technology',
-              backgroundImage: 'https://images.unsplash.com/photo-1676313414325-2a877a95dd10?w=1080',
-              seo: {
-                metaTitle: 'A&T BioNano - Innovación en Bionanotecnología',
-                metaDescription: 'Desarrollamos soluciones antimicrobianas y fungicidas sostenibles con nanotecnología avanzada',
-                metaKeywords: 'bionanotecnología, antimicrobianos, fungicidas, nanotecnología, sostenibilidad'
-              }
-            }
-          },
-          {
-            id: 'sec-trust',
-            type: 'trust' as const,
-            order: 2,
-            visible: true,
-            content: {
-              title: 'Respaldados por',
-              partners: [
-                { name: "MinCiencias", placeholder: "MC", image: "https://images.unsplash.com/photo-1612165469953-69b4bc7eedbf?w=1080" },
-                { name: "Ruta N", placeholder: "RN", image: "https://images.unsplash.com/photo-1762075314732-c8abb7ea446d?w=1080" },
-                { name: "SENA", placeholder: "SENA", image: "https://images.unsplash.com/photo-1614308457932-e16d85c5d053?w=1080" },
-                { name: "Tecnnova", placeholder: "TN", image: "https://images.unsplash.com/photo-1769147555720-71fc71bfc216?w=1080" },
-                { name: "Tecnova", placeholder: "TV", image: "https://images.unsplash.com/photo-1762075314732-c8abb7ea446d?w=1080" }
-              ]
-            }
-          },
-          {
-            id: 'sec-purpose',
-            type: 'features' as const,
-            order: 3,
-            visible: true,
-            content: {
-              title: 'Nuestro Propósito',
-              items: [
-                { icon: 'Users', title: '¿Quiénes somos?', description: 'Empresa de base tecnológica dedicada a rutas verdes y amigables con el medio ambiente.' },
-                { icon: 'Target', title: '¿Qué hacemos?', description: 'Resolución de contaminación por microorganismos (hongos, virus y bacterias) mediante experticia científica.' },
-                { icon: 'Lightbulb', title: '¿Cómo lo hacemos?', description: 'Proveedores líderes de nanocompuestos para Latinoamérica.' }
-              ],
-              seo: {
-                metaTitle: 'Nuestro Propósito - A&T BioNano',
-                metaDescription: 'Descubre nuestro propósito de innovar en bionanotecnología para un futuro sostenible',
-                metaKeywords: 'propósito, innovación, sostenibilidad, excelencia'
-              }
-            }
-          },
-          {
-            id: 'sec-timeline',
-            type: 'timeline' as const,
-            order: 6,
-            visible: true,
-            content: {
-              title: language === 'es' ? 'Nuestra Trayectoria' : 'Our Journey',
-              milestones: [
-                {
-                  year: '2018',
-                  icon: 'Lightbulb',
-                  title: language === 'es' ? 'Fundación' : 'Foundation',
-                  description: language === 'es' ? 'Inicio de la investigación en bionanotecnología con el apoyo de MinCiencias.' : 'Start of bionanotechnology research with MinCiencias support.',
-                  step: '1',
-                  desc: language === 'es' ? 'Inicio de la investigación' : 'Research Initiation'
-                },
-                {
-                  year: '2020',
-                  icon: 'FileCheck',
-                  title: language === 'es' ? 'Primera Patente' : 'First Patent',
-                  description: language === 'es' ? 'Obtención de la primera patente para nuestra tecnología de nanocompuestos.' : 'Obtained first patent for our nanocomposites technology.',
-                  step: '2',
-                  desc: language === 'es' ? 'Primera patente' : 'First Patent'
-                },
-                {
-                  year: '2022',
-                  icon: 'TrendingUp',
-                  title: language === 'es' ? 'Producción Comercial' : 'Commercial Production',
-                  description: language === 'es' ? 'Inicio de la producción comercial en nuestra planta de Medellín.' : 'Started commercial production at our Medellín plant.',
-                  step: '3',
-                  desc: language === 'es' ? 'Producción comercial' : 'Commercial Production'
-                },
-                {
-                  year: '2024',
-                  icon: 'FileCheck',
-                  title: language === 'es' ? 'Certificación ISO' : 'ISO Certification',
-                  description: language === 'es' ? 'Obtención de la certificación ISO 9001:2015 para calidad.' : 'Obtained ISO 9001:2015 quality certification.',
-                  step: '4',
-                  desc: language === 'es' ? 'Certificación ISO' : 'ISO Certification'
-                },
-                {
-                  year: '2025',
-                  icon: 'TrendingUp',
-                  title: language === 'es' ? 'Expansión Latinoamérica' : 'Latin America Expansion',
-                  description: language === 'es' ? 'Inicio de operaciones en México y Chile.' : 'Started operations in Mexico and Chile.',
-                  step: '5',
-                  desc: language === 'es' ? 'Expansión regional' : 'Regional Expansion'
-                }
-              ],
-              seo: {
-                metaTitle: language === 'es' ? 'Nuestra Trayectoria - A&T BioNano' : 'Our Journey - A&T BioNano',
-                metaDescription: language === 'es' ? 'Descubre la evolución de A&T BioNano desde su fundación hasta la actualidad.' : 'Discover the evolution of A&T BioNano from its foundation to the present.',
-                metaKeywords: language === 'es' ? 'trayectoria, historia, innovación, crecimiento' : 'journey, history, innovation, growth'
-              }
-            }
-          },
-          {
-            id: 'sec-ecosystem',
-            type: 'ecosystem' as const,
-            order: 8,
-            visible: true,
-            content: {
-              title: language === 'es' ? 'Ecosistema y Aliados' : 'Ecosystem and Allies',
-              allies: [
-                {
-                  name: language === 'es' ? 'Capiro' : 'Capiro',
-                  sector: language === 'es' ? 'Agrícola' : 'Agricultural',
-                  initials: 'CP',
-                  image: ''
-                },
-                {
-                  name: language === 'es' ? 'Coatings' : 'Coatings',
-                  sector: language === 'es' ? 'Recubrimientos' : 'Coatings',
-                  initials: 'CT',
-                  image: ''
-                },
-                {
-                  name: language === 'es' ? 'Cecotec' : 'Cecotec',
-                  sector: language === 'es' ? 'Tecnología' : 'Technology',
-                  initials: 'CC',
-                  image: ''
-                },
-                {
-                  name: language === 'es' ? 'Green Industries' : 'Green Industries',
-                  sector: language === 'es' ? 'Sostenibilidad' : 'Sustainability',
-                  initials: 'GI',
-                  image: ''
-                }
-              ],
-              seo: {
-                metaTitle: language === 'es' ? 'Ecosistema - A&T BioNano' : 'Ecosystem - A&T BioNano',
-                metaDescription: language === 'es' ? 'Conoce nuestros aliados y partners en el ecosistema de bionanotecnología.' : 'Meet our allies and partners in the bionanotechnology ecosystem.',
-                metaKeywords: language === 'es' ? 'ecosistema, aliados, partners, colaboración' : 'ecosystem, allies, partners, collaboration'
-              }
-            }
-          },
-          {
-            id: 'sec-footer',
-            type: 'contact' as const,
-            order: 9,
-            visible: true,
-            content: {
-              contactInfo: {
-                phone: language === 'es' ? '+57 300 123 4567' : '+57 300 123 4567',
-                email: language === 'es' ? 'info@bionanoaxus.com' : 'info@bionanoaxus.com',
-                location: language === 'es' ? 'Medellín, Colombia' : 'Medellín, Colombia'
-              },
-              seo: {
-                metaTitle: language === 'es' ? 'Contacto - A&T BioNano' : 'Contact - A&T BioNano',
-                metaDescription: language === 'es' ? 'Contáctanos para recibir más información sobre nuestras soluciones de bionanotecnología.' : 'Contact us to learn more about our bionanotechnology solutions.',
-                metaKeywords: language === 'es' ? 'contacto, información, consultas, soporte' : 'contact, information, inquiries, support'
-              }
-            }
-          }
-        ]
-      };
-      
-      return defaultContent;
+      return null;
     }
     
     return content;

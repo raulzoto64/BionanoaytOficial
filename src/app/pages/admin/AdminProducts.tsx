@@ -34,6 +34,7 @@ import { ImageUpload } from '../../components/ImageUpload';
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsNames, setProductsNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -63,6 +64,14 @@ export function AdminProducts() {
     try {
       const data = await supabaseAPI.getAllProducts(); // Obtener todos los productos (active, inactive, draft)
       setProducts(data);
+
+      // Cargar nombres de productos en el idioma actual
+      const names: Record<string, string> = {};
+      for (const product of data) {
+        const translation = await supabaseAPI.getProductTranslation(product.id, currentLang);
+        names[product.id] = translation.name || product.slug;
+      }
+      setProductsNames(names);
     } catch (error) {
       toast.error('Error al cargar productos');
     } finally {
@@ -212,7 +221,7 @@ export function AdminProducts() {
       <div className="grid gap-4">
         {products.map((product) => (
           <Card key={product.id} className="p-6 bg-white border-2 border-[#629960]/20">
-            <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-lg overflow-hidden">
                   {product.image ? (
@@ -226,7 +235,7 @@ export function AdminProducts() {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xl text-[#1C5D15] mb-1">{product.slug}</h3>
+                  <h3 className="text-xl text-[#1C5D15] mb-1">{productsNames[product.id] || product.slug}</h3>
                   <p className="text-sm text-[#629960]">ID: {product.id}</p>
                 </div>
               </div>
@@ -364,6 +373,190 @@ export function AdminProducts() {
                     })
                   }
                   rows={4}
+                />
+              </div>
+
+              {/* Status */}
+              <div>
+                <Label>Estado</Label>
+                <Select
+                  value={editingProduct.status}
+                  onValueChange={(val: 'active' | 'inactive' | 'draft') =>
+                    setEditingProduct({ ...editingProduct, status: val })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Activo</SelectItem>
+                    <SelectItem value="inactive">Inactivo</SelectItem>
+                    <SelectItem value="draft">Borrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Features */}
+              <div>
+                <Label>Características</Label>
+                <div className="space-y-2">
+                  {editingTranslation.features.map((feature, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={feature}
+                        onChange={(e) => {
+                          const newFeatures = [...editingTranslation.features];
+                          newFeatures[index] = e.target.value;
+                          setEditingTranslation({ ...editingTranslation, features: newFeatures });
+                        }}
+                        placeholder="Característica"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                        onClick={() => {
+                          const newFeatures = editingTranslation.features.filter((_, i) => i !== index);
+                          setEditingTranslation({ ...editingTranslation, features: newFeatures });
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-[#629960] text-[#629960]"
+                    onClick={() => {
+                      setEditingTranslation({ ...editingTranslation, features: [...editingTranslation.features, ''] });
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar Característica
+                  </Button>
+                </div>
+              </div>
+
+              {/* Benefits */}
+              <div>
+                <Label>Beneficios</Label>
+                <div className="space-y-2">
+                  {editingTranslation.benefits.map((benefit, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={benefit}
+                        onChange={(e) => {
+                          const newBenefits = [...editingTranslation.benefits];
+                          newBenefits[index] = e.target.value;
+                          setEditingTranslation({ ...editingTranslation, benefits: newBenefits });
+                        }}
+                        placeholder="Beneficio"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                        onClick={() => {
+                          const newBenefits = editingTranslation.benefits.filter((_, i) => i !== index);
+                          setEditingTranslation({ ...editingTranslation, benefits: newBenefits });
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-[#629960] text-[#629960]"
+                    onClick={() => {
+                      setEditingTranslation({ ...editingTranslation, benefits: [...editingTranslation.benefits, ''] });
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar Beneficio
+                  </Button>
+                </div>
+              </div>
+
+              {/* Technical Specs */}
+              <div>
+                <Label>Especificaciones Técnicas</Label>
+                <div className="space-y-2">
+                  {Object.entries(editingTranslation.technical_specs).map(([key, value], index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={key}
+                        onChange={(e) => {
+                          const newSpecs = { ...editingTranslation.technical_specs };
+                          delete newSpecs[key];
+                          newSpecs[e.target.value] = value;
+                          setEditingTranslation({ ...editingTranslation, technical_specs: newSpecs });
+                        }}
+                        placeholder="Nombre"
+                      />
+                      <Input
+                        value={value}
+                        onChange={(e) => {
+                          const newSpecs = { ...editingTranslation.technical_specs };
+                          newSpecs[key] = e.target.value;
+                          setEditingTranslation({ ...editingTranslation, technical_specs: newSpecs });
+                        }}
+                        placeholder="Valor"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                        onClick={() => {
+                          const newSpecs = { ...editingTranslation.technical_specs };
+                          delete newSpecs[key];
+                          setEditingTranslation({ ...editingTranslation, technical_specs: newSpecs });
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-[#629960] text-[#629960]"
+                    onClick={() => {
+                      setEditingTranslation({
+                        ...editingTranslation,
+                        technical_specs: { ...editingTranslation.technical_specs, 'Nueva Especificación': '' },
+                      });
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar Especificación
+                  </Button>
+                </div>
+              </div>
+
+              {/* Meta Title */}
+              <div>
+                <Label>Título Meta (SEO)</Label>
+                <Input
+                  value={editingTranslation.meta_title}
+                  onChange={(e) =>
+                    setEditingTranslation({ ...editingTranslation, meta_title: e.target.value })
+                  }
+                  placeholder="Título para motores de búsqueda"
+                />
+              </div>
+
+              {/* Meta Description */}
+              <div>
+                <Label>Descripción Meta (SEO)</Label>
+                <Input
+                  value={editingTranslation.meta_description}
+                  onChange={(e) =>
+                    setEditingTranslation({ ...editingTranslation, meta_description: e.target.value })
+                  }
+                  placeholder="Descripción para motores de búsqueda"
                 />
               </div>
 
