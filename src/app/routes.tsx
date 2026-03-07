@@ -8,6 +8,7 @@ import { Process } from "./pages/Process";
 import { Cart } from "./pages/Cart";
 import { NotFound } from "./pages/NotFound";
 import { ProductDetail } from "./pages/ProductDetail";
+import { Blog } from "./pages/Blog";
 import { AdminLayout } from "./pages/AdminLayout";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { AdminProducts } from "./pages/admin/AdminProducts";
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
       {
         path: "process",
         element: <Process />,
+      },
+      {
+        path: "blog",
+        element: <Blog />,
       },
       {
         path: "cart",

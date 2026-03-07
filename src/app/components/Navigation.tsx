@@ -106,6 +106,14 @@ export function Navigation() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Blog */}
+            <Link 
+              to="/blog" 
+              className="hover:text-[#19FF00] transition-colors"
+            >
+              {t('nav.blog')}
+            </Link>
+
             {/* Tienda */}
             <Link 
               to="/store" 
@@ -206,6 +214,13 @@ export function Navigation() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {t('nav.technology')}
+              </Link>
+              <Link 
+                to="/blog" 
+                className="hover:text-[#19FF00] transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav.blog')}
               </Link>
               <Link 
                 to="/store" 

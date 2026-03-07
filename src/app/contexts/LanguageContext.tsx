@@ -28,6 +28,7 @@ const defaultTranslations: { [key in Language]: Translations } = {
     'nav.cart': 'Carrito',
     'nav.login': 'Ingresar',
     'nav.products_catalog': 'Catálogo de productos',
+    'nav.blog': 'Blog',
     
     // Botones
     'btn.learn_more': 'Conocer más',
@@ -100,6 +101,7 @@ const defaultTranslations: { [key in Language]: Translations } = {
     'nav.cart': 'Cart',
     'nav.login': 'Login',
     'nav.products_catalog': 'Products Catalog',
+    'nav.blog': 'Blog',
     
     // Buttons
     'btn.learn_more': 'Learn more',
