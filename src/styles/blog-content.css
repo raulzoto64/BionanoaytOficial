@@ -1,0 +1,136 @@
+/* Blog Content Styles */
+.blog-content {
+  line-height: 1.8;
+  font-size: 18px;
+}
+
+.blog-content h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1C5D15;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #19FF00;
+}
+
+.blog-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1C5D15;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.blog-content p {
+  margin-bottom: 1.5rem;
+  text-align: justify;
+}
+
+.blog-content ul,
+.blog-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.blog-content li {
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.blog-content li strong {
+  color: #1C5D15;
+  font-weight: 600;
+}
+
+.blog-content blockquote {
+  border-left: 4px solid #19FF00;
+  padding-left: 1.5rem;
+  margin-left: 0;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  color: #629960;
+  background-color: #F0F9F0;
+  padding: 1rem 1.5rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.blog-content code {
+  background-color: #F0F9F0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #1C5D15;
+}
+
+.blog-content pre {
+  background-color: #F0F9F0;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.blog-content pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+
+.blog-content a {
+  color: #1C5D15;
+  text-decoration: underline;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.blog-content a:hover {
+  color: #19FF00;
+}
+
+.blog-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blog-content {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .blog-content h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .blog-content h3 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .blog-content p {
+    margin-bottom: 1rem;
+  }
+
+  .blog-content ul,
+  .blog-content ol {
+    padding-left: 1rem;
+  }
+
+  .blog-content blockquote {
+    padding: 0.75rem 1rem;
+  }
+
+  .blog-content pre {
+    padding: 1rem;
+  }
+}

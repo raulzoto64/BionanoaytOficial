@@ -9,6 +9,7 @@ import { Cart } from "./pages/Cart";
 import { NotFound } from "./pages/NotFound";
 import { ProductDetail } from "./pages/ProductDetail";
 import { Blog } from "./pages/Blog";
+import { BlogPost } from "./pages/BlogPost";
 import { AdminLayout } from "./pages/AdminLayout";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { AdminProducts } from "./pages/admin/AdminProducts";
@@ -17,6 +18,8 @@ import { AdminContent } from "./pages/admin/AdminContent";
 import { AdminCategories } from "./pages/admin/AdminCategories";
 import { AdminTranslations } from "./pages/admin/AdminTranslations";
 import { AdminSettings } from "./pages/admin/AdminSettings";
+import { AdminBlogPosts } from "./pages/admin/AdminBlogPosts";
+import { AdminBlogCategories } from "./pages/admin/AdminBlogCategories";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
 // Wrapper component for Login to include LanguageProvider
@@ -56,6 +59,10 @@ export const router = createBrowserRouter([
       {
         path: "blog",
         element: <Blog />,
+      },
+      {
+        path: "blog/:slug",
+        element: <BlogPost />,
       },
       {
         path: "cart",
@@ -102,6 +109,14 @@ export const router = createBrowserRouter([
       {
         path: "settings",
         element: <AdminSettings />,
+      },
+      {
+        path: "blog/posts",
+        element: <AdminBlogPosts />,
+      },
+      {
+        path: "blog/categories",
+        element: <AdminBlogCategories />,
       },
     ],
   },

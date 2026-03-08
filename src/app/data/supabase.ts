@@ -125,6 +125,50 @@ export interface SiteSettings {
   };
 }
 
+export interface BlogPost {
+  id: string;
+  slug: string;
+  author: string;
+  cover_image: string;
+  status: "draft" | "published";
+  featured: boolean;
+  views: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogPostTranslation {
+  post_id: string;
+  language: "es" | "en";
+  title: string;
+  excerpt: string;
+  content: string;
+  meta_title: string;
+  meta_description: string;
+  meta_keywords: string;
+}
+
+export interface BlogCategory {
+  id: string;
+  slug: string;
+  order: number;
+  status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogCategoryTranslation {
+  category_id: string;
+  language: "es" | "en";
+  name: string;
+  description: string;
+}
+
+export interface BlogPostCategory {
+  post_id: string;
+  category_id: string;
+}
+
 export interface Translation {
   id: string;
   key: string;
@@ -656,6 +700,285 @@ export const supabaseAPI = {
       translations && translations.length > 0 ? translations[0] : null;
 
     return translation || null;
+  },
+
+  // ==========================================
+  // BLOG - ARTÍCULOS
+  // ==========================================
+
+  getBlogPosts: async (status?: "draft" | "published"): Promise<BlogPost[]> => {
+    let query = supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
+    
+    if (status) {
+      query = query.eq("status", status);
+    }
+    
+    const { data: posts, error } = await query;
+    
+    if (error) throw new Error(error.message);
+    return posts || [];
+  },
+
+  getBlogPostById: async (id: string): Promise<BlogPost | null> => {
+    const { data: post, error } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return post || null;
+  },
+
+  getBlogPostBySlug: async (slug: string): Promise<BlogPost | null> => {
+    const { data: post, error } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return post || null;
+  },
+
+  getBlogPostTranslation: async (
+    postId: string,
+    language: "es" | "en",
+  ): Promise<BlogPostTranslation> => {
+    const { data: translation, error } = await supabase
+      .from("blog_post_translations")
+      .select("*")
+      .eq("post_id", postId)
+      .eq("language", language)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116" || error.code === "406") {
+        return {
+          post_id: postId,
+          language: language,
+          title: "",
+          excerpt: "",
+          content: "",
+          meta_title: "",
+          meta_description: "",
+          meta_keywords: "",
+        };
+      }
+      throw new Error(error.message);
+    }
+
+    return translation;
+  },
+
+  createBlogPost: async (data: Omit<BlogPost, "id" | "created_at" | "updated_at" | "views">): Promise<BlogPost> => {
+    const { data: post, error } = await supabase
+      .from("blog_posts")
+      .insert([{ ...data, views: 0 }])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return post;
+  },
+
+  updateBlogPost: async (
+    id: string,
+    data: Partial<BlogPost>,
+  ): Promise<BlogPost> => {
+    const { data: post, error } = await supabase
+      .from("blog_posts")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return post;
+  },
+
+  updateBlogPostTranslation: async (
+    postId: string,
+    language: "es" | "en",
+    data: Partial<BlogPostTranslation>,
+  ): Promise<BlogPostTranslation> => {
+    const { data: translations, error } = await supabase
+      .from("blog_post_translations")
+      .upsert(
+        {
+          post_id: postId,
+          language: language,
+          ...data,
+        },
+        {
+          onConflict: "post_id,language",
+        },
+      )
+      .select();
+
+    if (error) throw new Error(error.message);
+    return translations[0];
+  },
+
+  deleteBlogPost: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // BLOG - CATEGORÍAS
+  // ==========================================
+
+  getBlogCategories: async (status?: "active" | "inactive"): Promise<BlogCategory[]> => {
+    let query = supabase.from("blog_categories").select("*").order("order", { ascending: true });
+    
+    if (status) {
+      query = query.eq("status", status);
+    }
+    
+    const { data: categories, error } = await query;
+    
+    if (error) throw new Error(error.message);
+    return categories || [];
+  },
+
+  getBlogCategoryById: async (id: string): Promise<BlogCategory | null> => {
+    const { data: category, error } = await supabase
+      .from("blog_categories")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return category || null;
+  },
+
+  getBlogCategoryBySlug: async (slug: string): Promise<BlogCategory | null> => {
+    const { data: category, error } = await supabase
+      .from("blog_categories")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return category || null;
+  },
+
+  getBlogCategoryTranslation: async (
+    categoryId: string,
+    language: "es" | "en",
+  ): Promise<BlogCategoryTranslation> => {
+    const { data: translation, error } = await supabase
+      .from("blog_category_translations")
+      .select("*")
+      .eq("category_id", categoryId)
+      .eq("language", language)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116" || error.code === "406") {
+        return {
+          category_id: categoryId,
+          language: language,
+          name: "",
+          description: "",
+        };
+      }
+      throw new Error(error.message);
+    }
+
+    return translation;
+  },
+
+  createBlogCategory: async (data: Omit<BlogCategory, "id" | "created_at" | "updated_at">): Promise<BlogCategory> => {
+    const { data: category, error } = await supabase
+      .from("blog_categories")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return category;
+  },
+
+  updateBlogCategory: async (
+    id: string,
+    data: Partial<BlogCategory>,
+  ): Promise<BlogCategory> => {
+    const { data: category, error } = await supabase
+      .from("blog_categories")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return category;
+  },
+
+  updateBlogCategoryTranslation: async (
+    categoryId: string,
+    language: "es" | "en",
+    data: Partial<BlogCategoryTranslation>,
+  ): Promise<BlogCategoryTranslation> => {
+    const { data: translations, error } = await supabase
+      .from("blog_category_translations")
+      .upsert(
+        {
+          category_id: categoryId,
+          language: language,
+          ...data,
+        },
+        {
+          onConflict: "category_id,language",
+        },
+      )
+      .select();
+
+    if (error) throw new Error(error.message);
+    return translations[0];
+  },
+
+  deleteBlogCategory: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("blog_categories").delete().eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // BLOG - RELACIONES
+  // ==========================================
+
+  getBlogPostCategories: async (postId: string): Promise<BlogPostCategory[]> => {
+    const { data: relations, error } = await supabase
+      .from("blog_post_categories")
+      .select("*")
+      .eq("post_id", postId);
+
+    if (error) throw new Error(error.message);
+    return relations || [];
+  },
+
+  addBlogPostCategory: async (postId: string, categoryId: string): Promise<BlogPostCategory> => {
+    const { data: relation, error } = await supabase
+      .from("blog_post_categories")
+      .insert([{ post_id: postId, category_id: categoryId }])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return relation;
+  },
+
+  removeBlogPostCategory: async (postId: string, categoryId: string): Promise<void> => {
+    const { error } = await supabase
+      .from("blog_post_categories")
+      .delete()
+      .eq("post_id", postId)
+      .eq("category_id", categoryId);
+
+    if (error) throw new Error(error.message);
   },
 
   // ==========================================

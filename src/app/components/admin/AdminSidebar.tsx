@@ -8,7 +8,9 @@ import {
   Settings, 
   Languages,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  BookOpen,
+  FileEdit
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
@@ -24,6 +26,8 @@ export function AdminSidebar() {
     { path: '/admin/categories', icon: FolderTree, label: 'Categorías' },
     { path: '/admin/content', icon: FileText, label: 'Contenido CMS' },
     { path: '/admin/translations', icon: Languages, label: 'Traducciones' },
+    { path: '/admin/blog/posts', icon: FileEdit, label: 'Artículos del Blog' },
+    { path: '/admin/blog/categories', icon: BookOpen, label: 'Categorías del Blog' },
     { path: '/admin/settings', icon: Settings, label: 'Configuración' },
   ];
 
