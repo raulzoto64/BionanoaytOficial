@@ -28,13 +28,16 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { useDatabase } from '../../hooks/useDatabase';
-import { Product, ProductTranslation, supabaseAPI } from '../../data/supabase';
+import { Product, ProductTranslation, supabaseAPI, Category } from '../../data/supabase';
 import { toast } from 'sonner';
 import { ImageUpload } from '../../components/ImageUpload';
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [productsNames, setProductsNames] = useState<Record<string, string>>({});
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -53,11 +56,18 @@ export function AdminProducts() {
     meta_title: '',
     meta_description: '',
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { updateTrigger } = useDatabase();
 
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, [updateTrigger]); // Re-cargar cuando cambie la base de datos
+
+  useEffect(() => {
+    applyFilters();
+  }, [products, searchTerm, selectedCategory, productsNames]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -77,6 +87,43 @@ export function AdminProducts() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const data = await supabaseAPI.getAllCategories();
+      setCategories(data);
+
+      // Cargar nombres de categorías en el idioma actual
+      const names: Record<string, string> = {};
+      for (const category of data) {
+        const translation = await supabaseAPI.getCategoryTranslation(category.id, currentLang);
+        names[category.id] = translation?.name || category.slug;
+      }
+      setCategoryNames(names);
+    } catch (error) {
+      toast.error('Error al cargar categorías');
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...products];
+
+    // Filtrar por término de búsqueda
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        productsNames[product.id]?.toLowerCase().includes(term) ||
+        product.slug.toLowerCase().includes(term)
+      );
+    }
+
+    // Filtrar por categoría
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product => product.category === selectedCategory);
+    }
+
+    setFilteredProducts(filtered);
   };
 
   const handleNewProduct = () => {
@@ -217,9 +264,42 @@ export function AdminProducts() {
         </Button>
       </div>
 
+      {/* Filters and Search */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex-1">
+          <Label htmlFor="search">Buscar Producto</Label>
+          <Input
+            id="search"
+            placeholder="Buscar por nombre o slug..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div className="w-full md:w-64">
+          <Label htmlFor="category">Categoría</Label>
+          <Select
+            value={selectedCategory}
+            onValueChange={setSelectedCategory}
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Todas las categorías" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las categorías</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {categoryNames[category.id] || category.slug}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Products List */}
       <div className="grid gap-4">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <Card key={product.id} className="p-6 bg-white border-2 border-[#629960]/20">
               <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -236,7 +316,7 @@ export function AdminProducts() {
                 </div>
                 <div>
                   <h3 className="text-xl text-[#1C5D15] mb-1">{productsNames[product.id] || product.slug}</h3>
-                  <p className="text-sm text-[#629960]">ID: {product.id}</p>
+                  <p className="text-sm text-[#629960]">Categoría: {categoryNames[product.category] || product.category}</p>
                 </div>
               </div>
 
