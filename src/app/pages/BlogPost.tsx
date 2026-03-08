@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { useLanguage } from '../contexts/LanguageContext';
-import { supabaseAPI, BlogPost as BlogPostType, BlogPostTranslation } from '../data/supabase';
+import { supabaseAPI, BlogPost as BlogPostType, BlogPostTranslation, BlogCategory } from '../data/supabase';
 import '../../styles/blog-content.css';
 
 export function BlogPost() {
@@ -11,6 +11,7 @@ export function BlogPost() {
   const [translation, setTranslation] = useState<BlogPostTranslation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categoryName, setCategoryName] = useState<string>('Sin categoría');
 
   useEffect(() => {
     const loadPost = async () => {
@@ -30,6 +31,16 @@ export function BlogPost() {
         // Get translation
         const postTranslation = await supabaseAPI.getBlogPostTranslation(postData.id, language);
         setTranslation(postTranslation);
+
+        // Get category for this post
+        const relations = await supabaseAPI.getBlogPostCategories(postData.id);
+        if (relations.length > 0) {
+          const category = await supabaseAPI.getBlogCategoryById(relations[0].category_id);
+          if (category) {
+            const categoryTranslation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
+            setCategoryName(categoryTranslation.name || category.slug);
+          }
+        }
       } catch (error) {
         console.error('Error loading post:', error);
         setError('Error loading post');
@@ -106,8 +117,8 @@ export function BlogPost() {
           <div className="p-8">
             {/* Article Meta */}
             <div className="flex flex-wrap items-center gap-4 mb-6">
-              <span className="px-3 py-1 bg-[#19FF00]/20 text-[#1C5D15] text-sm font-medium rounded-full">
-                {language === 'es' ? 'Tecnología' : 'Technology'}
+            <span className="px-3 py-1 bg-[#19FF00]/20 text-[#1C5D15] text-sm font-medium rounded-full">
+                {categoryName}
               </span>
               <span className="text-sm text-[#629960]">
                 {new Date(post.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {

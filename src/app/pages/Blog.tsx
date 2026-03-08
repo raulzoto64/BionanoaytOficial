@@ -14,6 +14,8 @@ interface PostWithTranslation {
   created_at: string;
   updated_at: string;
   translation: BlogPostTranslation;
+  category_id?: string;
+  category_name?: string;
 }
 
 export function Blog() {
@@ -21,6 +23,7 @@ export function Blog() {
   const [posts, setPosts] = useState<PostWithTranslation[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [categoriesNames, setCategoriesNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -32,13 +35,28 @@ export function Blog() {
         const allCategories = await supabaseAPI.getBlogCategories('active');
         setCategories(allCategories);
 
-        // Get translations for each post
+        // Get category names in current language
+        const categoryNames: Record<string, string> = {};
+        for (const category of allCategories) {
+          const translation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
+          categoryNames[category.id] = translation.name || category.slug;
+        }
+        setCategoriesNames(categoryNames);
+
+        // Get translations and categories for each post
         const postsWithTranslations = [];
         for (const post of allPosts) {
           const translation = await supabaseAPI.getBlogPostTranslation(post.id, language);
+          
+          // Get category for this post
+          const relations = await supabaseAPI.getBlogPostCategories(post.id);
+          const category_id = relations.length > 0 ? relations[0].category_id : undefined;
+          
           postsWithTranslations.push({
             ...post,
-            translation
+            translation,
+            category_id,
+            category_name: category_id ? categoryNames[category_id] || 'Sin categoría' : 'Sin categoría'
           });
         }
 
@@ -103,7 +121,7 @@ export function Blog() {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="px-3 py-1 bg-[#19FF00]/20 text-[#1C5D15] text-sm font-medium rounded-full">
-                      {language === 'es' ? 'Tecnología' : 'Technology'}
+                      {post.category_name}
                     </span>
                     <span className="text-sm text-[#629960]">
                       {new Date(post.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
