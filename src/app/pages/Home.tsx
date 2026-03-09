@@ -39,13 +39,15 @@ export function Home() {
       const products = await supabaseAPI.getFeaturedProducts();
       console.log('Featured products from DB:', products);
       
-      // Get translations for each featured product
+      // Get translations for each featured product and category
       const productsWithTranslations = await Promise.all(
         products.map(async (product) => {
           const translation = await supabaseAPI.getProductTranslation(product.id, language);
+          const categoryTranslation = await supabaseAPI.getCategoryTranslation(product.category, language);
           return {
             ...product,
-            translation
+            translation,
+            categoryName: categoryTranslation?.name || product.category
           };
         })
       );

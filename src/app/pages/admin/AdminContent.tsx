@@ -1364,10 +1364,77 @@ function SectionEditor({
 
                 {section.type === 'timeline' && (
                   <div>
-                    <Label className="text-[#1C5D15]">Momentos Clave</Label>
+                    <div className="flex items-center justify-between mb-4">
+                      <Label className="text-[#1C5D15]">Momentos Clave</Label>
+                      <Button
+                        onClick={() => {
+                          const newMilestone = {
+                            year: '',
+                            icon: 'Lightbulb',
+                            title: '',
+                            description: '',
+                            step: '',
+                            desc: ''
+                          };
+                          
+                          // Actualizar la sección con el nuevo milestone en español e inglés
+                          const updatedSection = {
+                            ...section,
+                            content: {
+                              ...section.content,
+                              milestones: [...(section.content.milestones || []), newMilestone]
+                            },
+                            contentEN: {
+                              ...(section as any).contentEN || {},
+                              milestones: [...((section as any).contentEN?.milestones || []), newMilestone]
+                            }
+                          };
+                          
+                          onUpdate(updatedSection as any);
+                        }}
+                        className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/80"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Agregar Momento
+                      </Button>
+                    </div>
                     {section.content.milestones && section.content.milestones.length > 0 ? (
                       (section.content.milestones as any[]).map((milestone: any, idx: number) => (
                         <div key={idx} className="border p-4 rounded-lg mb-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h6 className="text-sm font-semibold text-[#1C5D15]">Moment {idx + 1}</h6>
+                            <Button
+                              onClick={() => {
+                                // Eliminar el milestone en español
+                                const newMilestones = section.content.milestones.filter((_: any, i: number) => i !== idx);
+                                
+                                // Eliminar el milestone correspondiente en inglés
+                                const currentContentEN = (section as any).contentEN || {};
+                                const currentMilestonesEN = currentContentEN.milestones || [];
+                                const newMilestonesEN = currentMilestonesEN.filter((_: any, i: number) => i !== idx);
+                                
+                                // Actualizar la sección con ambos cambios
+                                const updatedSection = {
+                                  ...section,
+                                  content: {
+                                    ...section.content,
+                                    milestones: newMilestones
+                                  },
+                                  contentEN: {
+                                    ...currentContentEN,
+                                    milestones: newMilestonesEN
+                                  }
+                                };
+                                
+                                onUpdate(updatedSection as any);
+                              }}
+                              className="bg-red-500 text-white hover:bg-red-600"
+                              size="sm"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                           <div className="grid md:grid-cols-2 gap-4">
                             <div>
                               <Label className="text-[#1C5D15]">Año</Label>

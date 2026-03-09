@@ -89,7 +89,7 @@ export function Products({ products, title, subtitle }: ProductsProps) {
 
               {/* Product Details */}
               <div className="p-6 flex flex-col flex-grow">
-                <div className="text-[#629960] text-sm mb-2">{product.category}</div>
+                <div className="text-[#629960] text-sm mb-2">{(product as any).categoryName || product.category}</div>
                 <h3 className="text-2xl mb-3 text-[#1C5D15]">{product.translation.name}</h3>
                 <p className="text-[#629960] mb-6 leading-relaxed line-clamp-3">
                   {product.translation.short_description || product.translation.description}

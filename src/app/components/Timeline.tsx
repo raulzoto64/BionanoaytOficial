@@ -92,7 +92,7 @@ export function Timeline({ milestones }: TimelineProps) {
 
         <div className="relative px-12">
           <Slider {...settings}>
-            {milestones.map((milestone, index) => {
+            {milestones.filter(milestone => milestone.title.trim() && milestone.description.trim()).map((milestone, index) => {
               const IconComponent = getIconComponent(milestone.icon);
               return (
                 <div key={index} className="px-4">
