@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { ShoppingCart, Filter, Search, Star } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -40,10 +40,29 @@ export function Store() {
   const { language } = useLanguage();
   const { updateTrigger } = useDatabase();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle category from URL
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     loadData();
   }, [language, updateTrigger]); // Re-cargar cuando cambie el idioma o la base de datos
+
+  // Update URL when selected category changes
+  useEffect(() => {
+    if (selectedCategory === "all") {
+      searchParams.delete("category");
+    } else {
+      searchParams.set("category", selectedCategory);
+    }
+    setSearchParams(searchParams, { replace: true });
+  }, [selectedCategory, searchParams, setSearchParams]);
 
   const loadData = async () => {
     setLoading(true);

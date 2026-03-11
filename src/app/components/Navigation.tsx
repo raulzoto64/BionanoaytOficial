@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { ShoppingCart, User, Menu, X, ChevronDown, Globe } from "lucide-react";
 import { Button } from "./ui/button";
@@ -9,12 +9,37 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useLanguage } from "../contexts/LanguageContext";
+import { supabaseAPI, Category } from "../data/supabase";
 
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
+
+  // Load categories on component mount and when language changes
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await supabaseAPI.getCategories();
+        const categoriesWithTranslations = await Promise.all(
+          categoriesData.map(async (cat: Category) => {
+            const translation = await supabaseAPI.getCategoryTranslation(cat.id, language);
+            return {
+              id: cat.id,
+              name: translation?.name || cat.slug,
+            };
+          })
+        );
+        setCategories(categoriesWithTranslations);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+
+    loadCategories();
+  }, [language]);
 
   const scrollToSection = (sectionId: string) => {
     // Si ya estamos en la home, hacer scroll directamente
@@ -103,6 +128,14 @@ export function Navigation() {
                 {t('nav.products')} <ChevronDown className="w-4 h-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white">
+                <DropdownMenuItem onClick={() => navigate("/store")}>
+                  {language === 'es' ? 'Todos los productos' : 'All products'}
+                </DropdownMenuItem>
+                {categories.map((cat) => (
+                  <DropdownMenuItem key={cat.id} onClick={() => navigate(`/store?category=${cat.id}`)}>
+                    {cat.name}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
 

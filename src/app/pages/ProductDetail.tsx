@@ -6,6 +6,14 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Label } from '../components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useDatabase } from '../hooks/useDatabase';
 import { supabaseAPI, Product, ProductTranslation, PriceByQuantity } from '../data/supabase';
@@ -27,6 +35,7 @@ export function ProductDetail() {
     total: number;
     currency: string;
   } | null>(null);
+  const [selectedPackagingType, setSelectedPackagingType] = useState<string>('');
 
   useEffect(() => {
     if (slug) {
@@ -56,6 +65,27 @@ export function ProductDetail() {
       setProduct(productData);
       setTranslation(translationData);
       setPrices(pricesData);
+      
+      // Obtener tipos de embase disponibles para el producto
+      const availablePackagingTypes = Array.from(
+        new Set(pricesData.map(price => {
+          const packaging = price.packaging || 'Sin embase';
+          return packaging.includes(' ') 
+            ? (() => {
+                const parts = packaging.split(' ');
+                if (!isNaN(Number(parts[0]))) {
+                  return `${parts[1]} de ${parts[0]} litros`;
+                }
+                return `${parts[0]} de ${parts[1]} litros`;
+              })()
+            : packaging;
+        }))
+      );
+      
+      // Seleccionar el primer tipo de embase disponible si no hay uno seleccionado
+      if (availablePackagingTypes.length > 0 && !selectedPackagingType) {
+        setSelectedPackagingType(availablePackagingTypes[0]);
+      }
     } catch (error) {
       console.error('Error loading product:', error);
       toast.error('Error al cargar el producto');
@@ -106,6 +136,37 @@ export function ProductDetail() {
     return null;
   }
 
+  // Obtener tipos de embase disponibles para el producto
+  const availablePackagingTypes = Array.from(
+    new Set(prices.map(price => {
+      const packaging = price.packaging || 'Sin embase';
+      return packaging.includes(' ') 
+        ? (() => {
+            const parts = packaging.split(' ');
+            if (!isNaN(Number(parts[0]))) {
+              return `${parts[1]} de ${parts[0]} litros`;
+            }
+            return `${parts[0]} de ${parts[1]} litros`;
+          })()
+        : packaging;
+    }))
+  );
+
+  // Filtrar precios por tipo de embase seleccionado
+  const filteredPrices = prices.filter(price => {
+    const packaging = price.packaging || 'Sin embase';
+    const packagingType = packaging.includes(' ') 
+      ? (() => {
+          const parts = packaging.split(' ');
+          if (!isNaN(Number(parts[0]))) {
+            return `${parts[1]} de ${parts[0]} litros`;
+          }
+          return `${parts[0]} de ${parts[1]} litros`;
+        })()
+      : packaging;
+    return packagingType === selectedPackagingType;
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F7F9CE] to-white">
       {/* Back Button */}
@@ -150,25 +211,50 @@ export function ProductDetail() {
             <Card className="bg-white border-2 border-[#629960] p-6 mb-6">
               <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('price.volume_pricing')}</h3>
               
-              {/* Tabla de precios por cantidad */}
-              <div className="space-y-3 mb-6">
-                {prices.map((price, index) => (
-                  <div
-                    key={price.id}
-                    className={`flex justify-between items-center p-3 rounded-lg ${
-                      calculatedPrice?.pricePerUnit === price.price_per_unit
-                        ? 'bg-[#19FF00]/20 border-2 border-[#19FF00]'
-                        : 'bg-[#F7F9CE]/50'
-                    }`}
-                  >
-                    <span className="text-[#1C5D15]">
-                      {price.min_quantity} - {price.max_quantity || '∞'} {t('price.unit')}
-                    </span>
-                    <span className="font-bold text-[#1C5D15]">
-                      {formatPrice(price.price_per_unit, price.currency)}/{t('price.unit')}
-                    </span>
+              {/* Selector de tipo de embase */}
+              {availablePackagingTypes.length > 1 && (
+                <div className="mb-6">
+                  <Label>Tipo de Embase</Label>
+                  <Select value={selectedPackagingType} onValueChange={setSelectedPackagingType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePackagingTypes.map((packagingType) => (
+                        <SelectItem key={packagingType} value={packagingType}>
+                          {packagingType}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Precios para el tipo de embase seleccionado */}
+              <div className="space-y-2 mb-6">
+                {filteredPrices.length === 0 ? (
+                  <div className="text-center py-12 text-[#629960]">
+                    <p>No hay precios configurados para este tipo de embase</p>
                   </div>
-                ))}
+                ) : (
+                  filteredPrices.map((price) => (
+                    <div
+                      key={price.id}
+                      className={`flex justify-between items-center p-2 rounded-lg ${
+                        calculatedPrice?.pricePerUnit === price.price_per_unit
+                          ? 'bg-[#19FF00]/20 border-2 border-[#19FF00]'
+                          : 'bg-[#F7F9CE]/50'
+                      }`}
+                    >
+                      <span className="text-[#1C5D15]">
+                        {price.min_quantity} - {price.max_quantity || '∞'} {t('price.unit')}
+                      </span>
+                      <span className="font-bold text-[#1C5D15]">
+                        {formatPrice(price.price_per_unit, price.currency)}/{t('price.unit')}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Selector de cantidad */}
@@ -212,7 +298,7 @@ export function ProductDetail() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Total ({quantity} {t('price.unit')}):</span>
-                    <span className="text-3xl font-bold text-[#19FF00]">
+                    <span className="text-2xl font-bold text-[#19FF00]">
                       {formatPrice(calculatedPrice.total, calculatedPrice.currency)}
                     </span>
                   </div>

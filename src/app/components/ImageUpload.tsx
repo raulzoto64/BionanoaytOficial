@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { Button } from './ui/button';
 import { Upload } from 'lucide-react';
 
@@ -16,6 +16,7 @@ export function ImageUpload({
   type = 'avatar' 
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const uniqueId = useId(); // Generar un id único para cada componente
 
   // Configuración de ImageKit (Cuentas por defecto de HitPoly)
   const DEFAULT_CONFIG = {
@@ -85,10 +86,16 @@ export function ImageUpload({
         </div>
       )}
       <div className="flex items-center gap-2">
-        <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="image-upload" />
+        <input 
+          type="file" 
+          accept="image/*" 
+          onChange={handleFileChange} 
+          className="hidden" 
+          id={uniqueId} 
+        />
         <Button
           variant="outline"
-          onClick={() => document.getElementById('image-upload')?.click()}
+          onClick={() => document.getElementById(uniqueId)?.click()}
           disabled={uploading}
         >
           <Upload className="w-4 h-4 mr-2" />

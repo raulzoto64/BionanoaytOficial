@@ -1349,6 +1349,7 @@ function SectionEditor({
                                   onUpdateContent('allies', newAllies);
                                 }}
                                 type="avatar"
+                                userId={`ally_${idx}_${ally.name || 'unknown'}`}
                               />
                             </div>
                           </div>

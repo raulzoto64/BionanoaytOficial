@@ -7,7 +7,7 @@ function NextArrow(props: any) {
   return (
     <button
       onClick={onClick}
-      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-[#19FF00] rounded-full flex items-center justify-center hover:bg-[#19FF00]/80 transition-colors shadow-lg"
+      className="absolute -right-15 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-[#19FF00] rounded-full flex items-center justify-center hover:bg-[#19FF00]/80 transition-colors shadow-lg"
     >
       <ChevronRight className="w-6 h-6 text-[#1C5D15]" />
     </button>
@@ -19,7 +19,7 @@ function PrevArrow(props: any) {
   return (
     <button
       onClick={onClick}
-      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-[#19FF00] rounded-full flex items-center justify-center hover:bg-[#19FF00]/80 transition-colors shadow-lg"
+      className="absolute -left-15 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-[#19FF00] rounded-full flex items-center justify-center hover:bg-[#19FF00]/80 transition-colors shadow-lg"
     >
       <ChevronLeft className="w-6 h-6 text-[#1C5D15]" />
     </button>
@@ -48,6 +48,8 @@ export function Ecosystem({ allies }: EcosystemProps) {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
+    swipe: true,
+    draggable: true,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
     responsive: [
@@ -63,6 +65,8 @@ export function Ecosystem({ allies }: EcosystemProps) {
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
+          nextArrow: undefined,
+          prevArrow: undefined
         }
       }
     ],
@@ -79,7 +83,7 @@ export function Ecosystem({ allies }: EcosystemProps) {
           {t('ecosystem.title')}
         </h2>
         
-        <div className="relative px-12">
+        <div className="relative px-16 md:px-20">
           <Slider {...settings}>
             {allies.map((ally) => (
               <div key={ally.name} className="px-4">

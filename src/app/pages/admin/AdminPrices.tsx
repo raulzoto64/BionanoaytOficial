@@ -30,6 +30,7 @@ export function AdminPrices() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPrice, setEditingPrice] = useState<PriceByQuantity | null>(null);
   const [isNewPrice, setIsNewPrice] = useState(false);
+  const [selectedPackagingType, setSelectedPackagingType] = useState<string>('');
 
   useEffect(() => {
     loadData();
@@ -73,6 +74,27 @@ export function AdminPrices() {
     try {
       const pricesData = await supabaseAPI.getPricesByProduct(selectedProductId);
       setPrices(pricesData.sort((a, b) => a.min_quantity - b.min_quantity));
+      
+      // Obtener tipos de embase disponibles para el producto seleccionado
+      const availablePackagingTypes = Array.from(
+        new Set(pricesData.map(price => {
+          const packaging = price.packaging || 'Sin embase';
+          return packaging.includes(' ') 
+            ? (() => {
+                const parts = packaging.split(' ');
+                if (!isNaN(Number(parts[0]))) {
+                  return `${parts[1]} de ${parts[0]} litros`;
+                }
+                return `${parts[0]} de ${parts[1]} litros`;
+              })()
+            : packaging;
+        }))
+      );
+      
+      // Seleccionar el primer tipo de embase disponible si no hay uno seleccionado
+      if (availablePackagingTypes.length > 0 && !selectedPackagingType) {
+        setSelectedPackagingType(availablePackagingTypes[0]);
+      }
     } catch (error) {
       toast.error('Error al cargar precios');
     }
@@ -86,6 +108,7 @@ export function AdminPrices() {
       max_quantity: null,
       price_per_unit: 0,
       currency: 'COP',
+      packaging: '',
     });
     setIsNewPrice(true);
     setDialogOpen(true);
@@ -100,6 +123,20 @@ export function AdminPrices() {
   const handleSave = async () => {
     if (!editingPrice) return;
 
+    // Validate packaging
+    const packagingType = editingPrice.packaging?.split(' ')[0];
+    const packagingVolume = editingPrice.packaging?.split(' ')[1];
+    
+    if (packagingType && !packagingVolume) {
+      toast.error('Debe seleccionar un volumen para este tipo de embase');
+      return;
+    }
+
+    if (packagingVolume && !packagingType) {
+      toast.error('Debe seleccionar un tipo de embase');
+      return;
+    }
+
     try {
       if (isNewPrice) {
         await supabaseAPI.createPrice({
@@ -108,6 +145,7 @@ export function AdminPrices() {
           max_quantity: editingPrice.max_quantity,
           price_per_unit: editingPrice.price_per_unit,
           currency: editingPrice.currency,
+          packaging: editingPrice.packaging,
         });
         toast.success('Precio agregado correctamente');
       } else {
@@ -152,6 +190,37 @@ export function AdminPrices() {
     ? productTranslations[selectedProductId]
     : null;
 
+  // Obtener tipos de embase disponibles para el producto seleccionado
+  const availablePackagingTypes = Array.from(
+    new Set(prices.map(price => {
+      const packaging = price.packaging || 'Sin embase';
+      return packaging.includes(' ') 
+        ? (() => {
+            const parts = packaging.split(' ');
+            if (!isNaN(Number(parts[0]))) {
+              return `${parts[1]} de ${parts[0]} litros`;
+            }
+            return `${parts[0]} de ${parts[1]} litros`;
+          })()
+        : packaging;
+    }))
+  );
+
+  // Filtrar precios por tipo de embase seleccionado
+  const filteredPrices = prices.filter(price => {
+    const packaging = price.packaging || 'Sin embase';
+    const packagingType = packaging.includes(' ') 
+      ? (() => {
+          const parts = packaging.split(' ');
+          if (!isNaN(Number(parts[0]))) {
+            return `${parts[1]} de ${parts[0]} litros`;
+          }
+          return `${parts[0]} de ${parts[1]} litros`;
+        })()
+      : packaging;
+    return packagingType === selectedPackagingType;
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -159,12 +228,19 @@ export function AdminPrices() {
           <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Precios</h2>
           <p className="text-[#629960]">Configura precios por cantidad para cada producto</p>
         </div>
+        <Button
+          onClick={handleAddNew}
+          className="bg-[#1C5D15] text-white hover:bg-[#629960]"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar Precio
+        </Button>
       </div>
 
-      {/* Product Selector */}
+      {/* Product and Packaging Selectors */}
       <Card className="p-6 bg-white border-2 border-[#629960]/20 mb-6">
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <Label>Seleccionar Producto</Label>
             <Select value={selectedProductId} onValueChange={setSelectedProductId}>
               <SelectTrigger className="w-full">
@@ -179,13 +255,23 @@ export function AdminPrices() {
               </SelectContent>
             </Select>
           </div>
-          <Button
-            onClick={handleAddNew}
-            className="bg-[#1C5D15] text-white hover:bg-[#629960] mt-6"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Agregar Precio
-          </Button>
+          {availablePackagingTypes.length > 0 && (
+            <div>
+              <Label>Tipo de Embase</Label>
+              <Select value={selectedPackagingType} onValueChange={setSelectedPackagingType}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePackagingTypes.map((packagingType) => (
+                    <SelectItem key={packagingType} value={packagingType}>
+                      {packagingType}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -197,11 +283,9 @@ export function AdminPrices() {
         </Card>
       )}
 
-      {/* Prices Table */}
-      <Card className="p-6 bg-white border-2 border-[#629960]/20">
-        <h3 className="text-xl text-[#1C5D15] mb-4">Tabla de Precios por Cantidad</h3>
-
-        {prices.length === 0 ? (
+      {/* Prices for selected packaging type */}
+      {prices.length === 0 ? (
+        <Card className="p-6 bg-white border-2 border-[#629960]/20">
           <div className="text-center py-12 text-[#629960]">
             <p>No hay precios configurados para este producto</p>
             <Button
@@ -213,55 +297,76 @@ export function AdminPrices() {
               Agregar Primer Precio
             </Button>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {prices.map((price) => (
-              <div
-                key={price.id}
-                className="flex items-center justify-between p-4 bg-[#F7F9CE]/50 rounded-lg border border-[#629960]/20"
-              >
-                <div className="flex-1 grid grid-cols-3 gap-4">
-                  <div>
-                    <span className="text-sm text-[#629960]">Cantidad</span>
-                    <p className="text-lg text-[#1C5D15] font-semibold">
-                      {price.min_quantity} - {price.max_quantity || '∞'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-[#629960]">Precio por unidad</span>
-                    <p className="text-lg text-[#1C5D15] font-semibold">
-                      {formatPrice(price.price_per_unit, price.currency)}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-[#629960]">Moneda</span>
-                    <p className="text-lg text-[#1C5D15] font-semibold">{price.currency}</p>
-                  </div>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          <Card className="p-6 bg-white border-2 border-[#629960]/20">
+            <h3 className="text-xl text-[#1C5D15] mb-4">
+              Precios para {selectedPackagingType}
+            </h3>
+            <div className="space-y-3">
+              {filteredPrices.length === 0 ? (
+                <div className="text-center py-12 text-[#629960]">
+                  <p>No hay precios configurados para este tipo de embase</p>
+                  <Button
+                    onClick={handleAddNew}
+                    variant="outline"
+                    className="mt-4 border-[#1C5D15] text-[#1C5D15]"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar Precio
+                  </Button>
                 </div>
+              ) : (
+                filteredPrices.map((price) => (
+                  <div
+                    key={price.id}
+                    className="flex items-center justify-between p-4 bg-[#F7F9CE]/50 rounded-lg border border-[#629960]/20"
+                  >
+                    <div className="flex-1 grid grid-cols-3 gap-4">
+                      <div>
+                        <span className="text-sm text-[#629960]">Cantidad</span>
+                        <p className="text-lg text-[#1C5D15] font-semibold">
+                          {price.min_quantity} - {price.max_quantity || '∞'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-[#629960]">Precio por unidad</span>
+                        <p className="text-lg text-[#1C5D15] font-semibold">
+                          {formatPrice(price.price_per_unit, price.currency)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-[#629960]">Moneda</span>
+                        <p className="text-lg text-[#1C5D15] font-semibold">{price.currency}</p>
+                      </div>
+                    </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-[#1C5D15] text-[#1C5D15]"
-                    onClick={() => handleEdit(price)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                    onClick={() => handleDelete(price.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-[#1C5D15] text-[#1C5D15]"
+                        onClick={() => handleEdit(price)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                        onClick={() => handleDelete(price.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Edit/Add Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -299,6 +404,59 @@ export function AdminPrices() {
                   }
                   placeholder="Dejar vacío para infinito"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Tipo de Embase</Label>
+                  <Select
+                    value={editingPrice.packaging?.split(' ')[0] || ''}
+                    onValueChange={(val) => {
+                      const volume = editingPrice.packaging?.split(' ')[1] || '';
+                      setEditingPrice({
+                        ...editingPrice,
+                        packaging: val ? `${val} ${volume}` : '',
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Botella">Botella</SelectItem>
+                      <SelectItem value="Galón">Galón</SelectItem>
+                      <SelectItem value="Bolsa">Bolsa</SelectItem>
+                      <SelectItem value="Cilindro">Cilindro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Volumen (Litros)</Label>
+                  <Select
+                    value={editingPrice.packaging?.split(' ')[1] || ''}
+                    onValueChange={(val) => {
+                      const type = editingPrice.packaging?.split(' ')[0] || '';
+                      setEditingPrice({
+                        ...editingPrice,
+                        packaging: type ? `${type} ${val}` : val,
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Volumen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>

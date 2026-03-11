@@ -48,6 +48,7 @@ export interface PriceByQuantity {
   max_quantity: number | null;
   price_per_unit: number;
   currency: "COP" | "USD";
+  packaging?: string; // Ej: "1L", "5L", "20L", "Galón", "Cilindro 10kg"
 }
 
 export interface Category {
@@ -638,6 +639,7 @@ export const supabaseAPI = {
           max_quantity: data.max_quantity,
           price_per_unit: data.price_per_unit,
           currency: data.currency,
+          packaging: data.packaging,
         },
       ])
       .select()
