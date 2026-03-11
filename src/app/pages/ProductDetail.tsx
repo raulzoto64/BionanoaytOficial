@@ -206,17 +206,17 @@ export function ProductDetail() {
           
           {/* Imagen y precios */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Galería de imágenes */}
+              {/* Galería de imágenes */}
             <div className="flex gap-6">
               {/* Miniaturas a la izquierda */}
               {product.images && product.images.length > 1 && (
                 <div className="flex flex-col gap-4 w-20">
                   {/* Imágenes visibles (5 para desktop, 4 para mobile) */}
-                  {product.images.slice(0, 5).map((image, index) => {
+                    {product.images?.slice(0, 5).map((image, index) => {
                     // Determinar si es la última miniatura visible
                     const isLastVisibleThumbnail = (!isMobile && index === 4) || (isMobile && index === 3);
                     // Determinar si hay más imágenes que las visibles
-                    const hasMoreImages = product.images.length > (!isMobile ? 5 : 4);
+                    const hasMoreImages = (product.images?.length || 0) > (!isMobile ? 5 : 4);
                     
                     return (
                       <div
@@ -234,7 +234,7 @@ export function ProductDetail() {
                         {/* Indicador de más imágenes sobrepuesto */}
                         {isLastVisibleThumbnail && hasMoreImages && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold">
-                            +{product.images.length - (!isMobile ? 5 : 4)}
+                            +{(product.images?.length || 0) - (!isMobile ? 5 : 4)}
                           </div>
                         )}
                       </div>
@@ -250,7 +250,7 @@ export function ProductDetail() {
                   style={{ cursor: 'zoom-in' }}
                 >
                   <img
-                    src={product.images?.[selectedImageIndex] || product.image || `https://images.unsplash.com/photo-1576834976341-53b1b975c6f9?w=800`}
+                    src={(product.images && product.images[selectedImageIndex]) || product.image || `https://images.unsplash.com/photo-1576834976341-53b1b975c6f9?w=800`}
                     alt={translation.name}
                     className="w-full h-full object-cover transition-transform duration-500 ease-in-out"
                     style={{ 
@@ -280,13 +280,19 @@ export function ProductDetail() {
                 {product.images && product.images.length > 1 && (
                   <>
                     <button
-                      onClick={() => setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : product.images!.length - 1))}
+                      onClick={() => setSelectedImageIndex((prev) => {
+                        const images = product.images || [];
+                        return (prev > 0 ? prev - 1 : images.length - 1);
+                      })}
                       className="absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white text-[#1C5D15] rounded-full p-2 shadow-lg"
                     >
                       <ChevronLeft className="w-6 h-6" />
                     </button>
                     <button
-                      onClick={() => setSelectedImageIndex((prev) => (prev < product.images!.length - 1 ? prev + 1 : 0))}
+                      onClick={() => setSelectedImageIndex((prev) => {
+                        const images = product.images || [];
+                        return (prev < images.length - 1 ? prev + 1 : 0);
+                      })}
                       className="absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white text-[#1C5D15] rounded-full p-2 shadow-lg"
                     >
                       <ChevronRight className="w-6 h-6" />

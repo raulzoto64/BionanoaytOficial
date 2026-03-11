@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
-  FileEdit
+  FileEdit,
+  Users
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
@@ -21,6 +22,7 @@ export function AdminSidebar() {
 
   const menuItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+    { path: '/admin/users', icon: Users, label: 'Usuarios y Roles' },
     { path: '/admin/products', icon: Package, label: 'Productos' },
     { path: '/admin/prices', icon: DollarSign, label: 'Precios' },
     { path: '/admin/categories', icon: FolderTree, label: 'Categorías' },

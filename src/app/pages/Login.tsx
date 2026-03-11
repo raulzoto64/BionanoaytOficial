@@ -7,6 +7,7 @@ import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { supabaseAPI } from "../data/supabase";
 import { Card } from "../components/ui/card";
+import { useAuth } from "../hooks/useAuth";
 
 export function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,6 +19,7 @@ export function Login() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,14 +36,14 @@ export function Login() {
 
         const user = await supabaseAPI.loginUser(formData.email, formData.password);
         
-        // Guardar sesión en localStorage
-        localStorage.setItem('user', JSON.stringify(user));
+        // Guardar sesión usando el hook
+        login(user);
         
         toast.success(`¡Bienvenido ${user.name}!`);
         
         // Redirigir según el rol
         setTimeout(() => {
-          if (user.role === 'admin') {
+          if (user.role === 'admin' || user.role === 'editor' || user.role === 'manager' || user.role === 'viewer') {
             navigate('/admin');
           } else {
             navigate('/');

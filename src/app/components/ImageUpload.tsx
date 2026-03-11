@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Upload, X } from 'lucide-react';
 
 interface ImageUploadProps {
-  onImageUpload: (urls: string[]) => void;
+  onImageUpload: (url: string | string[]) => void;
   currentImages?: string[];
   currentImage?: string;
   userId?: string;
@@ -80,9 +80,14 @@ export function ImageUpload({
         }
       });
 
-      const newImages = await Promise.all(uploadPromises);
-      const updatedImages = [...currentImages, ...newImages];
-      onImageUpload(updatedImages);
+        const newImages = await Promise.all(uploadPromises);
+        const updatedImages = [...currentImages, ...newImages];
+        // Si solo se espera una imagen, devolver la primera
+        if (currentImage !== undefined) {
+          onImageUpload(newImages[0] || '');
+        } else {
+          onImageUpload(updatedImages);
+        }
     } catch (error) {
       console.error('Error al subir:', error);
       alert('Error al conectar con el servidor de imágenes');
@@ -93,7 +98,11 @@ export function ImageUpload({
 
   const handleRemoveImage = (index: number) => {
     const updatedImages = currentImages.filter((_, i) => i !== index);
-    onImageUpload(updatedImages);
+    if (currentImage !== undefined) {
+      onImageUpload('');
+    } else {
+      onImageUpload(updatedImages);
+    }
   };
 
   return (

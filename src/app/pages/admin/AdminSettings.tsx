@@ -80,6 +80,28 @@ export function AdminSettings() {
 
   if (!settings) return null;
 
+  // Asegurar que las propiedades existan
+  const safeSettings = {
+    ...settings,
+    social_media: settings.social_media || {
+      facebook: "",
+      twitter: "",
+      instagram: "",
+      linkedin: "",
+    },
+    seo: settings.seo || {
+      default_title: "",
+      default_description: "",
+      default_keywords: "",
+    },
+    colors: settings.colors || {
+      primary: "#1C5D15",
+      secondary: "#629960",
+      accent: "#19FF00",
+      background: "#F7F9CE",
+    },
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -112,8 +134,8 @@ export function AdminSettings() {
               <Input
                 id="siteName"
                 type="text"
-                value={settings.siteName}
-                onChange={(e) => updateField('siteName', e.target.value)}
+                value={safeSettings.site_name || ""}
+                onChange={(e) => updateField('site_name', e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -126,8 +148,8 @@ export function AdminSettings() {
               <Input
                 id="siteEmail"
                 type="email"
-                value={settings.siteEmail}
-                onChange={(e) => updateField('siteEmail', e.target.value)}
+                value={safeSettings.site_email || ""}
+                onChange={(e) => updateField('site_email', e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -140,8 +162,8 @@ export function AdminSettings() {
               <Input
                 id="sitePhone"
                 type="text"
-                value={settings.sitePhone}
-                onChange={(e) => updateField('sitePhone', e.target.value)}
+                value={safeSettings.site_phone || ""}
+                onChange={(e) => updateField('site_phone', e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -154,8 +176,8 @@ export function AdminSettings() {
               <Input
                 id="siteAddress"
                 type="text"
-                value={settings.siteAddress}
-                onChange={(e) => updateField('siteAddress', e.target.value)}
+                value={safeSettings.site_address || ""}
+                onChange={(e) => updateField('site_address', e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -177,8 +199,8 @@ export function AdminSettings() {
               <Input
                 id="facebook"
                 type="url"
-                value={settings.socialMedia.facebook || ''}
-                onChange={(e) => updateNestedField('socialMedia', 'facebook', e.target.value)}
+                value={safeSettings.social_media.facebook || ''}
+                onChange={(e) => updateNestedField('social_media', 'facebook', e.target.value)}
                 placeholder="https://facebook.com/..."
                 className="mt-1"
               />
@@ -192,8 +214,8 @@ export function AdminSettings() {
               <Input
                 id="twitter"
                 type="url"
-                value={settings.socialMedia.twitter || ''}
-                onChange={(e) => updateNestedField('socialMedia', 'twitter', e.target.value)}
+                value={safeSettings.social_media.twitter || ''}
+                onChange={(e) => updateNestedField('social_media', 'twitter', e.target.value)}
                 placeholder="https://twitter.com/..."
                 className="mt-1"
               />
@@ -207,8 +229,8 @@ export function AdminSettings() {
               <Input
                 id="instagram"
                 type="url"
-                value={settings.socialMedia.instagram || ''}
-                onChange={(e) => updateNestedField('socialMedia', 'instagram', e.target.value)}
+                value={safeSettings.social_media.instagram || ''}
+                onChange={(e) => updateNestedField('social_media', 'instagram', e.target.value)}
                 placeholder="https://instagram.com/..."
                 className="mt-1"
               />
@@ -222,8 +244,8 @@ export function AdminSettings() {
               <Input
                 id="linkedin"
                 type="url"
-                value={settings.socialMedia.linkedin || ''}
-                onChange={(e) => updateNestedField('socialMedia', 'linkedin', e.target.value)}
+                value={safeSettings.social_media.linkedin || ''}
+                onChange={(e) => updateNestedField('social_media', 'linkedin', e.target.value)}
                 placeholder="https://linkedin.com/..."
                 className="mt-1"
               />
@@ -245,13 +267,13 @@ export function AdminSettings() {
               <Input
                 id="seoTitle"
                 type="text"
-                value={settings.seo.defaultTitle}
-                onChange={(e) => updateNestedField('seo', 'defaultTitle', e.target.value)}
+                value={safeSettings.seo.default_title || ""}
+                onChange={(e) => updateNestedField('seo', 'default_title', e.target.value)}
                 className="mt-1"
                 maxLength={60}
               />
               <p className="text-xs text-[#629960] mt-1">
-                {settings.seo.defaultTitle.length}/60 caracteres (recomendado: 50-60)
+                {safeSettings.seo.default_title?.length || 0}/60 caracteres (recomendado: 50-60)
               </p>
             </div>
 
@@ -261,14 +283,14 @@ export function AdminSettings() {
               </Label>
               <textarea
                 id="seoDescription"
-                value={settings.seo.defaultDescription}
-                onChange={(e) => updateNestedField('seo', 'defaultDescription', e.target.value)}
+                value={safeSettings.seo.default_description || ""}
+                onChange={(e) => updateNestedField('seo', 'default_description', e.target.value)}
                 className="w-full mt-1 px-3 py-2 border rounded-lg"
                 rows={3}
                 maxLength={160}
               />
               <p className="text-xs text-[#629960] mt-1">
-                {settings.seo.defaultDescription.length}/160 caracteres (recomendado: 150-160)
+                {safeSettings.seo.default_description?.length || 0}/160 caracteres (recomendado: 150-160)
               </p>
             </div>
 
@@ -279,8 +301,8 @@ export function AdminSettings() {
               <Input
                 id="seoKeywords"
                 type="text"
-                value={settings.seo.defaultKeywords}
-                onChange={(e) => updateNestedField('seo', 'defaultKeywords', e.target.value)}
+                value={safeSettings.seo.default_keywords || ""}
+                onChange={(e) => updateNestedField('seo', 'default_keywords', e.target.value)}
                 className="mt-1"
                 placeholder="palabra1, palabra2, palabra3"
               />

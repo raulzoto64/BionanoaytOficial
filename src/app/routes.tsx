@@ -20,6 +20,7 @@ import { AdminTranslations } from "./pages/admin/AdminTranslations";
 import { AdminSettings } from "./pages/admin/AdminSettings";
 import { AdminBlogPosts } from "./pages/admin/AdminBlogPosts";
 import { AdminBlogCategories } from "./pages/admin/AdminBlogCategories";
+import { AdminUsers } from "./pages/admin/AdminUsers";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
 // Wrapper component for Login to include LanguageProvider
@@ -117,6 +118,10 @@ export const router = createBrowserRouter([
       {
         path: "blog/categories",
         element: <AdminBlogCategories />,
+      },
+      {
+        path: "users",
+        element: <AdminUsers />,
       },
     ],
   },

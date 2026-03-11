@@ -82,7 +82,7 @@ export function Process() {
               <section key={section.id} className="py-20 bg-white">
                 <div className="max-w-6xl mx-auto px-6">
                   <div className="space-y-16">
-                    {section.content.items.map((step, index) => {
+                    {section.content.items.map((step: any, index: number) => {
                       const Icon = getIconComponent(step.icon);
                       const isEven = index % 2 === 0;
                       
@@ -105,7 +105,7 @@ export function Process() {
                               {step.description}
                             </p>
                             <ul className="grid grid-cols-2 gap-3">
-                              {step.details.map((detail, idx) => (
+                              {step.details.map((detail: string, idx: number) => (
                                 <li key={idx} className="flex items-start gap-2 text-[#629960]">
                                   <span className="text-[#19FF00] mt-1">✓</span>
                                   <span>{detail}</span>
@@ -140,7 +140,7 @@ export function Process() {
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-                    {section.content.milestones.map((item, index) => (
+                    {section.content.milestones.map((item: any, index: number) => (
                       <div key={index} className="flex items-center gap-4">
                         <div className="text-center bg-white p-6 rounded-xl shadow-lg border-2 border-[#19FF00]">
                           <div className="text-2xl text-[#1C5D15] mb-2">{item.phase}</div>

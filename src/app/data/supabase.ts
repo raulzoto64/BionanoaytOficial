@@ -12,7 +12,7 @@ export interface User {
   email: string;
   password: string;
   name: string;
-  role: "admin" | "customer";
+  role: 'admin' | 'editor' | 'manager' | 'viewer' | 'customer';
   created_at: string;
   updated_at: string;
 }
@@ -217,6 +217,30 @@ export const supabaseAPI = {
     return users;
   },
 
+  updateUser: async (id: string, data: Partial<User>): Promise<User> => {
+    console.log('Update user data:', id, data);
+    const { data: user, error } = await supabase
+      .from("users")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Update user error:', error);
+      throw new Error(error.message);
+    }
+    
+    console.log('Updated user:', user);
+    return user;
+  },
+
+  deleteUser: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("users").delete().eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
   // ==========================================
   // CATEGORÍAS
   // ==========================================
@@ -375,8 +399,56 @@ export const supabaseAPI = {
       .select("*")
       .single();
 
-    if (error) throw new Error(error.message);
-    return settings;
+    if (error) {
+      console.warn("Error al cargar configuración, usando valores predeterminados");
+      // Devolver configuración predeterminada si no existe o hay error
+      return {
+        id: "1",
+        site_name: "BionanoAyt",
+        site_email: "contacto@bionanoayt.com",
+        site_phone: "+51 999 123 456",
+        site_address: "Av. El Sol 123, Lima, Perú",
+        social_media: {
+          facebook: "",
+          twitter: "",
+          instagram: "",
+          linkedin: "",
+        },
+        seo: {
+          default_title: "BionanoAyt - Soluciones Sostenibles",
+          default_description: "BionanoAyt ofrece soluciones sostenibles para el cuidado del medio ambiente y la salud humana.",
+          default_keywords: "bionanoayt, sostenibilidad, medio ambiente, salud",
+        },
+        colors: {
+          primary: "#1C5D15",
+          secondary: "#629960",
+          accent: "#19FF00",
+          background: "#F7F9CE",
+        },
+      };
+    }
+
+    // Asegurar que las propiedades anidadas existan
+    return {
+      ...settings,
+      social_media: settings.social_media || {
+        facebook: "",
+        twitter: "",
+        instagram: "",
+        linkedin: "",
+      },
+      seo: settings.seo || {
+        default_title: "BionanoAyt - Soluciones Sostenibles",
+        default_description: "BionanoAyt ofrece soluciones sostenibles para el cuidado del medio ambiente y la salud humana.",
+        default_keywords: "bionanoayt, sostenibilidad, medio ambiente, salud",
+      },
+      colors: settings.colors || {
+        primary: "#1C5D15",
+        secondary: "#629960",
+        accent: "#19FF00",
+        background: "#F7F9CE",
+      },
+    };
   },
 
   updateSiteSettings: async (

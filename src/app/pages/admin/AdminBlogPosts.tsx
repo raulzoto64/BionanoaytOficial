@@ -608,8 +608,8 @@ export function AdminBlogPosts() {
               <div>
                 <Label>Imagen de Portada</Label>
                 <ImageUpload
-                  currentImage={editingPost.cover_image}
-                  onImageUpload={(url) => setEditingPost({ ...editingPost, cover_image: url })}
+                  currentImage={editingPost.cover_image || ''}
+                  onImageUpload={(url) => setEditingPost({ ...editingPost, cover_image: typeof url === 'string' ? url || '' : url[0] || '' })}
                 />
               </div>
 

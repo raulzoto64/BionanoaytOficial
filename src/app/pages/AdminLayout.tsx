@@ -1,41 +1,60 @@
 import { Outlet } from 'react-router';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
-import { Bell, User } from 'lucide-react';
+import { Bell, User, LogOut } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { LanguageProvider } from '../contexts/LanguageContext';
+import { useAuth } from '../hooks/useAuth';
+import { ProtectedRoute } from '../components/ProtectedRoute';
 
 export function AdminLayout() {
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <LanguageProvider>
-      <div className="min-h-screen flex bg-[#F7F9CE]">
-        <AdminSidebar />
-        
-        <div className="flex-1 flex flex-col">
-          {/* Top Bar */}
-          <header className="bg-white border-b border-[#629960]/20 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl text-[#1C5D15]">Sistema de Administración</h1>
-              
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" className="relative">
-                  <Bell className="w-5 h-5 text-[#1C5D15]" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-[#19FF00] rounded-full"></span>
-                </Button>
+      <ProtectedRoute>
+        <div className="min-h-screen flex bg-[#F7F9CE]">
+          <AdminSidebar />
+          
+          <div className="flex-1 flex flex-col">
+            {/* Top Bar */}
+            <header className="bg-white border-b border-[#629960]/20 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl text-[#1C5D15]">Sistema de Administración</h1>
                 
-                <div className="flex items-center gap-2 px-3 py-2 bg-[#F7F9CE] rounded-lg">
-                  <User className="w-5 h-5 text-[#1C5D15]" />
-                  <span className="text-sm text-[#1C5D15]">Admin</span>
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="sm" className="relative">
+                    <Bell className="w-5 h-5 text-[#1C5D15]" />
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-[#19FF00] rounded-full"></span>
+                  </Button>
+                  
+                  <div className="flex items-center gap-2 px-3 py-2 bg-[#F7F9CE] rounded-lg">
+                    <User className="w-5 h-5 text-[#1C5D15]" />
+                    <span className="text-sm text-[#1C5D15]">{user?.name}</span>
+                  </div>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleLogout}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </Button>
                 </div>
               </div>
-            </div>
-          </header>
+            </header>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto p-6">
-            <Outlet />
-          </main>
+            {/* Main Content */}
+            <main className="flex-1 overflow-auto p-6">
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
+      </ProtectedRoute>
     </LanguageProvider>
   );
 }
