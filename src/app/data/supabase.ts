@@ -23,6 +23,7 @@ export interface Product {
   category: string;
   status: "active" | "inactive" | "draft";
   image: string;
+  images?: string[];
   featured: boolean;
   created_at: string;
   updated_at: string;

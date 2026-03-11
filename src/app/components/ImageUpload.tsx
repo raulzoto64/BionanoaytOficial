@@ -1,20 +1,24 @@
 import { useState, useId } from 'react';
 import { Button } from './ui/button';
-import { Upload } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 
 interface ImageUploadProps {
-  onImageUpload: (url: string) => void;
+  onImageUpload: (urls: string[]) => void;
+  currentImages?: string[];
   currentImage?: string;
   userId?: string;
-  type?: 'avatar' | 'banner';
+  type?: 'avatar' | 'banner' | 'product';
 }
 
 export function ImageUpload({ 
   onImageUpload, 
-  currentImage, 
+  currentImages = [], 
+  currentImage,
   userId = 'default', 
-  type = 'avatar' 
+  type = 'product' 
 }: ImageUploadProps) {
+  // Manejar compatibilidad con currentImage
+  const images = currentImage ? [currentImage] : currentImages;
   const [uploading, setUploading] = useState(false);
   const uniqueId = useId(); // Generar un id único para cada componente
 
@@ -27,49 +31,58 @@ export function ImageUpload({
     banner: {
       publicKey: "public_LMAf2QROhvzzt89GcZrQQLp1ydI=",
       privateKey: "private_KHCQyprWox4wBQO/T0lfRn2xMSE="
+    },
+    product: {
+      publicKey: "public_LMAf2QROhvzzt89GcZrQQLp1ydI=",
+      privateKey: "private_KHCQyprWox4wBQO/T0lfRn2xMSE="
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
     setUploading(true);
 
     try {
-      // Preparar datos para upload
-      const fileName = `${type}_user_${userId}_${Date.now()}.webp`;
-      const folder = type === 'avatar' ? "/perfiles/avatares" : "/perfiles/banners";
+      const uploadPromises = files.map(async (file) => {
+        // Preparar datos para upload
+        const fileName = `${type}_user_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.webp`;
+        const folder = type === 'avatar' ? "/perfiles/avatares" : type === 'banner' ? "/perfiles/banners" : "/productos/imagenes";
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileName', fileName);
-      formData.append('useUniqueFileName', 'false');
-      formData.append('overwriteFile', 'true');
-      formData.append('folder', folder);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', fileName);
+        formData.append('useUniqueFileName', 'false');
+        formData.append('overwriteFile', 'true');
+        formData.append('folder', folder);
 
-      // Obtener configuración de ImageKit
-      const config = DEFAULT_CONFIG[type];
+        // Obtener configuración de ImageKit
+        const config = DEFAULT_CONFIG[type];
 
-      // Subir a ImageKit
-      const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Basic ${btoa(`${config.privateKey}:`)}`
+        // Subir a ImageKit
+        const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Basic ${btoa(`${config.privateKey}:`)}`
+          }
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.url) {
+          // Agregar versión para evitar caché
+          return `${data.url}?v=${Date.now()}`;
+        } else {
+          console.error('Error ImageKit:', data.message);
+          throw new Error(`Error: ${data.message || 'No se pudo subir la imagen'}`);
         }
       });
 
-      const data = await response.json();
-      
-      if (response.ok && data.url) {
-        // Agregar versión para evitar caché
-        const imageUrl = `${data.url}?v=${Date.now()}`;
-        onImageUpload(imageUrl);
-      } else {
-        console.error('Error ImageKit:', data.message);
-        alert(`Error: ${data.message || 'No se pudo subir la imagen'}`);
-      }
+      const newImages = await Promise.all(uploadPromises);
+      const updatedImages = [...currentImages, ...newImages];
+      onImageUpload(updatedImages);
     } catch (error) {
       console.error('Error al subir:', error);
       alert('Error al conectar con el servidor de imágenes');
@@ -78,11 +91,26 @@ export function ImageUpload({
     }
   };
 
+  const handleRemoveImage = (index: number) => {
+    const updatedImages = currentImages.filter((_, i) => i !== index);
+    onImageUpload(updatedImages);
+  };
+
   return (
     <div className="space-y-4">
-      {currentImage && (
-        <div className="relative w-32 h-32">
-          <img src={currentImage} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+      {currentImages.length > 0 && (
+        <div className="grid grid-cols-4 gap-2">
+          {currentImages.map((image, index) => (
+            <div key={index} className="relative">
+              <img src={image} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+              <button
+                onClick={() => handleRemoveImage(index)}
+                className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-full hover:bg-red-600"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
       <div className="flex items-center gap-2">
@@ -91,7 +119,8 @@ export function ImageUpload({
           accept="image/*" 
           onChange={handleFileChange} 
           className="hidden" 
-          id={uniqueId} 
+          id={uniqueId}
+          multiple
         />
         <Button
           variant="outline"
@@ -99,7 +128,7 @@ export function ImageUpload({
           disabled={uploading}
         >
           <Upload className="w-4 h-4 mr-2" />
-          {uploading ? 'Subiendo...' : 'Seleccionar Imagen'}
+          {uploading ? 'Subiendo...' : 'Seleccionar Imágenes'}
         </Button>
       </div>
     </div>

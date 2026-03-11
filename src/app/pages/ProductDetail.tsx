@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Label } from '../components/ui/label';
 import {
   Select,
@@ -18,6 +17,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useDatabase } from '../hooks/useDatabase';
 import { supabaseAPI, Product, ProductTranslation, PriceByQuantity } from '../data/supabase';
 import { toast } from 'sonner';
+import { ProductTabs } from '../components/ProductTabs';
 
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -36,6 +36,7 @@ export function ProductDetail() {
     currency: string;
   } | null>(null);
   const [selectedPackagingType, setSelectedPackagingType] = useState<string>('');
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     if (slug) {
@@ -185,221 +186,217 @@ export function ProductDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-          {/* Imagen del producto */}
-          <div className="relative">
-            <div className="aspect-square bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-[#629960]/20">
-              <img
-                src={product.image || `https://images.unsplash.com/photo-1576834976341-53b1b975c6f9?w=800`}
-                alt={translation.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            {product.status === 'active' && (
-              <Badge className="absolute top-4 right-4 bg-[#19FF00] text-[#1C5D15] text-lg px-4 py-2">
-                {language === 'es' ? 'Disponible' : 'Available'}
-              </Badge>
-            )}
-          </div>
-
-          {/* Información y precios */}
-          <div>
+        <div className="mb-16">
+          {/* Título y subtítulo */}
+          <div className="mb-8">
             <h1 className="text-5xl mb-4 text-[#1C5D15]">{translation.name}</h1>
-            <p className="text-xl text-[#629960] mb-8">{translation.short_description}</p>
-
-            {/* Card de precios */}
-            <Card className="bg-white border-2 border-[#629960] p-6 mb-6">
-              <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('price.volume_pricing')}</h3>
-              
-              {/* Selector de tipo de embase */}
-              {availablePackagingTypes.length > 1 && (
-                <div className="mb-6">
-                  <Label>Tipo de Embase</Label>
-                  <Select value={selectedPackagingType} onValueChange={setSelectedPackagingType}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availablePackagingTypes.map((packagingType) => (
-                        <SelectItem key={packagingType} value={packagingType}>
-                          {packagingType}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <p className="text-xl text-[#629960]">{translation.short_description}</p>
+          </div>
+          
+          {/* Imagen y precios */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Galería de imágenes */}
+            <div className="flex gap-6">
+              {/* Miniaturas a la izquierda */}
+              {product.images && product.images.length > 1 && (
+                <div className="flex flex-col gap-4 w-20">
+                  {/* Imágenes visibles (5 para desktop, 4 para mobile) */}
+                  {product.images.slice(0, 5).map((image, index) => (
+                    <div
+                      key={index}
+                      className={`w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer ${
+                        index === selectedImageIndex ? 'border-[#1C5D15]' : 'border-gray-300 hover:border-[#629960]'
+                      } ${index >= 4 ? 'hidden sm:block' : ''}`}
+                      onClick={() => setSelectedImageIndex(index)}
+                    >
+                      <img
+                        src={image}
+                        alt={`${translation.name} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Indicador de más imágenes sobrepuesto */}
+                      {product.images && (
+                        ((index === 4 && product.images.length > 5) || 
+                         (index === 3 && product.images.length > 4 && index < 4)) && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold">
+                            +{product.images.length - (index + 1)}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
-
-              {/* Precios para el tipo de embase seleccionado */}
-              <div className="space-y-2 mb-6">
-                {filteredPrices.length === 0 ? (
-                  <div className="text-center py-12 text-[#629960]">
-                    <p>No hay precios configurados para este tipo de embase</p>
-                  </div>
-                ) : (
-                  filteredPrices.map((price) => (
-                    <div
-                      key={price.id}
-                      className={`flex justify-between items-center p-2 rounded-lg ${
-                        calculatedPrice?.pricePerUnit === price.price_per_unit
-                          ? 'bg-[#19FF00]/20 border-2 border-[#19FF00]'
-                          : 'bg-[#F7F9CE]/50'
-                      }`}
+              
+              {/* Imagen principal */}
+              <div className="relative flex-1">
+                <div className="aspect-square bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-[#629960]/20">
+                  <img
+                    src={product.images?.[selectedImageIndex] || product.image || `https://images.unsplash.com/photo-1576834976341-53b1b975c6f9?w=800`}
+                    alt={translation.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {product.status === 'active' && (
+                  <Badge className="absolute top-4 right-4 bg-[#19FF00] text-[#1C5D15] text-lg px-4 py-2">
+                    {language === 'es' ? 'Disponible' : 'Available'}
+                  </Badge>
+                )}
+                
+                {/* Botones de navegación */}
+                {product.images && product.images.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : product.images!.length - 1))}
+                      className="absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white text-[#1C5D15] rounded-full p-2 shadow-lg"
                     >
-                      <span className="text-[#1C5D15]">
-                        {price.min_quantity} - {price.max_quantity || '∞'} {t('price.unit')}
-                      </span>
-                      <span className="font-bold text-[#1C5D15]">
-                        {formatPrice(price.price_per_unit, price.currency)}/{t('price.unit')}
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedImageIndex((prev) => (prev < product.images!.length - 1 ? prev + 1 : 0))}
+                      className="absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white text-[#1C5D15] rounded-full p-2 shadow-lg"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+                
+                {/* Botón de lupa */}
+                <button className="absolute bottom-4 right-4 bg-white/80 hover:bg-white text-[#1C5D15] rounded-full p-2 shadow-lg">
+                  <Search className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Tablero de precios */}
+            <div>
+              {/* Card de precios */}
+              <Card className="bg-white border-2 border-[#629960] p-6">
+                <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('price.volume_pricing')}</h3>
+                
+                {/* Selector de tipo de embase */}
+                {availablePackagingTypes.length > 1 && (
+                  <div className="mb-6">
+                    <Label>Tipo de Embase</Label>
+                    <Select value={selectedPackagingType} onValueChange={setSelectedPackagingType}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availablePackagingTypes.map((packagingType) => (
+                          <SelectItem key={packagingType} value={packagingType}>
+                            {packagingType}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Precios para el tipo de embase seleccionado */}
+                <div className="space-y-2 mb-6">
+                  {filteredPrices.length === 0 ? (
+                    <div className="text-center py-12 text-[#629960]">
+                      <p>No hay precios configurados para este tipo de embase</p>
+                    </div>
+                  ) : (
+                    filteredPrices.map((price) => (
+                      <div
+                        key={price.id}
+                        className={`flex justify-between items-center p-2 rounded-lg ${
+                          calculatedPrice?.pricePerUnit === price.price_per_unit
+                            ? 'bg-[#19FF00]/20 border-2 border-[#19FF00]'
+                            : 'bg-[#F7F9CE]/50'
+                        }`}
+                      >
+                        <span className="text-[#1C5D15]">
+                          {price.min_quantity} - {price.max_quantity || '∞'} {t('price.unit')}
+                        </span>
+                        <span className="font-bold text-[#1C5D15]">
+                          {formatPrice(price.price_per_unit, price.currency)}/{t('price.unit')}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Selector de cantidad */}
+                <div className="mb-4">
+                  <label className="block text-sm mb-2 text-[#1C5D15]">
+                    {t('products.quantity')}
+                  </label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="border-[#629960] text-[#1C5D15] hover:bg-[#629960] hover:text-white"
+                    >
+                      -
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="text-center border-[#629960] text-[#1C5D15]"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="border-[#629960] text-[#1C5D15] hover:bg-[#629960] hover:text-white"
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Precio calculado */}
+                {calculatedPrice && (
+                  <div className="bg-[#1C5D15] text-white p-4 rounded-lg mb-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span>{t('products.price')} por unidad:</span>
+                      <span className="text-2xl font-bold text-[#19FF00]">
+                        {formatPrice(calculatedPrice.pricePerUnit, calculatedPrice.currency)}
                       </span>
                     </div>
-                  ))
+                    <div className="flex justify-between items-center">
+                      <span>Total ({quantity} {t('price.unit')}):</span>
+                      <span className="text-2xl font-bold text-[#19FF00]">
+                        {formatPrice(calculatedPrice.total, calculatedPrice.currency)}
+                      </span>
+                    </div>
+                  </div>
                 )}
-              </div>
 
-              {/* Selector de cantidad */}
-              <div className="mb-4">
-                <label className="block text-sm mb-2 text-[#1C5D15]">
-                  {t('products.quantity')}
-                </label>
-                <div className="flex gap-2">
+                {/* Botones de acción */}
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button
-                    variant="outline"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="border-[#629960] text-[#1C5D15] hover:bg-[#629960] hover:text-white"
+                    onClick={handleAddToCart}
+                    className="flex-1 bg-[#1C5D15] hover:bg-[#629960] text-white"
                   >
-                    -
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    {t('btn.add_to_cart')}
                   </Button>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="text-center border-[#629960] text-[#1C5D15]"
-                  />
                   <Button
+                    onClick={handleRequestQuote}
                     variant="outline"
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="border-[#629960] text-[#1C5D15] hover:bg-[#629960] hover:text-white"
+                    className="flex-1 border-[#1C5D15] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white"
                   >
-                    +
+                    <Package className="w-5 h-5 mr-2" />
+                    {t('btn.quote')}
                   </Button>
                 </div>
-              </div>
-
-              {/* Precio calculado */}
-              {calculatedPrice && (
-                <div className="bg-[#1C5D15] text-white p-4 rounded-lg mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span>{t('products.price')} por unidad:</span>
-                    <span className="text-2xl font-bold text-[#19FF00]">
-                      {formatPrice(calculatedPrice.pricePerUnit, calculatedPrice.currency)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Total ({quantity} {t('price.unit')}):</span>
-                    <span className="text-2xl font-bold text-[#19FF00]">
-                      {formatPrice(calculatedPrice.total, calculatedPrice.currency)}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Botones de acción */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  onClick={handleAddToCart}
-                  className="flex-1 bg-[#1C5D15] hover:bg-[#629960] text-white"
-                >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  {t('btn.add_to_cart')}
-                </Button>
-                <Button
-                  onClick={handleRequestQuote}
-                  variant="outline"
-                  className="flex-1 border-[#1C5D15] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white"
-                >
-                  <Package className="w-5 h-5 mr-2" />
-                  {t('btn.quote')}
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            </div>
           </div>
         </div>
 
         {/* Tabs de información */}
-        <Tabs defaultValue="description" className="mb-16">
-          <TabsList className="grid w-full grid-cols-4 bg-[#629960]/20">
-            <TabsTrigger value="description" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
-              {language === 'es' ? 'Descripción' : 'Description'}
-            </TabsTrigger>
-            <TabsTrigger value="features" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
-              {t('products.features')}
-            </TabsTrigger>
-            <TabsTrigger value="benefits" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
-              {t('products.benefits')}
-            </TabsTrigger>
-            <TabsTrigger value="specs" className="data-[state=active]:bg-[#1C5D15] data-[state=active]:text-white">
-              {t('products.specs')}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="description" className="mt-6">
-            <Card className="p-6 bg-white">
-              {/* Separar descripción en parrafos de 4 líneas */}
-              <div className="space-y-4">
-                {translation.description.split(/\n\n|(?<=\.{3})|(?<=\.)(?=\s[A-Z])/).map((paragraph, index) => {
-                  if (paragraph.trim()) {
-                    return <p key={index} className="text-lg leading-relaxed text-[#1C5D15]">{paragraph.trim()}</p>;
-                  }
-                  return null;
-                })}
-              </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="features" className="mt-6">
-            <Card className="p-6 bg-white">
-              <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('products.features')}</h3>
-              <ul className="space-y-3">
-                {translation.features.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-1" />
-                    <span className="text-[#1C5D15]">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="benefits" className="mt-6">
-            <Card className="p-6 bg-white">
-              <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('products.benefits')}</h3>
-              <ul className="space-y-3">
-                {translation.benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-1" />
-                    <span className="text-[#1C5D15]">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="specs" className="mt-6">
-            <Card className="p-6 bg-white">
-              <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('products.specs')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(translation.technical_specs).map(([key, value]) => (
-                  <div key={key} className="border-b border-[#629960]/20 pb-3">
-                    <dt className="font-bold text-[#629960] mb-1">{key}</dt>
-                    <dd className="text-[#1C5D15]">{value as string}</dd>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <ProductTabs
+          translation={translation}
+          language={language}
+          t={t}
+        />
 
         {/* Call to Action Final */}
         <Card className="bg-gradient-to-r from-[#1C5D15] to-[#629960] text-white p-8 text-center">
