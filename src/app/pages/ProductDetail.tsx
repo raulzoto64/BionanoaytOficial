@@ -37,6 +37,17 @@ export function ProductDetail() {
   } | null>(null);
   const [selectedPackagingType, setSelectedPackagingType] = useState<string>('');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 640);
+
+  // Manejar cambio de tamaño de ventana
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (slug) {
@@ -201,40 +212,62 @@ export function ProductDetail() {
               {product.images && product.images.length > 1 && (
                 <div className="flex flex-col gap-4 w-20">
                   {/* Imágenes visibles (5 para desktop, 4 para mobile) */}
-                  {product.images.slice(0, 5).map((image, index) => (
-                    <div
-                      key={index}
-                      className={`w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer ${
-                        index === selectedImageIndex ? 'border-[#1C5D15]' : 'border-gray-300 hover:border-[#629960]'
-                      } ${index >= 4 ? 'hidden sm:block' : ''}`}
-                      onClick={() => setSelectedImageIndex(index)}
-                    >
-                      <img
-                        src={image}
-                        alt={`${translation.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      {/* Indicador de más imágenes sobrepuesto */}
-                      {product.images && (
-                        ((index === 4 && product.images.length > 5) || 
-                         (index === 3 && product.images.length > 4 && index < 4)) && (
+                  {product.images.slice(0, 5).map((image, index) => {
+                    // Determinar si es la última miniatura visible
+                    const isLastVisibleThumbnail = (!isMobile && index === 4) || (isMobile && index === 3);
+                    // Determinar si hay más imágenes que las visibles
+                    const hasMoreImages = product.images.length > (!isMobile ? 5 : 4);
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer relative ${
+                          index === selectedImageIndex ? 'border-[#1C5D15]' : 'border-gray-300 hover:border-[#629960]'
+                        } ${index >= 4 ? 'hidden sm:block' : ''}`}
+                        onClick={() => setSelectedImageIndex(index)}
+                      >
+                        <img
+                          src={image}
+                          alt={`${translation.name} ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Indicador de más imágenes sobrepuesto */}
+                        {isLastVisibleThumbnail && hasMoreImages && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold">
-                            +{product.images.length - (index + 1)}
+                            +{product.images.length - (!isMobile ? 5 : 4)}
                           </div>
-                        )
-                      )}
-                    </div>
-                  ))}
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               
               {/* Imagen principal */}
               <div className="relative flex-1">
-                <div className="aspect-square bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-[#629960]/20">
+                <div 
+                  className="aspect-square bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-[#629960]/20 group"
+                  style={{ cursor: 'zoom-in' }}
+                >
                   <img
                     src={product.images?.[selectedImageIndex] || product.image || `https://images.unsplash.com/photo-1576834976341-53b1b975c6f9?w=800`}
                     alt={translation.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 ease-in-out"
+                    style={{ 
+                      transformOrigin: 'center center',
+                      transform: 'scale(1)' 
+                    }}
+                    onMouseMove={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = (e.clientX - rect.left) / rect.width;
+                      const y = (e.clientY - rect.top) / rect.height;
+                      e.currentTarget.style.transform = `scale(1.5)`;
+                      e.currentTarget.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.transformOrigin = 'center center';
+                    }}
                   />
                 </div>
                 {product.status === 'active' && (
@@ -261,10 +294,12 @@ export function ProductDetail() {
                   </>
                 )}
                 
-                {/* Botón de lupa */}
-                <button className="absolute bottom-4 right-4 bg-white/80 hover:bg-white text-[#1C5D15] rounded-full p-2 shadow-lg">
-                  <Search className="w-6 h-6" />
-                </button>
+                {/* Botón de lupa que aparece al pasar el mouse */}
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="bg-white/80 hover:bg-white text-[#1C5D15] rounded-full p-2 shadow-lg">
+                    <Search className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
             </div>
 
