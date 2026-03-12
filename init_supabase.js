@@ -440,11 +440,11 @@ async function initDatabase() {
               content: {
                 title: 'Ecosistema y Aliados',
                 allies: [
-                  { name: 'Capiro', sector: 'Agrícola', initials: 'CP' },
-                  { name: 'Coatings', sector: 'Recubrimientos', initials: 'CT' },
-                  { name: 'Cecoltec', sector: 'Tecnología', initials: 'CL' },
-                  { name: 'BioTech Solutions', sector: 'Biotecnología', initials: 'BTS' },
-                  { name: 'Green Industries', sector: 'Sostenibilidad', initials: 'GI' }
+                  { name: 'Capiro', sector: 'Agrícola', initials: 'CP', slug: 'capiro' },
+                  { name: 'Coatings', sector: 'Recubrimientos', initials: 'CT', slug: 'coatings' },
+                  { name: 'Cecoltec', sector: 'Tecnología', initials: 'CL', slug: 'cecoltec' },
+                  { name: 'BioTech Solutions', sector: 'Biotecnología', initials: 'BTS', slug: 'biotech-solutions' },
+                  { name: 'Green Industries', sector: 'Sostenibilidad', initials: 'GI', slug: 'green-industries' }
                 ]
               }
             },
@@ -634,11 +634,11 @@ async function initDatabase() {
               content: {
                 title: 'Ecosystem and Allies',
                 allies: [
-                  { name: 'Capiro', sector: 'Agriculture', initials: 'CP' },
-                  { name: 'Coatings', sector: 'Coatings', initials: 'CT' },
-                  { name: 'Cecoltec', sector: 'Technology', initials: 'CL' },
-                  { name: 'BioTech Solutions', sector: 'Biotechnology', initials: 'BTS' },
-                  { name: 'Green Industries', sector: 'Sustainability', initials: 'GI' }
+                  { name: 'Capiro', sector: 'Agriculture', initials: 'CP', slug: 'capiro' },
+                  { name: 'Coatings', sector: 'Coatings', initials: 'CT', slug: 'coatings' },
+                  { name: 'Cecoltec', sector: 'Technology', initials: 'CL', slug: 'cecoltec' },
+                  { name: 'BioTech Solutions', sector: 'Biotechnology', initials: 'BTS', slug: 'biotech-solutions' },
+                  { name: 'Green Industries', sector: 'Sustainability', initials: 'GI', slug: 'green-industries' }
                 ]
               }
             },

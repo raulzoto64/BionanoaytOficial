@@ -11,7 +11,8 @@ import {
   ChevronRight,
   BookOpen,
   FileEdit,
-  Users
+  Users,
+  UsersRound
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
@@ -30,6 +31,7 @@ export function AdminSidebar() {
     { path: '/admin/translations', icon: Languages, label: 'Traducciones' },
     { path: '/admin/blog/posts', icon: FileEdit, label: 'Artículos del Blog' },
     { path: '/admin/blog/categories', icon: BookOpen, label: 'Categorías del Blog' },
+    { path: '/admin/ecosystem', icon: UsersRound, label: 'Miembros del Ecosistema' },
     { path: '/admin/settings', icon: Settings, label: 'Configuración' },
   ];
 

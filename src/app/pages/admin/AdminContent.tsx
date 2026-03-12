@@ -221,17 +221,17 @@ export function AdminContent() {
       const contentEN = await supabaseAPI.getPageContent(editingPage.id, 'en');
 
       // Actualizar la sección específica en español
-      const updatedSectionsES = contentES.sections.map(sec => 
+      const updatedSectionsES = contentES?.sections?.map(sec => 
         sec.id === section.id ? sectionES : sec
-      );
+      ) || [sectionES];
       if (!updatedSectionsES.some(sec => sec.id === section.id)) {
         updatedSectionsES.push(sectionES);
       }
 
       // Actualizar la sección específica en inglés
-      const updatedSectionsEN = contentEN.sections.map(sec => 
+      const updatedSectionsEN = contentEN?.sections?.map(sec => 
         sec.id === section.id ? sectionEN : sec
-      );
+      ) || [sectionEN];
       if (!updatedSectionsEN.some(sec => sec.id === section.id)) {
         updatedSectionsEN.push(sectionEN);
       }
@@ -430,11 +430,9 @@ function SectionEditor({
     { value: 'features', label: 'Características' },
     { value: 'products', label: 'Productos' },
     { value: 'team', label: 'Equipo' },
-    { value: 'timeline', label: 'Línea de Tiempo' },
     { value: 'contact', label: 'Contacto' },
     { value: 'custom', label: 'Personalizado' },
     { value: 'trust', label: 'Confianza' },
-    { value: 'ecosystem', label: 'Ecosistema' },
     { value: 'featured', label: 'Destacado' },
   ];
 
@@ -552,7 +550,7 @@ function SectionEditor({
             {/* Campos comunes a múltiples secciones */}
             {(section.type === 'hero' || section.type === 'text' || section.type === 'features' || 
               section.type === 'team' || section.type === 'products' || section.type === 'featured' ||
-              section.type === 'trust' || section.type === 'ecosystem' || section.type === 'timeline') && (
+              section.type === 'trust') && (
               <>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -1242,340 +1240,6 @@ function SectionEditor({
                     ) : (
                       <div className="text-[#629960] text-sm">
                         No hay items de características definidos
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {section.type === 'ecosystem' && (
-                  <div>
-                    <Label className="text-[#1C5D15]">Ecosistema de Aliados</Label>
-                    {section.content.allies && section.content.allies.length > 0 ? (
-                      (section.content.allies as any[]).map((ally: any, idx: number) => (
-                        <div key={idx} className="border p-4 rounded-lg mb-4">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <Label className="text-[#1C5D15]">Nombre (Español)</Label>
-                              <Input
-                                type="text"
-                                value={ally.name || ''}
-                                onChange={(e) => {
-                                  const newAllies = [...section.content.allies];
-                                  newAllies[idx].name = e.target.value;
-                                  onUpdateContent('allies', newAllies);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[#1C5D15]">Nombre (English)</Label>
-                              <Input
-                                type="text"
-                                value={(section as any).contentEN?.allies?.[idx]?.name || ''}
-                                onChange={(e) => {
-                                  const currentContentEN = (section as any).contentEN || {};
-                                  const currentAlliesEN = currentContentEN.allies || [];
-                                  if (!currentAlliesEN[idx]) {
-                                    currentAlliesEN[idx] = {};
-                                  }
-                                  currentAlliesEN[idx].name = e.target.value;
-                                  (section as any).contentEN = {
-                                    ...currentContentEN,
-                                    allies: currentAlliesEN
-                                  };
-                                  onUpdate(section);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <Label className="text-[#1C5D15]">Sector (Español)</Label>
-                              <Input
-                                type="text"
-                                value={ally.sector || ''}
-                                onChange={(e) => {
-                                  const newAllies = [...section.content.allies];
-                                  newAllies[idx].sector = e.target.value;
-                                  onUpdateContent('allies', newAllies);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[#1C5D15]">Sector (English)</Label>
-                              <Input
-                                type="text"
-                                value={(section as any).contentEN?.allies?.[idx]?.sector || ''}
-                                onChange={(e) => {
-                                  const currentContentEN = (section as any).contentEN || {};
-                                  const currentAlliesEN = currentContentEN.allies || [];
-                                  if (!currentAlliesEN[idx]) {
-                                    currentAlliesEN[idx] = {};
-                                  }
-                                  currentAlliesEN[idx].sector = e.target.value;
-                                  (section as any).contentEN = {
-                                    ...currentContentEN,
-                                    allies: currentAlliesEN
-                                  };
-                                  onUpdate(section);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <Label className="text-[#1C5D15]">Iniciales</Label>
-                              <Input
-                                type="text"
-                                value={ally.initials || ''}
-                                onChange={(e) => {
-                                  const newAllies = [...section.content.allies];
-                                  newAllies[idx].initials = e.target.value;
-                                  onUpdateContent('allies', newAllies);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[#1C5D15]">Imagen</Label>
-                              <ImageUpload
-                                currentImage={ally.image}
-                                onImageUpload={(url) => {
-                                  const newAllies = [...section.content.allies];
-                                  newAllies[idx].image = url;
-                                  onUpdateContent('allies', newAllies);
-                                }}
-                                type="avatar"
-                                userId={`ally_${idx}_${ally.name || 'unknown'}`}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-[#629960] text-sm">
-                        No hay aliados definidos
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {section.type === 'timeline' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <Label className="text-[#1C5D15]">Momentos Clave</Label>
-                      <Button
-                        onClick={() => {
-                          const newMilestone = {
-                            year: '',
-                            icon: 'Lightbulb',
-                            title: '',
-                            description: '',
-                            step: '',
-                            desc: ''
-                          };
-                          
-                          // Actualizar la sección con el nuevo milestone en español e inglés
-                          const updatedSection = {
-                            ...section,
-                            content: {
-                              ...section.content,
-                              milestones: [...(section.content.milestones || []), newMilestone]
-                            },
-                            contentEN: {
-                              ...(section as any).contentEN || {},
-                              milestones: [...((section as any).contentEN?.milestones || []), newMilestone]
-                            }
-                          };
-                          
-                          onUpdate(updatedSection as any);
-                        }}
-                        className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/80"
-                        size="sm"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Agregar Momento
-                      </Button>
-                    </div>
-                    {section.content.milestones && section.content.milestones.length > 0 ? (
-                      (section.content.milestones as any[]).map((milestone: any, idx: number) => (
-                        <div key={idx} className="border p-4 rounded-lg mb-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <h6 className="text-sm font-semibold text-[#1C5D15]">Moment {idx + 1}</h6>
-                            <Button
-                              onClick={() => {
-                                // Eliminar el milestone en español
-                                const newMilestones = section.content.milestones.filter((_: any, i: number) => i !== idx);
-                                
-                                // Eliminar el milestone correspondiente en inglés
-                                const currentContentEN = (section as any).contentEN || {};
-                                const currentMilestonesEN = currentContentEN.milestones || [];
-                                const newMilestonesEN = currentMilestonesEN.filter((_: any, i: number) => i !== idx);
-                                
-                                // Actualizar la sección con ambos cambios
-                                const updatedSection = {
-                                  ...section,
-                                  content: {
-                                    ...section.content,
-                                    milestones: newMilestones
-                                  },
-                                  contentEN: {
-                                    ...currentContentEN,
-                                    milestones: newMilestonesEN
-                                  }
-                                };
-                                
-                                onUpdate(updatedSection as any);
-                              }}
-                              className="bg-red-500 text-white hover:bg-red-600"
-                              size="sm"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <Label className="text-[#1C5D15]">Año</Label>
-                              <Input
-                                type="text"
-                                value={milestone.year || ''}
-                                onChange={(e) => {
-                                  const newMilestones = [...section.content.milestones];
-                                  newMilestones[idx].year = e.target.value;
-                                  onUpdateContent('milestones', newMilestones);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[#1C5D15]">Ícono</Label>
-                              <select
-                                value={milestone.icon || 'Lightbulb'}
-                                onChange={(e) => {
-                                  const newMilestones = [...section.content.milestones];
-                                  newMilestones[idx].icon = e.target.value;
-                                  onUpdateContent('milestones', newMilestones);
-                                }}
-                                className="w-full mt-1 px-3 py-2 border rounded-lg"
-                              >
-                                <option value="Lightbulb">Idea / Innovación</option>
-                                <option value="FileCheck">Logro / Certificación</option>
-                                <option value="TrendingUp">Crecimiento / Expansión</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <Label className="text-[#1C5D15]">Título (Español)</Label>
-                              <Input
-                                type="text"
-                                value={milestone.title || ''}
-                                onChange={(e) => {
-                                  const newMilestones = [...section.content.milestones];
-                                  newMilestones[idx].title = e.target.value;
-                                  onUpdateContent('milestones', newMilestones);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[#1C5D15]">Título (English)</Label>
-                              <Input
-                                type="text"
-                                value={(section as any).contentEN?.milestones?.[idx]?.title || ''}
-                                onChange={(e) => {
-                                  const currentContentEN = (section as any).contentEN || {};
-                                  const currentMilestonesEN = currentContentEN.milestones || [];
-                                  if (!currentMilestonesEN[idx]) {
-                                    currentMilestonesEN[idx] = {};
-                                  }
-                                  currentMilestonesEN[idx].title = e.target.value;
-                                  (section as any).contentEN = {
-                                    ...currentContentEN,
-                                    milestones: currentMilestonesEN
-                                  };
-                                  onUpdate(section);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <Label className="text-[#1C5D15]">Descripción (Español)</Label>
-                              <textarea
-                                value={milestone.description || ''}
-                                onChange={(e) => {
-                                  const newMilestones = [...section.content.milestones];
-                                  newMilestones[idx].description = e.target.value;
-                                  onUpdateContent('milestones', newMilestones);
-                                }}
-                                className="w-full mt-1 px-3 py-2 border rounded-lg"
-                                rows={2}
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[#1C5D15]">Descripción (English)</Label>
-                              <textarea
-                                value={(section as any).contentEN?.milestones?.[idx]?.description || ''}
-                                onChange={(e) => {
-                                  const currentContentEN = (section as any).contentEN || {};
-                                  const currentMilestonesEN = currentContentEN.milestones || [];
-                                  if (!currentMilestonesEN[idx]) {
-                                    currentMilestonesEN[idx] = {};
-                                  }
-                                  currentMilestonesEN[idx].description = e.target.value;
-                                  (section as any).contentEN = {
-                                    ...currentContentEN,
-                                    milestones: currentMilestonesEN
-                                  };
-                                  onUpdate(section);
-                                }}
-                                className="w-full mt-1 px-3 py-2 border rounded-lg"
-                                rows={2}
-                              />
-                            </div>
-                          </div>
-                          {/* Campos para la timeline de Technology page (grilla) */}
-                          <div className="mt-4 pt-4 border-t">
-                            <h6 className="text-sm font-semibold text-[#1C5D15] mb-3">Para Timeline de Technology</h6>
-                            <div className="grid md:grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-[#1C5D15] text-sm">Paso</Label>
-                                <Input
-                                  type="text"
-                                  value={milestone.step || ''}
-                                  onChange={(e) => {
-                                    const newMilestones = [...section.content.milestones];
-                                    newMilestones[idx].step = e.target.value;
-                                    onUpdateContent('milestones', newMilestones);
-                                  }}
-                                  className="mt-1 text-sm"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-[#1C5D15] text-sm">Descripción Corta</Label>
-                                <Input
-                                  type="text"
-                                  value={milestone.desc || ''}
-                                  onChange={(e) => {
-                                    const newMilestones = [...section.content.milestones];
-                                    newMilestones[idx].desc = e.target.value;
-                                    onUpdateContent('milestones', newMilestones);
-                                  }}
-                                  className="mt-1 text-sm"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-[#629960] text-sm">
-                        No hay momentos clave definidos
                       </div>
                     )}
                   </div>

@@ -179,6 +179,30 @@ export interface Translation {
   en: string;
 }
 
+// ==========================================
+// ECOSYSTEM MEMBERS
+// ==========================================
+
+export interface EcosystemMember {
+  id: string;
+  slug: string;
+  status: "active" | "inactive" | "draft";
+  image: string;
+  sector: string;
+  social_media: Record<string, string>;
+  youtube_videos: string[];
+  short_videos: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EcosystemMemberTranslation {
+  member_id: string;
+  language: "es" | "en";
+  name: string;
+  description: string;
+}
+
 // API para interactuar con Supabase
 export const supabaseAPI = {
   // ==========================================
@@ -1099,8 +1123,216 @@ export const supabaseAPI = {
       }
       return null;
     }
+
+    // Si el idioma es inglés, usar las imágenes del contenido en español
+    if (language === "en") {
+      const { data: contentES, error: errorES } = await supabase
+        .from("page_contents")
+        .select("*")
+        .eq("page_id", pageId)
+        .eq("language", "es")
+        .single();
+
+      if (!errorES && contentES) {
+        // Sincronizar imágenes entre secciones
+        content.sections = content.sections.map((sectionEN: Section) => {
+          const sectionES = contentES.sections.find((sec: Section) => sec.id === sectionEN.id);
+          if (sectionES) {
+            // Copiar campos de imagen de la sección en español a la sección en inglés
+            const updatedSection = { ...sectionEN };
+            
+            // Campos de imagen comunes en diferentes tipos de secciones
+            if (sectionEN.content.backgroundImage) {
+              updatedSection.content.backgroundImage = sectionES.content.backgroundImage || sectionEN.content.backgroundImage;
+            }
+            if (sectionEN.content.productImage) {
+              updatedSection.content.productImage = sectionES.content.productImage || sectionEN.content.productImage;
+            }
+            if (sectionEN.content.members) {
+              updatedSection.content.members = sectionEN.content.members.map((memberEN: any, idx: number) => {
+                const memberES = sectionES.content.members?.[idx];
+                if (memberES && memberES.image) {
+                  return { ...memberEN, image: memberES.image };
+                }
+                return memberEN;
+              });
+            }
+            if (sectionEN.content.products) {
+              updatedSection.content.products = sectionEN.content.products.map((productEN: any, idx: number) => {
+                const productES = sectionES.content.products?.[idx];
+                if (productES && productES.image) {
+                  return { ...productEN, image: productES.image };
+                }
+                return productEN;
+              });
+            }
+            if (sectionEN.content.partners) {
+              updatedSection.content.partners = sectionEN.content.partners.map((partnerEN: any, idx: number) => {
+                const partnerES = sectionES.content.partners?.[idx];
+                if (partnerES && partnerES.image) {
+                  return { ...partnerEN, image: partnerES.image };
+                }
+                return partnerEN;
+              });
+            }
+            if (sectionEN.content.allies) {
+              updatedSection.content.allies = sectionEN.content.allies.map((allyEN: any, idx: number) => {
+                const allyES = sectionES.content.allies?.[idx];
+                if (allyES && allyES.image) {
+                  return { ...allyEN, image: allyES.image };
+                }
+                return allyEN;
+              });
+            }
+            if (sectionEN.content.items) {
+              updatedSection.content.items = sectionEN.content.items.map((itemEN: any, idx: number) => {
+                const itemES = sectionES.content.items?.[idx];
+                if (itemES && itemES.image) {
+                  return { ...itemEN, image: itemES.image };
+                }
+                return itemEN;
+              });
+            }
+            if (sectionEN.content.features) {
+              updatedSection.content.features = sectionEN.content.features.map((featureEN: any, idx: number) => {
+                const featureES = sectionES.content.features?.[idx];
+                if (featureES && featureES.image) {
+                  return { ...featureEN, image: featureES.image };
+                }
+                return featureEN;
+              });
+            }
+
+            return updatedSection;
+          }
+          return sectionEN;
+        });
+      }
+    }
     
     return content;
+  },
+
+  // ==========================================
+  // ECOSYSTEM MEMBERS
+  // ==========================================
+
+  getEcosystemMembers: async (): Promise<EcosystemMember[]> => {
+    const { data: members, error } = await supabase
+      .from("ecosystem_members")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return members || [];
+  },
+
+  getEcosystemMemberById: async (id: string): Promise<EcosystemMember | null> => {
+    const { data: member, error } = await supabase
+      .from("ecosystem_members")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return member || null;
+  },
+
+  getEcosystemMemberBySlug: async (slug: string): Promise<EcosystemMember | null> => {
+    const { data: member, error } = await supabase
+      .from("ecosystem_members")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return member || null;
+  },
+
+  getEcosystemMemberTranslation: async (
+    memberId: string,
+    language: "es" | "en",
+  ): Promise<EcosystemMemberTranslation> => {
+    const { data: translation, error } = await supabase
+      .from("ecosystem_member_translations")
+      .select("*")
+      .eq("member_id", memberId)
+      .eq("language", language)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116" || error.code === "406") {
+        return {
+          member_id: memberId,
+          language: language,
+          name: "",
+          description: "",
+        };
+      }
+      throw new Error(error.message);
+    }
+
+    return translation;
+  },
+
+  updateEcosystemMember: async (
+    id: string,
+    data: Partial<EcosystemMember>,
+  ): Promise<EcosystemMember> => {
+    const { data: member, error } = await supabase
+      .from("ecosystem_members")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return member;
+  },
+
+  updateEcosystemMemberTranslation: async (
+    memberId: string,
+    language: "es" | "en",
+    data: Partial<EcosystemMemberTranslation>,
+  ): Promise<EcosystemMemberTranslation> => {
+    const { data: translations, error } = await supabase
+      .from("ecosystem_member_translations")
+      .upsert(
+        {
+          member_id: memberId,
+          language: language,
+          ...data,
+        },
+        {
+          onConflict: "member_id,language",
+        },
+      )
+      .select();
+
+    if (error) throw new Error(error.message);
+    return translations[0];
+  },
+
+  createEcosystemMember: async (
+    data: Omit<EcosystemMember, "id" | "created_at" | "updated_at">,
+  ): Promise<EcosystemMember> => {
+    const { data: member, error } = await supabase
+      .from("ecosystem_members")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return member;
+  },
+
+  deleteEcosystemMember: async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from("ecosystem_members")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw new Error(error.message);
   },
 
 };

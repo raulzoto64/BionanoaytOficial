@@ -148,22 +148,35 @@ export function Home() {
             </div>
           </div>
         </div>
-
-        {/* Skeleton for Ecosystem */}
-        <div className="py-20 bg-[#629960]/10">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="h-12 bg-[#1C5D15]/20 rounded-lg w-1/3 mx-auto mb-12 animate-pulse"></div>
-            <div className="grid md:grid-cols-2 gap-8">
-              {[1, 2].map((i) => (
-                <div key={i} className="bg-white rounded-xl p-8 text-center shadow-lg border-2 border-[#629960]/20">
-                  <div className="w-32 h-32 rounded-full border-4 border-[#629960]/30 mx-auto mb-4 animate-pulse"></div>
-                  <div className="h-8 bg-[#1C5D15]/20 rounded-lg mb-2 animate-pulse"></div>
-                  <div className="h-6 bg-[#629960]/20 rounded-lg animate-pulse"></div>
-                </div>
-              ))}
-            </div>
+{/* Skeleton for Ecosystem */}
+<div className="py-20 bg-[#629960]/10">
+  <div className="max-w-6xl mx-auto px-6">
+    {/* Título del esqueleto principal */}
+    <div className="h-12 bg-[#1C5D15]/20 rounded-lg w-1/3 mx-auto mb-12 animate-pulse"></div>
+    
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Ajustado a 3 columnas para que coincida con tu imagen */}
+      {[1, 2, 3].map((i) => (
+        <div 
+          key={i} 
+          className="bg-white rounded-xl p-8 flex flex-col items-center shadow-lg border-2 border-[#629960]/20 min-h-[380px] justify-center"
+        >
+          {/* Círculo Interno: flex-shrink-0 evita que se aplaste */}
+          <div className="w-32 h-32 rounded-full border-4 border-[#629960]/30 mb-6 animate-pulse bg-[#629960]/10 flex-shrink-0"></div>
+          
+          {/* Contenedor de texto con altura fija para simular el espacio de 2 líneas */}
+          <div className="w-full flex flex-col items-center">
+            <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-full mb-3 animate-pulse"></div>
+            <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-2/3 mb-4 animate-pulse"></div> {/* Segunda línea de título */}
+            
+            {/* Subtítulo o categoría */}
+            <div className="h-5 bg-[#629960]/20 rounded-lg w-1/2 animate-pulse"></div>
           </div>
+          
         </div>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* Skeleton for Footer */}
         <div className="py-20 bg-[#1C5D15] text-white">
@@ -281,7 +294,7 @@ export function Home() {
             return (
               <div key={section.id} id="ecosystem">
                 <div id="allies">
-                  <Ecosystem allies={section.content.allies} />
+                  <Ecosystem />
                 </div>
               </div>
             );

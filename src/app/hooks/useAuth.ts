@@ -15,6 +15,19 @@ export const useAuth = () => {
         console.error('Error al parsear usuario:', error);
         localStorage.removeItem('user');
       }
+    } else {
+      // Usuario admin por defecto para pruebas
+      const defaultUser: User = {
+        id: 'user-001',
+        email: 'admin@atbionano.com',
+        password: 'admin123',
+        name: 'Administrador',
+        role: 'admin',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setUser(defaultUser);
+      localStorage.setItem('user', JSON.stringify(defaultUser));
     }
     setIsLoading(false);
   }, []);

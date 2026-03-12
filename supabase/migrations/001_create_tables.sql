@@ -303,6 +303,29 @@ INSERT INTO page_contents (page_id, language, sections) VALUES
     '[{"id": "sec-hero", "type": "hero", "order": 1, "visible": true, "content": {"title": "Innovation in Bionanotechnology", "subtitle": "We develop sustainable antimicrobial and fungicidal solutions", "ctaText": "Learn more", "ctaLink": "#purpose", "backgroundImage": "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1920"}}, {"id": "sec-purpose", "type": "features", "order": 3, "visible": true, "content": {"title": "Our Purpose", "items": [{"icon": "Users", "title": "Innovation", "description": "We develop cutting-edge technology"}, {"icon": "Target", "title": "Sustainability", "description": "Committed to the environment"}, {"icon": "Lightbulb", "title": "Excellence", "description": "Quality in every product"}]}}]'::jsonb
 );
 
+-- Tabla de Miembros del Ecosistema
+CREATE TABLE IF NOT EXISTS ecosystem_members (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('active', 'inactive', 'draft')),
+    image TEXT NOT NULL,
+    sector TEXT NOT NULL,
+    social_media JSONB NOT NULL DEFAULT '{}'::jsonb,
+    youtube_videos JSONB NOT NULL DEFAULT '[]'::jsonb,
+    short_videos JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de Traducciones de Miembros del Ecosistema
+CREATE TABLE IF NOT EXISTS ecosystem_member_translations (
+    member_id TEXT NOT NULL REFERENCES ecosystem_members(id) ON DELETE CASCADE,
+    language TEXT NOT NULL CHECK (language IN ('es', 'en')),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    PRIMARY KEY (member_id, language)
+);
+
 -- Insertar usuario administrador predeterminado
 INSERT INTO users (id, email, password, name, role) VALUES
 ('user-001', 'admin@atbionano.com', 'admin123', 'Administrador', 'admin');

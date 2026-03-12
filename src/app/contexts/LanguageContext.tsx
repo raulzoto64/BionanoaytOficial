@@ -168,7 +168,7 @@ const defaultTranslations: { [key in Language]: Translations } = {
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('es');
+  const [language, setLanguageState] = useState<Language>('es'); // Volver a idioma predeterminado español
   const [translations, setTranslations] = useState(defaultTranslations);
   const [isLoading, setIsLoading] = useState(true);
 

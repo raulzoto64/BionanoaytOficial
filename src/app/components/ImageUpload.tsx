@@ -107,16 +107,17 @@ export function ImageUpload({
 
   return (
     <div className="space-y-4">
-      {currentImages.length > 0 && (
+      {images.length > 0 && (
         <div className="grid grid-cols-4 gap-2">
-          {currentImages.map((image, index) => (
-            <div key={index} className="relative">
-              <img src={image} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+          {images.map((image, index) => (
+            <div key={index} className="relative aspect-square w-full">
+              <img src={image} alt={`Preview ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
               <button
                 onClick={() => handleRemoveImage(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-full hover:bg-red-600"
+                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md transition-colors"
+                title="Eliminar imagen"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           ))}
