@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useDatabase } from "../hooks/useDatabase";
-import { supabaseAPI, Product, ProductTranslation, Category, CategoryTranslation } from "../data/supabase";
+import { supabaseAPI, Product, ProductTranslation, Category, CategoryTranslation, PriceByQuantity } from "../data/supabase";
 
 interface ProductWithDetails {
   product: Product;
@@ -15,7 +15,7 @@ interface ProductWithDetails {
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex items-center gap-1 mb-2">
+    <div className="flex items-center gap-1 mb-3">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
@@ -31,11 +31,19 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function formatPrice(price: number, currency: string) {
+  if (currency === "COP") {
+    return `$${price.toLocaleString("es-CO")} COP`;
+  }
+  return `$${price.toLocaleString("en-US")} ${currency}`;
+}
+
 export function Store() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [products, setProducts] = useState<ProductWithDetails[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [productPrices, setProductPrices] = useState<Record<string, PriceByQuantity[]>>({});
   const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
   const { updateTrigger } = useDatabase();
@@ -93,6 +101,13 @@ export function Store() {
 
       console.log('Products with details:', productsWithDetails.length);
 
+      // Cargar precios para cada producto
+      const pricesData: Record<string, PriceByQuantity[]> = {};
+      for (const item of productsWithDetails) {
+        const prices = await supabaseAPI.getPricesByProduct(item.product.id);
+        pricesData[item.product.id] = prices;
+      }
+
       // Combinar categorías con traducciones
       const categoriesWithTranslations = await Promise.all(
         categoriesData.map(async (cat: Category) => {
@@ -109,6 +124,7 @@ export function Store() {
         { id: "all", name: language === 'es' ? "Todos los productos" : "All products" },
         ...categoriesWithTranslations,
       ]);
+      setProductPrices(pricesData);
       
       console.log('Data loading completed');
     } catch (error) {
@@ -190,38 +206,59 @@ export function Store() {
 
         {/* Products Grid */}
         <div className="grid md:grid-cols-3 gap-8">
-          {filteredProducts.map((item) => (
-            <div
-              key={item.product.id}
-              className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-[#19FF00] cursor-pointer"
-              onClick={() => handleProductClick(item.product.slug)}
-            >
-              <div className="h-64 overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960]">
-                <img
-                  src={item.product.image}
-                  alt={item.translation.name}
-                  className="w-full h-full object-cover opacity-80"
-                />
-              </div>
-              <div className="p-6">
-                <StarRating rating={5} />
-                <h3 className="text-xl mb-2 text-[#1C5D15] line-clamp-2">
-                  {item.translation.name}
-                </h3>
-                <p className="text-sm text-[#629960] mb-4 line-clamp-2">
-                  {item.translation.short_description}
-                </p>
-                <div className="mb-4">
-                  <span className="text-sm text-[#629960]">
-                    {item.category?.name || ''}
-                  </span>
+          {filteredProducts.map((item) => {
+            const prices = productPrices[item.product.id] || [];
+            const cheapestPrice = prices.length > 0 
+              ? Math.min(...prices.map(price => price.price_per_unit)) 
+              : null;
+            
+            return (
+              <div
+                key={item.product.id}
+                className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-[#19FF00] cursor-pointer"
+                onClick={() => handleProductClick(item.product.slug)}
+              >
+                <div className="h-64 overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960]">
+                  <img
+                    src={item.product.image}
+                    alt={item.translation.name}
+                    className="w-full h-full object-cover opacity-80"
+                  />
                 </div>
-                <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]">
-                  {language === 'es' ? 'Ver detalles' : 'View details'}
-                </Button>
+                <div className="p-6">
+                  <StarRating rating={5} />
+                  <h3 className="text-xl mb-2 text-[#1C5D15] line-clamp-2">
+                    {item.translation.name}
+                  </h3>
+                  <p className="text-sm text-[#629960] mb-4 line-clamp-3">
+                    {item.translation.short_description || item.translation.description}
+                  </p>
+                  
+                  {/* Price */}
+                  {cheapestPrice && (
+                    <div className="mb-4">
+                      <div className="text-lg font-bold text-[#1C5D15]">
+                        {formatPrice(cheapestPrice, prices[0]?.currency || 'COP')}
+                      </div>
+                      <div className="text-sm text-[#629960]">
+                        {language === 'es' ? 'por unidad' : 'per unit'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <span className="text-sm text-[#629960]">
+                      {item.category?.name || ''}
+                    </span>
+                  </div>
+                  
+                  <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]">
+                    {language === 'es' ? 'Ver detalles' : 'View details'}
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {filteredProducts.length === 0 && (

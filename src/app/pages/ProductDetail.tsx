@@ -18,12 +18,14 @@ import { useDatabase } from '../hooks/useDatabase';
 import { supabaseAPI, Product, ProductTranslation, PriceByQuantity } from '../data/supabase';
 import { toast } from 'sonner';
 import { ProductTabs } from '../components/ProductTabs';
+import { useAuth } from '../hooks/useAuth';
 
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const { updateTrigger } = useDatabase();
+  const { user, isAuthenticated } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [translation, setTranslation] = useState<ProductTranslation | null>(null);
@@ -113,11 +115,23 @@ export function ProductDetail() {
     setCalculatedPrice(pricing);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product || !translation || !calculatedPrice) return;
 
-    // Aquí conectarás con tu sistema de carrito
-    toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
+    try {
+      // Verificar que el usuario esté autenticado
+      if (!isAuthenticated || !user) {
+        toast.error('Debes iniciar sesión para agregar productos al carrito');
+        navigate('/login');
+        return;
+      }
+      
+      await supabaseAPI.addToCart(user.id, product.id, quantity);
+      toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      toast.error('Error al agregar el producto al carrito');
+    }
   };
 
   const handleRequestQuote = () => {

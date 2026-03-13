@@ -181,6 +181,31 @@ export interface Translation {
 }
 
 // ==========================================
+// CART ITEMS
+// ==========================================
+
+export interface CartItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Interfaz para el resultado de getCartItems con datos de producto
+export interface CartItemWithProduct {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  product: Product;
+  translation: ProductTranslation;
+}
+
+// ==========================================
 // ECOSYSTEM MEMBERS
 // ==========================================
 
@@ -1345,6 +1370,102 @@ export const supabaseAPI = {
       .from("ecosystem_members")
       .delete()
       .eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // CART OPERATIONS
+  // ==========================================
+
+  // Agregar o actualizar un item en el carrito
+  addToCart: async (userId: string, productId: string, quantity: number = 1): Promise<CartItem> => {
+    // Verificar si el item ya existe en el carrito
+    const { data: existingItem, error: fetchError } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("product_id", productId)
+      .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+      throw new Error(fetchError.message);
+    }
+
+    if (existingItem) {
+      // Actualizar cantidad si el item ya existe
+      const newQuantity = existingItem.quantity + quantity;
+      const { data: updatedItem, error: updateError } = await supabase
+        .from("cart_items")
+        .update({ quantity: newQuantity })
+        .eq("id", existingItem.id)
+        .select()
+        .single();
+
+      if (updateError) throw new Error(updateError.message);
+      return updatedItem;
+    } else {
+      // Agregar nuevo item al carrito
+      const { data: newItem, error: insertError } = await supabase
+        .from("cart_items")
+        .insert([{ user_id: userId, product_id: productId, quantity }])
+        .select()
+        .single();
+
+      if (insertError) throw new Error(insertError.message);
+      return newItem;
+    }
+  },
+
+  // Obtener todos los items del carrito de un usuario
+  getCartItems: async (userId: string): Promise<CartItemWithProduct[]> => {
+    const { data: cartItems, error: cartError } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq("user_id", userId);
+
+    if (cartError) throw new Error(cartError.message);
+
+    // Obtener datos de productos y traducciones para cada item del carrito
+    const cartItemsWithProducts = await Promise.all(
+      (cartItems || []).map(async (item) => {
+        const product = await supabaseAPI.getProductById(item.product_id);
+        const translation = await supabaseAPI.getProductTranslation(item.product_id, "es"); // Default to Spanish
+
+        return {
+          ...item,
+          product: product!,
+          translation: translation,
+        };
+      })
+    );
+
+    return cartItemsWithProducts.filter(item => item.product !== null);
+  },
+
+  // Actualizar cantidad de un item en el carrito
+  updateCartItemQuantity: async (itemId: string, quantity: number): Promise<CartItem> => {
+    const { data: updatedItem, error } = await supabase
+      .from("cart_items")
+      .update({ quantity })
+      .eq("id", itemId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return updatedItem;
+  },
+
+  // Eliminar un item del carrito
+  removeFromCart: async (itemId: string): Promise<void> => {
+    const { error } = await supabase.from("cart_items").delete().eq("id", itemId);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // Vaciar el carrito de un usuario
+  clearCart: async (userId: string): Promise<void> => {
+    const { error } = await supabase.from("cart_items").delete().eq("user_id", userId);
 
     if (error) throw new Error(error.message);
   },
