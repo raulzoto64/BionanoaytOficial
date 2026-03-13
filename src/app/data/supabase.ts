@@ -137,6 +137,7 @@ export interface BlogPost {
   views: number;
   created_at: string;
   updated_at: string;
+  type: "article" | "news";
 }
 
 export interface BlogPostTranslation {
@@ -792,11 +793,15 @@ export const supabaseAPI = {
   // BLOG - ARTÍCULOS
   // ==========================================
 
-  getBlogPosts: async (status?: "draft" | "published"): Promise<BlogPost[]> => {
+  getBlogPosts: async (status?: "draft" | "published", type?: "article" | "news"): Promise<BlogPost[]> => {
     let query = supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
     
     if (status) {
       query = query.eq("status", status);
+    }
+    
+    if (type) {
+      query = query.eq("type", type);
     }
     
     const { data: posts, error } = await query;

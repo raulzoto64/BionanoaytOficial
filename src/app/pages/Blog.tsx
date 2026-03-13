@@ -1,7 +1,10 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { supabaseAPI, BlogPost, BlogPostTranslation, BlogCategory } from '../data/supabase';
+import { supabaseAPI, BlogPostTranslation, BlogCategory } from '../data/supabase';
 import { Link } from 'react-router';
+import { ContentCard } from '../components/ContentCard';
 
 interface PostWithTranslation {
   id: string;
@@ -16,67 +19,80 @@ interface PostWithTranslation {
   translation: BlogPostTranslation;
   category_id?: string;
   category_name?: string;
+  type: 'article' | 'news';
 }
 
 export function Blog() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const [posts, setPosts] = useState<PostWithTranslation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<BlogCategory[]>([]);
-  const [categoriesNames, setCategoriesNames] = useState<Record<string, string>>({});
+
+  // Función para truncar texto a un número máximo de líneas y agregar puntos suspensivos
+  const truncateText = (text: string, maxLines: number = 4, charsPerLine: number = 40) => {
+    if (!text) return '';
+    
+    const maxChars = maxLines * charsPerLine;
+    
+    if (text.length <= maxChars) {
+      return text;
+    }
+    
+    // Truncar el texto a maxChars caracteres y agregar puntos suspensivos
+    return text.slice(0, maxChars) + '...';
+  };
 
   useEffect(() => {
-    const loadPosts = async () => {
+    const loadData = async () => {
+      setLoading(true);
       try {
-        // Get all published blog posts
-        const allPosts = await supabaseAPI.getBlogPosts('published');
-        
-        // Get categories for display
-        const allCategories = await supabaseAPI.getBlogCategories('active');
-        setCategories(allCategories);
+        const [allPosts, allCategories] = await Promise.all([
+          supabaseAPI.getBlogPosts('published'),
+          supabaseAPI.getBlogCategories('active')
+        ]);
 
-        // Get category names in current language
-        const categoryNames: Record<string, string> = {};
-        for (const category of allCategories) {
-          const translation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
-          categoryNames[category.id] = translation.name || category.slug;
-        }
-        setCategoriesNames(categoryNames);
+        const categoryNamesMap: Record<string, string> = {};
+        await Promise.all(allCategories.map(async (cat) => {
+          const trans = await supabaseAPI.getBlogCategoryTranslation(cat.id, language);
+          categoryNamesMap[cat.id] = trans.name || cat.slug;
+        }));
 
-        // Get translations and categories for each post
-        const postsWithTranslations = [];
-        for (const post of allPosts) {
-          const translation = await supabaseAPI.getBlogPostTranslation(post.id, language);
-          
-          // Get category for this post
-          const relations = await supabaseAPI.getBlogPostCategories(post.id);
+        const postsWithTranslations = await Promise.all(allPosts.map(async (post) => {
+          const [translation, relations] = await Promise.all([
+            supabaseAPI.getBlogPostTranslation(post.id, language),
+            supabaseAPI.getBlogPostCategories(post.id)
+          ]);
+
           const category_id = relations.length > 0 ? relations[0].category_id : undefined;
-          
-          postsWithTranslations.push({
+
+          return {
             ...post,
             translation,
             category_id,
-            category_name: category_id ? categoryNames[category_id] || 'Sin categoría' : 'Sin categoría'
-          });
-        }
+            category_name: category_id 
+              ? categoryNamesMap[category_id] || (language === 'es' ? 'General' : 'General') 
+              : (language === 'es' ? 'Sin categoría' : 'Uncategorized')
+          };
+        }));
 
         setPosts(postsWithTranslations);
       } catch (error) {
-        console.error('Error loading blog posts:', error);
+        console.error('Error loading blog content:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadPosts();
+    loadData();
   }, [language]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1C5D15]"></div>
-          <p className="mt-4 text-[#629960]">{language === 'es' ? 'Cargando artículos...' : 'Loading articles...'}</p>
+      <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-20 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#1C5D15]"></div>
+          <p className="mt-4 text-[#629960] font-medium">
+            {language === 'es' ? 'Cargando historias...' : 'Loading stories...'}
+          </p>
         </div>
       </div>
     );
@@ -84,103 +100,51 @@ export function Blog() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Hero Section */}
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Header Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">
-            {language === 'es' ? 'Blog' : 'Blog'}
+          <div className="inline-block px-4 py-1.5 bg-[#19FF00]/20 text-[#1C5D15] rounded-full mb-4 font-bold text-sm tracking-widest uppercase">
+            Blog
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-6 tracking-tight">
+            {language === 'es' ? 'Actualidad y Ciencia' : 'News & Science'}
           </h1>
-          <p className="text-xl text-[#629960] max-w-3xl mx-auto">
+          <p className="text-lg text-[#629960] max-w-2xl mx-auto leading-relaxed">
             {language === 'es' 
-              ? 'Artículos sobre bioseguridad, nanotecnología y prácticas sostenibles' 
-              : 'Articles about biosecurity, nanotechnology, and sustainable practices'
+              ? 'Explora las últimas innovaciones en bioseguridad, nanotecnología y desarrollo sostenible.' 
+              : 'Explore the latest innovations in biosecurity, nanotechnology, and sustainable development.'
             }
           </p>
         </div>
 
-        {/* Blog Posts Grid */}
+        {/* Grid de cartas */}
         {posts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
             {posts.map((post) => (
-              <div key={post.id} className="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
-                {post.cover_image ? (
-                  <div className="h-48 overflow-hidden">
-                    <img 
-                      src={post.cover_image} 
-                      alt={post.translation.title} 
-                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    />
-                  </div>
-                ) : (
-                  <div className="h-48 bg-gradient-to-r from-[#1C5D15] to-[#629960] flex items-center justify-center">
-                    <span className="text-white font-medium">
-                      {language === 'es' ? 'Imagen del artículo' : 'Article Image'}
-                    </span>
-                  </div>
-                )}
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-3 py-1 bg-[#19FF00]/20 text-[#1C5D15] text-sm font-medium rounded-full">
-                      {post.category_name}
-                    </span>
-                    <span className="text-sm text-[#629960]">
-                      {new Date(post.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-[#1C5D15] mb-3">
-                    {post.translation.title}
-                  </h3>
-                  <p className="text-[#629960] mb-4 line-clamp-3">
-                    {post.translation.excerpt}
-                  </p>
-                  <Link 
-                    to={`/blog/${post.slug}`}
-                    className="text-[#1C5D15] font-medium flex items-center gap-2 hover:text-[#19FF00] transition-colors"
-                  >
-                    {language === 'es' ? 'Leer más' : 'Read more'}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </div>
-              </div>
+              <ContentCard 
+                key={post.id} 
+                type="blog" 
+                data={post} 
+              />
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <h3 className="text-2xl font-bold text-[#1C5D15] mb-2">
-              {language === 'es' ? 'No hay artículos disponibles' : 'No articles available'}
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-[#629960]/30">
+            <h3 className="text-xl font-bold text-[#1C5D15] mb-2">
+              {language === 'es' ? 'Próximamente' : 'Coming Soon'}
             </h3>
             <p className="text-[#629960]">
-              {language === 'es' ? 'Próximamente publicaremos nuevos contenidos' : 'We will publish new content soon'}
+              {language === 'es' ? 'Estamos preparando nuevos artículos para ti.' : 'We are preparing new articles for you.'}
             </p>
           </div>
         )}
 
-        {/* Pagination */}
-        {posts.length > 0 && (
-          <div className="flex justify-center mt-16">
-            <div className="flex items-center gap-2">
-              <button className="px-4 py-2 bg-white border border-[#629960] text-[#1C5D15] rounded-lg hover:bg-[#19FF00]/10 transition-colors">
-                {language === 'es' ? 'Anterior' : 'Previous'}
-              </button>
-              <button className="px-4 py-2 bg-[#1C5D15] text-white rounded-lg">
-                1
-              </button>
-              <button className="px-4 py-2 bg-white border border-[#629960] text-[#1C5D15] rounded-lg hover:bg-[#19FF00]/10 transition-colors">
-                2
-              </button>
-              <button className="px-4 py-2 bg-white border border-[#629960] text-[#1C5D15] rounded-lg hover:bg-[#19FF00]/10 transition-colors">
-                3
-              </button>
-              <button className="px-4 py-2 bg-white border border-[#629960] text-[#1C5D15] rounded-lg hover:bg-[#19FF00]/10 transition-colors">
-                {language === 'es' ? 'Siguiente' : 'Next'}
-              </button>
-            </div>
+        {/* Paginación */}
+        {posts.length > 8 && (
+          <div className="flex justify-center mt-12 gap-2">
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-[#629960]/20 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all">1</button>
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-[#629960]/20 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all">2</button>
           </div>
         )}
       </div>

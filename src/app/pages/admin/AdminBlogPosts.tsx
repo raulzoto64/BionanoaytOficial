@@ -141,6 +141,7 @@ export function AdminBlogPosts() {
       views: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      type: 'article',
     };
     
     const newTranslation: BlogPostTranslation = {
@@ -392,6 +393,7 @@ export function AdminBlogPosts() {
         cover_image: editingPost.cover_image,
         status: editingPost.status,
         featured: editingPost.featured || false,
+        type: editingPost.type,
       };
 
       if (!postId) {
@@ -692,6 +694,24 @@ export function AdminBlogPosts() {
                   <SelectContent>
                     <SelectItem value="draft">Borrador</SelectItem>
                     <SelectItem value="published">Publicado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Tipo</Label>
+                <Select
+                  value={editingPost.type}
+                  onValueChange={(val: 'article' | 'news') =>
+                    setEditingPost({ ...editingPost, type: val })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="article">Artículo</SelectItem>
+                    <SelectItem value="news">Noticia</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

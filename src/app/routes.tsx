@@ -23,6 +23,7 @@ import { AdminBlogCategories } from "./pages/admin/AdminBlogCategories";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminEcosystem } from "./pages/admin/AdminEcosystem";
 import { EcosystemMemberDetail } from "./pages/EcosystemMemberDetail";
+import { EcosystemPage } from "./pages/Ecosystem";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
 // Wrapper component for Login to include LanguageProvider
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
       {
         path: "cart",
         element: <Cart />,
+      },
+      {
+        path: "ecosystem",
+        element: <EcosystemPage />,
       },
       {
         path: "ecosystem/:slug",

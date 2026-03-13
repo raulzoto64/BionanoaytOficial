@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { PageContent, Section, supabaseAPI, Product, ProductTranslation } from "../data/supabase";
+import {
+  PageContent,
+  Section,
+  supabaseAPI,
+  Product,
+  ProductTranslation,
+} from "../data/supabase";
 import { Hero } from "../components/Hero";
 import { TrustBar } from "../components/TrustBar";
 import { Purpose } from "../components/Purpose";
@@ -8,13 +14,16 @@ import { Products } from "../components/Products";
 import { Timeline } from "../components/Timeline";
 import { Leadership } from "../components/Leadership";
 import { Ecosystem } from "../components/Ecosystem";
+import { NewsSection } from "../components/NewsSection";
 import { Footer } from "../components/Footer";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 
 export function Home() {
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
-  const [featuredProducts, setFeaturedProducts] = useState<(Product & { translation: ProductTranslation })[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<
+    (Product & { translation: ProductTranslation })[]
+  >([]);
   const { language } = useLanguage();
 
   useEffect(() => {
@@ -24,38 +33,44 @@ export function Home() {
 
   const loadPageContent = async () => {
     try {
-      console.log('Loading page content for language:', language);
-      const content = await supabaseAPI.getPageContent('page-home', language);
-      console.log('Page content received:', content);
+      console.log("Loading page content for language:", language);
+      const content = await supabaseAPI.getPageContent("page-home", language);
+      console.log("Page content received:", content);
       setPageContent(content);
     } catch (error) {
-      console.error('Error al cargar contenido de página:', error);
+      console.error("Error al cargar contenido de página:", error);
     }
   };
 
   const loadFeaturedProducts = async () => {
     try {
-      console.log('Loading featured products...');
+      console.log("Loading featured products...");
       const products = await supabaseAPI.getFeaturedProducts();
-      console.log('Featured products from DB:', products);
-      
+      console.log("Featured products from DB:", products);
+
       // Get translations for each featured product and category
       const productsWithTranslations = await Promise.all(
         products.map(async (product) => {
-          const translation = await supabaseAPI.getProductTranslation(product.id, language);
-          const categoryTranslation = await supabaseAPI.getCategoryTranslation(product.category, language);
+          const translation = await supabaseAPI.getProductTranslation(
+            product.id,
+            language,
+          );
+          const categoryTranslation = await supabaseAPI.getCategoryTranslation(
+            product.category,
+            language,
+          );
           return {
             ...product,
             translation,
-            categoryName: categoryTranslation?.name || product.category
+            categoryName: categoryTranslation?.name || product.category,
           };
-        })
+        }),
       );
-      
-      console.log('Products with translations:', productsWithTranslations);
+
+      console.log("Products with translations:", productsWithTranslations);
       setFeaturedProducts(productsWithTranslations);
     } catch (error) {
-      console.error('Error al cargar productos destacados:', error);
+      console.error("Error al cargar productos destacados:", error);
     }
   };
 
@@ -98,7 +113,10 @@ export function Home() {
             </div>
             <div className="grid md:grid-cols-3 gap-8">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-lg border-2 border-[#629960]/20">
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl overflow-hidden shadow-lg border-2 border-[#629960]/20"
+                >
                   <div className="h-56 bg-[#1C5D15]/10 animate-pulse"></div>
                   <div className="p-6">
                     <div className="h-4 bg-[#629960]/20 rounded-lg mb-2 animate-pulse"></div>
@@ -148,35 +166,36 @@ export function Home() {
             </div>
           </div>
         </div>
-{/* Skeleton for Ecosystem */}
-<div className="py-20 bg-[#629960]/10">
-  <div className="max-w-6xl mx-auto px-6">
-    {/* Título del esqueleto principal */}
-    <div className="h-12 bg-[#1C5D15]/20 rounded-lg w-1/3 mx-auto mb-12 animate-pulse"></div>
-    
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Ajustado a 3 columnas para que coincida con tu imagen */}
-      {[1, 2, 3].map((i) => (
-        <div 
-          key={i} 
-          className="bg-white rounded-xl p-8 flex flex-col items-center shadow-lg border-2 border-[#629960]/20 min-h-[380px] justify-center"
-        >
-          {/* Círculo Interno: flex-shrink-0 evita que se aplaste */}
-          <div className="w-32 h-32 rounded-full border-4 border-[#629960]/30 mb-6 animate-pulse bg-[#629960]/10 flex-shrink-0"></div>
-          
-          {/* Contenedor de texto con altura fija para simular el espacio de 2 líneas */}
-          <div className="w-full flex flex-col items-center">
-            <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-full mb-3 animate-pulse"></div>
-            <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-2/3 mb-4 animate-pulse"></div> {/* Segunda línea de título */}
-            
-            {/* Subtítulo o categoría */}
-            <div className="h-5 bg-[#629960]/20 rounded-lg w-1/2 animate-pulse"></div>
+        {/* Skeleton for Ecosystem */}
+        <div className="py-20 bg-[#629960]/10">
+          <div className="max-w-6xl mx-auto px-6">
+            {/* Título del esqueleto principal */}
+            <div className="h-12 bg-[#1C5D15]/20 rounded-lg w-1/3 mx-auto mb-12 animate-pulse"></div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {" "}
+              {/* Ajustado a 3 columnas para que coincida con tu imagen */}
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-xl p-8 flex flex-col items-center shadow-lg border-2 border-[#629960]/20 min-h-[380px] justify-center"
+                >
+                  {/* Círculo Interno: flex-shrink-0 evita que se aplaste */}
+                  <div className="w-32 h-32 rounded-full border-4 border-[#629960]/30 mb-6 animate-pulse bg-[#629960]/10 flex-shrink-0"></div>
+
+                  {/* Contenedor de texto con altura fija para simular el espacio de 2 líneas */}
+                  <div className="w-full flex flex-col items-center">
+                    <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-full mb-3 animate-pulse"></div>
+                    <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-2/3 mb-4 animate-pulse"></div>{" "}
+                    {/* Segunda línea de título */}
+                    {/* Subtítulo o categoría */}
+                    <div className="h-5 bg-[#629960]/20 rounded-lg w-1/2 animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          
         </div>
-      ))}
-    </div>
-  </div>
-</div>
 
         {/* Skeleton for Footer */}
         <div className="py-20 bg-[#1C5D15] text-white">
@@ -225,10 +244,11 @@ export function Home() {
   }
 
   // Get SEO data from hero section or use defaults
-  const seoData = pageContent.sections.find(sec => sec.type === 'hero')?.content?.seo || {};
+  const seoData =
+    pageContent.sections.find((sec) => sec.type === "hero")?.content?.seo || {};
 
-  console.log('Page content sections:', pageContent.sections);
-  
+  console.log("Page content sections:", pageContent.sections);
+
   return (
     <>
       <SEO
@@ -236,69 +256,75 @@ export function Home() {
         description={seoData.metaDescription}
         keywords={seoData.metaKeywords}
       />
-      
+
       {pageContent.sections.map((section: Section) => {
         if (!section.visible) return null;
 
-        console.log('Rendering section:', section.type);
+        console.log("Rendering section:", section.type);
 
         switch (section.type) {
-          case 'hero':
+          case "hero":
             return (
               <div key={section.id} id="hero">
                 <Hero content={section.content} />
               </div>
             );
-          case 'trust':
+          case "trust":
             return (
               <div key={section.id} id="trust">
                 <TrustBar partners={section.content.partners} />
               </div>
             );
-          case 'features':
-            console.log('Features section content:', section.content);
+          case "features":
+            console.log("Features section content:", section.content);
             return (
               <div key={section.id} id="purpose">
                 <Purpose purposes={section.content.items} />
               </div>
             );
-          case 'featured':
+          case "featured":
             return (
               <div key={section.id} id="featured">
                 <FeaturedProduct content={section.content} />
               </div>
             );
-          case 'products':
+          case "products":
             return (
               <div key={section.id} id="products">
-                <Products 
-                  products={featuredProducts} 
-                  title={section.content.title} 
-                  subtitle={section.content.subtitle} 
+                <Products
+                  products={featuredProducts}
+                  title={section.content.title}
+                  subtitle={section.content.subtitle}
                 />
               </div>
             );
-          case 'timeline':
+          case "timeline":
             return (
               <div key={section.id} id="timeline">
                 <Timeline milestones={section.content.milestones} />
               </div>
             );
-          case 'team':
+          case "team":
             return (
               <div key={section.id} id="team">
-                <Leadership members={section.content.members} title={section.content.title} subtitle={section.content.subtitle} />
+                <Leadership
+                  members={section.content.members}
+                  title={section.content.title}
+                  subtitle={section.content.subtitle}
+                />
               </div>
             );
-          case 'ecosystem':
+          case "ecosystem":
             return (
               <div key={section.id} id="ecosystem">
                 <div id="allies">
                   <Ecosystem />
                 </div>
+                {/* News Section */}
+                <NewsSection />
               </div>
             );
-          case 'contact':
+          case "contact":
             return (
               <div key={section.id} id="contact">
                 <Footer contactInfo={section.content.contactInfo} />

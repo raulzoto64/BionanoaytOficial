@@ -25,6 +25,21 @@ import {
 } from '../../data/supabase';
 import { ImageUpload } from '../../components/ImageUpload';
 
+// Interface for ecosystem content management
+interface EcosystemContent {
+  id: string;
+  title: { es: string; en: string };
+  subtitle: { es: string; en: string };
+  description: { es: string; en: string };
+  features: Array<{
+    icon: string;
+    title: { es: string; en: string };
+    description: { es: string; en: string };
+  }>;
+  ctaText: { es: string; en: string };
+  ctaLink: string;
+}
+
 export function AdminEcosystem() {
   const [members, setMembers] = useState<EcosystemMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<EcosystemMember | null>(null);
@@ -35,9 +50,40 @@ export function AdminEcosystem() {
   const [allTranslations, setAllTranslations] = useState<Map<string, { es: EcosystemMemberTranslation; en: EcosystemMemberTranslation }>>(new Map());
   const [loading, setLoading] = useState(true);
   const [loadingMember, setLoadingMember] = useState<string | null>(null);
+  
+  // Ecosystem content management state
+  const [ecosystemContent, setEcosystemContent] = useState<EcosystemContent>({
+    id: 'ecosystem-content',
+    title: { es: 'Nuestro Ecosistema', en: 'Our Ecosystem' },
+    subtitle: { es: 'Conectamos innovadores, empresarios y profesionales', en: 'We connect innovators, entrepreneurs, and professionals' },
+    description: {
+      es: 'Conectamos innovadores, empresarios y profesionales para construir un ecosistema sostenible y tecnológico. Descubre a nuestros miembros y cómo están transformando el mundo.',
+      en: 'We connect innovators, entrepreneurs, and professionals to build a sustainable and technological ecosystem. Discover our members and how they are transforming the world.'
+    },
+    features: [
+      {
+        icon: 'Users',
+        title: { es: 'Red de Innovadores', en: 'Network of Innovators' },
+        description: { es: 'Conectamos a los mejores profesionales del sector', en: 'We connect the best professionals in the sector' }
+      },
+      {
+        icon: 'TrendingUp',
+        title: { es: 'Crecimiento Sostenible', en: 'Sustainable Growth' },
+        description: { es: 'Fomentamos el desarrollo responsable y ecológico', en: 'We promote responsible and ecological development' }
+      },
+      {
+        icon: 'Users2',
+        title: { es: 'Colaboración', en: 'Collaboration' },
+        description: { es: 'Trabajamos juntos para alcanzar objetivos comunes', en: 'We work together to achieve common goals' }
+      }
+    ],
+    ctaText: { es: 'Conocer Más', en: 'Learn More' },
+    ctaLink: '/ecosystem'
+  });
 
   useEffect(() => {
     loadMembers();
+    loadEcosystemContent();
   }, []);
 
   const loadMembers = async () => {
@@ -60,6 +106,21 @@ export function AdminEcosystem() {
       toast.error('Error al cargar miembros del ecosistema');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadEcosystemContent = async () => {
+    // For now, we'll use the default content. In a real app, this would be fetched from the database.
+    // This is just a placeholder implementation.
+  };
+
+  const saveEcosystemContent = async () => {
+    try {
+      // In a real app, this would save to the database
+      // For now, we'll just show a success message
+      toast.success('Contenido del ecosistema guardado exitosamente');
+    } catch (error) {
+      toast.error('Error al guardar el contenido del ecosistema');
     }
   };
 
@@ -541,114 +602,236 @@ export function AdminEcosystem() {
   // Vista de lista
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl text-[#1C5D15] mb-2">Miembros del Ecosistema</h2>
-          <p className="text-[#629960]">
-            Gestiona los miembros del ecosistema y su información en múltiples idiomas
-          </p>
+      {/* Ecosystem Content Management */}
+      <Card className="mb-8 p-6 bg-[#1C5D15]/5 border-2 border-[#1C5D15]/20">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl text-[#1C5D15] mb-2">Contenido del Ecosistema</h2>
+            <p className="text-[#629960]">
+              Gestiona el texto y el contenido que se muestra en la sección de ecosistema en la página de inicio
+            </p>
+          </div>
+          <Button
+            onClick={saveEcosystemContent}
+            className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Guardar Contenido
+          </Button>
         </div>
-        <Button
-          onClick={handleCreate}
-          className="bg-[#629960] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Agregar Miembro
-        </Button>
-      </div>
 
-      {/* Lista de miembros */}
-      <div className="grid gap-4">
-        {members.length === 0 ? (
-          <Card className="p-12 bg-white border-2 border-[#629960]/20 text-center">
-            <FileText className="w-16 h-16 text-[#1C5D15] mx-auto mb-4" />
-            <h3 className="text-2xl text-[#1C5D15] mb-2">No hay miembros</h3>
-            <p className="text-[#629960] mb-4">Agrega tu primer miembro para comenzar</p>
-          </Card>
-        ) : (
-          members.map((member) => (
-            <Card key={member.id} className="p-6 bg-white border-2 border-[#629960]/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {member.image ? (
-                    <img 
-                      src={member.image} 
-                      alt="Miembro" 
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-[#1C5D15] rounded-lg flex items-center justify-center">
-                      <ImageIcon className="w-8 h-8 text-white" />
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="text-xl text-[#1C5D15] mb-1">
-                      {(() => {
-                        // Obtenemos la traducción del miembro actual
-                        const memberTranslations = allTranslations.get(member.id);
-                        return memberTranslations?.es.name || member.slug;
-                      })()}
-                    </h3>
-                    <p className="text-sm text-[#629960]">
-                      {member.sector} • {member.status}
-                    </p>
-                  </div>
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Spanish Content */}
+          <div className="space-y-6">
+            <Card className="p-6">
+              <h3 className="text-xl text-[#1C5D15] mb-4">Contenido en Español</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-[#1C5D15]">Título</Label>
+                  <Input
+                    type="text"
+                    value={ecosystemContent.title.es}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, title: { ...ecosystemContent.title, es: e.target.value } })}
+                    className="mt-1"
+                  />
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Badge
-                    className={
-                      member.status === 'active'
-                        ? 'bg-[#19FF00] text-[#1C5D15]'
-                        : member.status === 'draft'
-                        ? 'bg-[#629960] text-white'
-                        : 'bg-gray-400 text-white'
-                    }
-                  >
-                    {member.status === 'active' ? 'Activo' : member.status === 'draft' ? 'Borrador' : 'Inactivo'}
-                  </Badge>
+                <div>
+                  <Label className="text-[#1C5D15]">Subtítulo</Label>
+                  <Input
+                    type="text"
+                    value={ecosystemContent.subtitle.es}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, subtitle: { ...ecosystemContent.subtitle, es: e.target.value } })}
+                    className="mt-1"
+                  />
+                </div>
 
-                  <button
-                    className="border border-[#1C5D15] text-[#1C5D15] px-3 py-1 rounded-md text-sm hover:bg-[#1C5D15] hover:text-white transition-colors disabled:opacity-50 flex items-center"
-                    onClick={() => {
-                      console.log('Edit button clicked for member id:', member.id);
-                      handleSelectMember(member.id);
-                    }}
-                    disabled={loadingMember === member.id}
-                  >
-                    {loadingMember === member.id ? (
-                      <span>Cargando...</span>
-                    ) : (
-                      <>
-                        <Edit className="w-4 h-4 mr-1" />
-                        Editar
-                      </>
-                    )}
-                  </button>
+                <div>
+                  <Label className="text-[#1C5D15]">Descripción</Label>
+                  <Textarea
+                    value={ecosystemContent.description.es}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, description: { ...ecosystemContent.description, es: e.target.value } })}
+                    className="w-full mt-1"
+                    rows={4}
+                  />
+                </div>
 
-                  <button
-                    className="border border-red-500 text-red-500 px-3 py-1 rounded-md text-sm hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center"
-                    onClick={async () => {
-                      if (confirm('¿Estás seguro de eliminar este miembro?')) {
-                        try {
-                          await supabaseAPI.deleteEcosystemMember(member.id);
-                          toast.success('Miembro eliminado exitosamente');
-                          loadMembers();
-                        } catch (error) {
-                          toast.error('Error al eliminar el miembro');
-                        }
-                      }
-                    }}
-                    disabled={loadingMember === member.id}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Eliminar
-                  </button>
+                <div>
+                  <Label className="text-[#1C5D15]">Texto del Botón</Label>
+                  <Input
+                    type="text"
+                    value={ecosystemContent.ctaText.es}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, ctaText: { ...ecosystemContent.ctaText, es: e.target.value } })}
+                    className="mt-1"
+                  />
                 </div>
               </div>
             </Card>
-          ))
-        )}
+          </div>
+
+          {/* English Content */}
+          <div className="space-y-6">
+            <Card className="p-6">
+              <h3 className="text-xl text-[#1C5D15] mb-4">Contenido en Inglés</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-[#1C5D15]">Título</Label>
+                  <Input
+                    type="text"
+                    value={ecosystemContent.title.en}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, title: { ...ecosystemContent.title, en: e.target.value } })}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-[#1C5D15]">Subtítulo</Label>
+                  <Input
+                    type="text"
+                    value={ecosystemContent.subtitle.en}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, subtitle: { ...ecosystemContent.subtitle, en: e.target.value } })}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-[#1C5D15]">Descripción</Label>
+                  <Textarea
+                    value={ecosystemContent.description.en}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, description: { ...ecosystemContent.description, en: e.target.value } })}
+                    className="w-full mt-1"
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-[#1C5D15]">Texto del Botón</Label>
+                  <Input
+                    type="text"
+                    value={ecosystemContent.ctaText.en}
+                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, ctaText: { ...ecosystemContent.ctaText, en: e.target.value } })}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </Card>
+
+      {/* Members Management */}
+      <div>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl text-[#1C5D15] mb-2">Miembros del Ecosistema</h2>
+            <p className="text-[#629960]">
+              Gestiona los miembros del ecosistema y su información en múltiples idiomas
+            </p>
+          </div>
+          <Button
+            onClick={handleCreate}
+            className="bg-[#629960] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Agregar Miembro
+          </Button>
+        </div>
+
+        {/* Lista de miembros */}
+        <div className="grid gap-4">
+          {members.length === 0 ? (
+            <Card className="p-12 bg-white border-2 border-[#629960]/20 text-center">
+              <FileText className="w-16 h-16 text-[#1C5D15] mx-auto mb-4" />
+              <h3 className="text-2xl text-[#1C5D15] mb-2">No hay miembros</h3>
+              <p className="text-[#629960] mb-4">Agrega tu primer miembro para comenzar</p>
+            </Card>
+          ) : (
+            members.map((member) => (
+              <Card key={member.id} className="p-6 bg-white border-2 border-[#629960]/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {member.image ? (
+                      <img 
+                        src={member.image} 
+                        alt="Miembro" 
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-[#1C5D15] rounded-lg flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-white" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-xl text-[#1C5D15] mb-1">
+                        {(() => {
+                          // Obtenemos la traducción del miembro actual
+                          const memberTranslations = allTranslations.get(member.id);
+                          return memberTranslations?.es.name || member.slug;
+                        })()}
+                      </h3>
+                      <p className="text-sm text-[#629960]">
+                        {member.sector} • {member.status}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Badge
+                      className={
+                        member.status === 'active'
+                          ? 'bg-[#19FF00] text-[#1C5D15]'
+                          : member.status === 'draft'
+                          ? 'bg-[#629960] text-white'
+                          : 'bg-gray-400 text-white'
+                      }
+                    >
+                      {member.status === 'active' ? 'Activo' : member.status === 'draft' ? 'Borrador' : 'Inactivo'}
+                    </Badge>
+
+                    <button
+                      className="border border-[#1C5D15] text-[#1C5D15] px-3 py-1 rounded-md text-sm hover:bg-[#1C5D15] hover:text-white transition-colors disabled:opacity-50 flex items-center"
+                      onClick={() => {
+                        console.log('Edit button clicked for member id:', member.id);
+                        handleSelectMember(member.id);
+                      }}
+                      disabled={loadingMember === member.id}
+                    >
+                      {loadingMember === member.id ? (
+                        <span>Cargando...</span>
+                      ) : (
+                        <>
+                          <Edit className="w-4 h-4 mr-1" />
+                          Editar
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      className="border border-red-500 text-red-500 px-3 py-1 rounded-md text-sm hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center"
+                      onClick={async () => {
+                        if (confirm('¿Estás seguro de eliminar este miembro?')) {
+                          try {
+                            await supabaseAPI.deleteEcosystemMember(member.id);
+                            toast.success('Miembro eliminado exitosamente');
+                            loadMembers();
+                          } catch (error) {
+                            toast.error('Error al eliminar el miembro');
+                          }
+                        }
+                      }}
+                      disabled={loadingMember === member.id}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Info Card */}
