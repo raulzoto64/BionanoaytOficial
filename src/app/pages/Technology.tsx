@@ -5,10 +5,20 @@ import { Purpose } from "../components/Purpose";
 import { Timeline } from "../components/Timeline";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
+import { Microscope, Atom, Shield, Leaf } from "lucide-react";
 
 export function Technology() {
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const { language } = useLanguage();
+
+  // Mapeo de nombres de iconos a componentes de Lucide
+  const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
+    'Microscope': Microscope,
+    'Atom': Atom,
+    'Shield': Shield,
+    'Leaf': Leaf,
+    // Agregar más iconos si es necesario
+  };
 
   useEffect(() => {
     loadPageContent();
@@ -67,7 +77,13 @@ export function Technology() {
                           className="bg-gradient-to-br from-gray-50 to-white p-8 rounded-2xl border-2 border-[#629960]/20 hover:border-[#19FF00] transition-all duration-300 hover:shadow-xl"
                         >
                           <div className="inline-block px-6 py-3 bg-[#19FF00] text-[#1C5D15] rounded-lg font-bold text-lg mb-6">
-                            {item.icon}
+                            {(() => {
+                              const IconComponent = iconMap[item.icon];
+                              if (IconComponent) {
+                                return <IconComponent className="w-8 h-8" />;
+                              }
+                              return item.icon;
+                            })()}
                           </div>
                           <h3 className="text-2xl text-[#1C5D15] mb-4">{item.title}</h3>
                           <p className="text-[#629960] mb-6 leading-relaxed">
