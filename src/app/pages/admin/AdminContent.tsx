@@ -430,6 +430,7 @@ function SectionEditor({
     { value: 'features', label: 'Características' },
     { value: 'products', label: 'Productos' },
     { value: 'team', label: 'Equipo' },
+    { value: 'timeline', label: 'Línea de Tiempo' },
     { value: 'contact', label: 'Contacto' },
     { value: 'custom', label: 'Personalizado' },
     { value: 'trust', label: 'Confianza' },
@@ -1163,6 +1164,20 @@ function SectionEditor({
                               />
                             </div>
                             <div>
+                              <Label className="text-[#1C5D15]">Imagen</Label>
+                              <ImageUpload
+                                currentImage={item.image}
+                                onImageUpload={(url) => {
+                                  const newItems = [...section.content.items];
+                                  newItems[idx].image = url;
+                                  onUpdateContent('items', newItems);
+                                }}
+                                type="avatar"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
                               <Label className="text-[#1C5D15]">Título (Español)</Label>
                               <Input
                                 type="text"
@@ -1175,8 +1190,6 @@ function SectionEditor({
                                 className="mt-1"
                               />
                             </div>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4 mt-4">
                             <div>
                               <Label className="text-[#1C5D15]">Título (English)</Label>
                               <Input
@@ -1235,6 +1248,63 @@ function SectionEditor({
                               />
                             </div>
                           </div>
+                          <div className="mt-4">
+                            <Label className="text-[#1C5D15]">Detalles (Español)</Label>
+                            {item.details && item.details.length > 0 ? (
+                              item.details.map((detail: string, detailIdx: number) => (
+                                <div key={detailIdx} className="flex gap-2 mt-2">
+                                  <Input
+                                    type="text"
+                                    value={detail || ''}
+                                    onChange={(e) => {
+                                      const newItems = [...section.content.items];
+                                      newItems[idx].details[detailIdx] = e.target.value;
+                                      onUpdateContent('items', newItems);
+                                    }}
+                                    className="flex-1"
+                                  />
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-[#629960] text-sm">
+                                No hay detalles definidos
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-4">
+                            <Label className="text-[#1C5D15]">Detalles (English)</Label>
+                            {((section as any).contentEN?.items?.[idx]?.details) && (section as any).contentEN.items[idx].details.length > 0 ? (
+                              (section as any).contentEN.items[idx].details.map((detail: string, detailIdx: number) => (
+                                <div key={detailIdx} className="flex gap-2 mt-2">
+                                  <Input
+                                    type="text"
+                                    value={detail || ''}
+                                    onChange={(e) => {
+                                      const currentContentEN = (section as any).contentEN || {};
+                                      const currentItemsEN = currentContentEN.items || [];
+                                      if (!currentItemsEN[idx]) {
+                                        currentItemsEN[idx] = {};
+                                      }
+                                      if (!currentItemsEN[idx].details) {
+                                        currentItemsEN[idx].details = [];
+                                      }
+                                      currentItemsEN[idx].details[detailIdx] = e.target.value;
+                                      (section as any).contentEN = {
+                                        ...currentContentEN,
+                                        items: currentItemsEN
+                                      };
+                                      onUpdate(section);
+                                    }}
+                                    className="flex-1"
+                                  />
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-[#629960] text-sm">
+                                No hay detalles definidos
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -1244,6 +1314,206 @@ function SectionEditor({
                     )}
                   </div>
                 )}
+
+                {/* Campos de SEO */}
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h5 className="text-sm font-semibold text-[#1C5D15] mb-3">SEO - Meta Tags</h5>
+                  <div>
+                    <Label className="text-[#1C5D15] text-sm">Título Meta</Label>
+                    <Input
+                      type="text"
+                      value={section.content.seo?.metaTitle || ''}
+                      onChange={(e) => {
+                        const currentSEO = section.content.seo || {};
+                        onUpdateContent('seo', {
+                          ...currentSEO,
+                          metaTitle: e.target.value
+                        });
+                      }}
+                      className="mt-1 text-sm"
+                      placeholder="Título para motores de búsqueda"
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <Label className="text-[#1C5D15] text-sm">Descripción Meta</Label>
+                    <textarea
+                      value={section.content.seo?.metaDescription || ''}
+                      onChange={(e) => {
+                        const currentSEO = section.content.seo || {};
+                        onUpdateContent('seo', {
+                          ...currentSEO,
+                          metaDescription: e.target.value
+                        });
+                      }}
+                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                      rows={2}
+                      placeholder="Descripción para motores de búsqueda"
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <Label className="text-[#1C5D15] text-sm">Palabras Clave</Label>
+                    <Input
+                      type="text"
+                      value={section.content.seo?.metaKeywords || ''}
+                      onChange={(e) => {
+                        const currentSEO = section.content.seo || {};
+                        onUpdateContent('seo', {
+                          ...currentSEO,
+                          metaKeywords: e.target.value
+                        });
+                      }}
+                      className="mt-1 text-sm"
+                      placeholder="palabra1, palabra2, palabra3"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {section.type === 'timeline' && (
+              <>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-[#1C5D15]">Título (Español)</Label>
+                    <Input
+                      type="text"
+                      value={section.content.title || ''}
+                      onChange={(e) => {
+                        const currentContent = section.content || {};
+                        onUpdateContent('title', e.target.value);
+                      }}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#1C5D15]">Título (English)</Label>
+                    <Input
+                      type="text"
+                      value={(section as any).contentEN?.title || ''}
+                      onChange={(e) => {
+                        const currentContentEN = (section as any).contentEN || {};
+                        (section as any).contentEN = {
+                          ...currentContentEN,
+                          title: e.target.value
+                        };
+                        onUpdate(section);
+                      }}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-[#1C5D15]">Subtítulo (Español)</Label>
+                    <textarea
+                      value={section.content.subtitle || ''}
+                      onChange={(e) => onUpdateContent('subtitle', e.target.value)}
+                      className="w-full mt-1 px-3 py-2 border rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#1C5D15]">Subtítulo (English)</Label>
+                    <textarea
+                      value={(section as any).contentEN?.subtitle || ''}
+                      onChange={(e) => {
+                        const currentContentEN = (section as any).contentEN || {};
+                        (section as any).contentEN = {
+                          ...currentContentEN,
+                          subtitle: e.target.value
+                        };
+                        onUpdate(section);
+                      }}
+                      className="w-full mt-1 px-3 py-2 border rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[#1C5D15]">Hitos de la Línea de Tiempo</Label>
+                  {section.content.milestones && section.content.milestones.length > 0 ? (
+                    (section.content.milestones as any[]).map((milestone: any, idx: number) => (
+                      <div key={idx} className="border p-4 rounded-lg mb-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-[#1C5D15]">Fase (Español)</Label>
+                            <Input
+                              type="text"
+                              value={milestone.phase || ''}
+                              onChange={(e) => {
+                                const newMilestones = [...section.content.milestones];
+                                newMilestones[idx].phase = e.target.value;
+                                onUpdateContent('milestones', newMilestones);
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[#1C5D15]">Fase (English)</Label>
+                            <Input
+                              type="text"
+                              value={(section as any).contentEN?.milestones?.[idx]?.phase || ''}
+                              onChange={(e) => {
+                                const currentContentEN = (section as any).contentEN || {};
+                                const currentMilestonesEN = currentContentEN.milestones || [];
+                                if (!currentMilestonesEN[idx]) {
+                                  currentMilestonesEN[idx] = {};
+                                }
+                                currentMilestonesEN[idx].phase = e.target.value;
+                                (section as any).contentEN = {
+                                  ...currentContentEN,
+                                  milestones: currentMilestonesEN
+                                };
+                                onUpdate(section);
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4 mt-4">
+                          <div>
+                            <Label className="text-[#1C5D15]">Tiempo (Español)</Label>
+                            <Input
+                              type="text"
+                              value={milestone.time || ''}
+                              onChange={(e) => {
+                                const newMilestones = [...section.content.milestones];
+                                newMilestones[idx].time = e.target.value;
+                                onUpdateContent('milestones', newMilestones);
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[#1C5D15]">Tiempo (English)</Label>
+                            <Input
+                              type="text"
+                              value={(section as any).contentEN?.milestones?.[idx]?.time || ''}
+                              onChange={(e) => {
+                                const currentContentEN = (section as any).contentEN || {};
+                                const currentMilestonesEN = currentContentEN.milestones || [];
+                                if (!currentMilestonesEN[idx]) {
+                                  currentMilestonesEN[idx] = {};
+                                }
+                                currentMilestonesEN[idx].time = e.target.value;
+                                (section as any).contentEN = {
+                                  ...currentContentEN,
+                                  milestones: currentMilestonesEN
+                                };
+                                onUpdate(section);
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[#629960] text-sm">
+                      No hay hitos definidos
+                    </div>
+                  )}
+                </div>
 
                 {/* Campos de SEO */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">

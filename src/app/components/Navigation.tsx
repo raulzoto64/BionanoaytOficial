@@ -63,13 +63,14 @@ export function Navigation() {
   return (
     <nav className="bg-[#1C5D15] text-white sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 bg-[#19FF00] rounded-full flex items-center justify-center">
-              <span className="text-[#1C5D15] font-bold text-xl">A&T</span>
-            </div>
-            <span className="text-xl hidden sm:block">A&T BioNano</span>
+            <img 
+              src="/images/logo png.png" 
+              alt="BioNano A&T" 
+              className="h-18 w-auto"
+            />
           </Link>
 
           {/* Desktop Menu */}

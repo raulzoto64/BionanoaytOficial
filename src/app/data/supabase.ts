@@ -685,21 +685,8 @@ export const supabaseAPI = {
     );
 
     if (!applicablePrice) {
-      // Si no hay precio aplicable, devolver un precio mock
-      console.warn("No applicable price found, returning mock data");
-      const mockPrices: Record<string, number> = {
-        "prod-001": 45000,
-        "prod-002": 35000,
-        "prod-003": 55000,
-        "prod-004": 25000,
-      };
-
-      const mockPrice = mockPrices[productId] || 0;
-      return {
-        pricePerUnit: mockPrice,
-        total: mockPrice * quantity,
-        currency: "COP",
-      };
+      console.warn("No applicable price found for product:", productId, "quantity:", quantity);
+      return null;
     }
 
     return {
@@ -1279,15 +1266,37 @@ export const supabaseAPI = {
     id: string,
     data: Partial<EcosystemMember>,
   ): Promise<EcosystemMember> => {
-    const { data: member, error } = await supabase
+    const { data: updateResult, error: updateError } = await supabase
       .from("ecosystem_members")
-      .update(data)
+      .update({
+        ...data,
+        updated_at: new Date().toISOString()
+      })
       .eq("id", id)
-      .select()
-      .single();
+      .select();
 
-    if (error) throw new Error(error.message);
-    return member;
+    if (updateError) {
+      console.error('Error updating ecosystem member:', updateError);
+      throw new Error(updateError.message);
+    }
+
+    // Si la actualización no encontró el registro, intenta obtenerlo directamente
+    if (!updateResult || updateResult.length === 0) {
+      const { data: getResult, error: getError } = await supabase
+        .from("ecosystem_members")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (getError) {
+        console.error('Error getting ecosystem member:', getError);
+        throw new Error(`Miembro con ID ${id} no encontrado`);
+      }
+      
+      return getResult;
+    }
+
+    return updateResult[0];
   },
 
   updateEcosystemMemberTranslation: async (

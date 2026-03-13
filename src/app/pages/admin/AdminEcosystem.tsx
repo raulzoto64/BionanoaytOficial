@@ -32,7 +32,9 @@ export function AdminEcosystem() {
     es: { member_id: '', language: 'es', name: '', description: '' },
     en: { member_id: '', language: 'en', name: '', description: '' }
   });
+  const [allTranslations, setAllTranslations] = useState<Map<string, { es: EcosystemMemberTranslation; en: EcosystemMemberTranslation }>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [loadingMember, setLoadingMember] = useState<string | null>(null);
 
   useEffect(() => {
     loadMembers();
@@ -43,6 +45,17 @@ export function AdminEcosystem() {
     try {
       const allMembers = await supabaseAPI.getEcosystemMembers();
       setMembers(allMembers);
+      
+      // Cargar todas las traducciones
+      const newTranslations = new Map();
+      for (const member of allMembers) {
+        const [translationES, translationEN] = await Promise.all([
+          supabaseAPI.getEcosystemMemberTranslation(member.id, 'es'),
+          supabaseAPI.getEcosystemMemberTranslation(member.id, 'en')
+        ]);
+        newTranslations.set(member.id, { es: translationES, en: translationEN });
+      }
+      setAllTranslations(newTranslations);
     } catch (error) {
       toast.error('Error al cargar miembros del ecosistema');
     } finally {
@@ -52,6 +65,7 @@ export function AdminEcosystem() {
 
   const handleSelectMember = async (memberId: string) => {
     console.log('handleSelectMember called with memberId:', memberId);
+    setLoadingMember(memberId);
     try {
       const member = await supabaseAPI.getEcosystemMemberById(memberId);
       if (member) {
@@ -73,6 +87,8 @@ export function AdminEcosystem() {
     } catch (error) {
       console.error('Error al cargar miembro:', error);
       toast.error('Error al cargar miembro');
+    } finally {
+      setLoadingMember(null);
     }
   };
 
@@ -569,8 +585,8 @@ export function AdminEcosystem() {
                     <h3 className="text-xl text-[#1C5D15] mb-1">
                       {(() => {
                         // Obtenemos la traducción del miembro actual
-                        const translation = translations.es.member_id === member.id ? translations.es.name : null;
-                        return translation || member.slug;
+                        const memberTranslations = allTranslations.get(member.id);
+                        return memberTranslations?.es.name || member.slug;
                       })()}
                     </h3>
                     <p className="text-sm text-[#629960]">
@@ -593,14 +609,40 @@ export function AdminEcosystem() {
                   </Badge>
 
                   <button
-                    className="border border-[#1C5D15] text-[#1C5D15] px-3 py-1 rounded-md text-sm hover:bg-[#1C5D15] hover:text-white transition-colors"
+                    className="border border-[#1C5D15] text-[#1C5D15] px-3 py-1 rounded-md text-sm hover:bg-[#1C5D15] hover:text-white transition-colors disabled:opacity-50 flex items-center"
                     onClick={() => {
                       console.log('Edit button clicked for member id:', member.id);
                       handleSelectMember(member.id);
                     }}
+                    disabled={loadingMember === member.id}
                   >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Editar
+                    {loadingMember === member.id ? (
+                      <span>Cargando...</span>
+                    ) : (
+                      <>
+                        <Edit className="w-4 h-4 mr-1" />
+                        Editar
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    className="border border-red-500 text-red-500 px-3 py-1 rounded-md text-sm hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center"
+                    onClick={async () => {
+                      if (confirm('¿Estás seguro de eliminar este miembro?')) {
+                        try {
+                          await supabaseAPI.deleteEcosystemMember(member.id);
+                          toast.success('Miembro eliminado exitosamente');
+                          loadMembers();
+                        } catch (error) {
+                          toast.error('Error al eliminar el miembro');
+                        }
+                      }
+                    }}
+                    disabled={loadingMember === member.id}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Eliminar
                   </button>
                 </div>
               </div>

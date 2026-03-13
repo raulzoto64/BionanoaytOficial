@@ -60,21 +60,21 @@ export function Technology() {
               <section key={section.id} className="py-20 bg-white">
                 <div className="max-w-6xl mx-auto px-6">
                   <div className="grid md:grid-cols-2 gap-8">
-                    {section.content.items.map((item, index) => {
+                    {section.content.items?.map((item: any, index: number) => {
                       return (
                         <div 
                           key={index}
                           className="bg-gradient-to-br from-gray-50 to-white p-8 rounded-2xl border-2 border-[#629960]/20 hover:border-[#19FF00] transition-all duration-300 hover:shadow-xl"
                         >
-                          <div className="w-16 h-16 bg-[#19FF00] rounded-full flex items-center justify-center mb-6">
-                            <div className="text-[#1C5D15] text-2xl">{item.icon}</div>
+                          <div className="inline-block px-6 py-3 bg-[#19FF00] text-[#1C5D15] rounded-lg font-bold text-lg mb-6">
+                            {item.icon}
                           </div>
                           <h3 className="text-2xl text-[#1C5D15] mb-4">{item.title}</h3>
                           <p className="text-[#629960] mb-6 leading-relaxed">
                             {item.description}
                           </p>
                           <ul className="space-y-2">
-                            {item.details.map((detail, idx) => (
+                            {item.details?.map((detail: string, idx: number) => (
                               <li key={idx} className="flex items-start gap-2 text-[#629960]">
                                 <span className="text-[#19FF00] mt-1">✓</span>
                                 {detail}
@@ -102,7 +102,7 @@ export function Technology() {
                   </div>
 
                   <div className="grid md:grid-cols-4 gap-6">
-                    {section.content.milestones.map((item, index) => (
+                    {section.content.milestones?.map((item: any, index: number) => (
                       <div key={index} className="text-center">
                         <div className="w-20 h-20 bg-[#1C5D15] text-[#19FF00] rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
                           {item.step}

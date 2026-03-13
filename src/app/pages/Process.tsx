@@ -22,6 +22,8 @@ export function Process() {
   };
 
   const getIconComponent = (iconName: string) => {
+    if (!iconName) return FlaskConical;
+    
     switch (iconName) {
       case 'FlaskConical':
         return FlaskConical;
@@ -68,12 +70,34 @@ export function Process() {
         switch (section.type) {
           case 'hero':
             return (
-              <div key={section.id} className="bg-gradient-to-br from-[#1C5D15] to-[#629960] text-white py-20">
-                <div className="max-w-6xl mx-auto px-6">
-                  <h1 className="text-5xl md:text-6xl mb-6">{section.content.title}</h1>
-                  <p className="text-xl text-[#F7F9CE] max-w-3xl">
-                    {section.content.subtitle}
-                  </p>
+              <div key={section.id}>
+                <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+                  {/* Background Image */}
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{
+                      backgroundImage: `url('${section.content.backgroundImage}')`,
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-[#1C5D15]/85"></div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="relative z-10 max-w-6xl mx-auto px-6 text-center text-white">
+                    <h1 className="text-5xl md:text-7xl mb-6 leading-tight">
+                      {section.content.title}
+                    </h1>
+                    <p className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-95">
+                      {section.content.subtitle}
+                    </p>
+                    {section.content.ctaText && (
+                      <button 
+                        className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90 px-8 py-6 text-lg shadow-lg rounded-lg transition-colors"
+                      >
+                        {section.content.ctaText}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -83,7 +107,6 @@ export function Process() {
                 <div className="max-w-6xl mx-auto px-6">
                   <div className="space-y-16">
                     {section.content.items.map((step: any, index: number) => {
-                      const Icon = getIconComponent(step.icon);
                       const isEven = index % 2 === 0;
                       
                       return (
@@ -94,7 +117,17 @@ export function Process() {
                           <div className="flex-1">
                             <div className="flex items-center gap-4 mb-4">
                               <div className="w-16 h-16 bg-[#19FF00] rounded-full flex items-center justify-center flex-shrink-0">
-                                <Icon className="w-8 h-8 text-[#1C5D15]" />
+                                {(() => {
+                                  try {
+                                    if (step.icon && typeof step.icon === 'string') {
+                                      const Icon = getIconComponent(step.icon);
+                                      return <Icon className="w-8 h-8 text-[#1C5D15]" />;
+                                    }
+                                  } catch (error) {
+                                    console.error('Error rendering icon:', error);
+                                  }
+                                  return <FlaskConical className="w-8 h-8 text-[#1C5D15]" />;
+                                })()}
                               </div>
                               <div>
                                 <div className="text-sm text-[#629960]">Paso {index + 1}</div>
@@ -116,7 +149,25 @@ export function Process() {
                           
                           <div className="flex-1">
                             <div className={`w-full h-80 rounded-2xl bg-gradient-to-br from-[#1C5D15] to-[#629960] flex items-center justify-center text-white text-6xl`}>
-                              <Icon className="w-32 h-32 opacity-20" />
+                              {step.image ? (
+                                <img 
+                                  src={step.image} 
+                                  alt={`Imagen paso ${index + 1}`} 
+                                  className="w-full h-full object-cover opacity-20"
+                                />
+                              ) : step.icon ? (
+                                (() => {
+                                  try {
+                                    if (typeof step.icon === 'string') {
+                                      const Icon = getIconComponent(step.icon);
+                                      return <Icon className="w-32 h-32 opacity-20" />;
+                                    }
+                                  } catch (error) {
+                                    console.error('Error rendering large icon:', error);
+                                  }
+                                  return null;
+                                })()
+                              ) : null}
                             </div>
                           </div>
                         </div>
