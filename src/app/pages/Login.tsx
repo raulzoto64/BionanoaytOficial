@@ -215,16 +215,6 @@ export function Login() {
           </button>
         </div>
 
-        {/* Credenciales de demo */}
-        <Card className="mt-6 p-4 bg-white/10 backdrop-blur border border-white/20">
-          <p className="text-white text-sm mb-2 font-semibold">
-            💡 Credenciales de prueba (Admin):
-          </p>
-          <div className="space-y-1 text-xs text-[#F7F9CE] font-mono">
-            <p>Email: admin@atbionano.com</p>
-            <p>Password: admin123</p>
-          </div>
-        </Card>
       </div>
     </div>
   );
