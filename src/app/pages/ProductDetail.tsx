@@ -58,10 +58,10 @@ export function ProductDetail() {
   }, [slug, language, updateTrigger]); // Re-cargar cuando cambie el slug, idioma o base de datos
 
   useEffect(() => {
-    if (product && quantity > 0) {
+    if (product && quantity > 0 && selectedPackagingType) {
       calculatePricing();
     }
-  }, [quantity, product]); // Recalcular precio cuando cambie la cantidad
+  }, [quantity, product, selectedPackagingType]); // Recalcular precio cuando cambie la cantidad o la embase
 
   const loadProduct = async () => {
     setLoading(true);
@@ -111,7 +111,21 @@ export function ProductDetail() {
   const calculatePricing = async () => {
     if (!product) return;
     
-    const pricing = await supabaseAPI.calculatePrice(product.id, quantity);
+    // Obtener el valor original de packaging (sin formatear) para pasar a la API
+    const originalPackaging = prices.find(price => {
+      const formatted = price.packaging?.includes(' ') 
+        ? (() => {
+            const parts = price.packaging.split(' ');
+            if (!isNaN(Number(parts[0]))) {
+              return `${parts[1]} de ${parts[0]} litros`;
+            }
+            return `${parts[0]} de ${parts[1]} litros`;
+          })()
+        : price.packaging || 'Sin embase';
+      return formatted === selectedPackagingType;
+    })?.packaging;
+
+    const pricing = await supabaseAPI.calculatePrice(product.id, quantity, originalPackaging);
     setCalculatedPrice(pricing);
   };
 
@@ -126,7 +140,36 @@ export function ProductDetail() {
         return;
       }
       
-      await supabaseAPI.addToCart(user.id, product.id, quantity);
+      // Obtener el valor original de packaging (sin formatear) para pasar a la API
+      const originalPackaging = prices.find(price => {
+        const formatted = price.packaging?.includes(' ') 
+          ? (() => {
+              const parts = price.packaging.split(' ');
+              if (!isNaN(Number(parts[0]))) {
+                return `${parts[1]} de ${parts[0]} litros`;
+              }
+              return `${parts[0]} de ${parts[1]} litros`;
+            })()
+          : price.packaging || 'Sin embase';
+        return formatted === selectedPackagingType;
+      })?.packaging;
+
+      // Log de información enviada al carrito
+      console.log("Enviando al carrito:", {
+        userId: user.id,
+        productId: product.id,
+        productName: translation.name,
+        quantity: quantity,
+        packaging: originalPackaging,
+        calculatedPrice: calculatedPrice,
+        selectedPackagingType: selectedPackagingType
+      });
+
+      const cartItem = await supabaseAPI.addToCart(user.id, product.id, quantity, originalPackaging);
+      
+      // Log de información recibida del carrito
+      console.log("Item agregado al carrito:", cartItem);
+      
       toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
     } catch (error) {
       console.error('Error al agregar al carrito:', error);

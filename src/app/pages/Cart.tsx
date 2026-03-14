@@ -11,6 +11,7 @@ interface CartItemWithPrice extends CartItemWithProduct {
   pricePerUnit: number;
   totalPrice: number;
   currency: string;
+  packaging?: string;
 }
 
 export function Cart() {
@@ -47,15 +48,17 @@ export function Cart() {
         return;
       }
       
-      // Obtener información de precio para cada item
+      // Usar los precios almacenados en el carrito o calcularlos si no existen
+      // Calcular precios para cada item del carrito
       const itemsWithPrices = await Promise.all(
         items.map(async (item) => {
-          const priceInfo = await supabaseAPI.calculatePrice(item.product_id, item.quantity);
+          const priceInfo = await supabaseAPI.calculatePrice(item.product_id, item.quantity, item.packaging);
           return {
             ...item,
             pricePerUnit: priceInfo?.pricePerUnit || 0,
             totalPrice: priceInfo?.total || 0,
-            currency: priceInfo?.currency || 'COP'
+            currency: priceInfo?.currency || 'COP',
+            packaging: item.packaging
           };
         })
       );
@@ -63,6 +66,8 @@ export function Cart() {
       setCartItems(itemsWithPrices);
       const total = itemsWithPrices.reduce((sum, item) => sum + item.totalPrice, 0);
       setSubtotal(total);
+      
+      console.log("Items del carrito con precios:", itemsWithPrices);
     } catch (error) {
       console.error('Error al cargar el carrito:', error);
       toast.error('Error al conectar con la base de datos');
@@ -78,16 +83,17 @@ export function Cart() {
       if (!item) return;
 
       const newQuantity = Math.max(1, item.quantity + delta);
-      await supabaseAPI.updateCartItemQuantity(itemId, newQuantity);
+      const updatedItem = await supabaseAPI.updateCartItemQuantity(itemId, newQuantity);
       
-      const priceInfo = await supabaseAPI.calculatePrice(item.product_id, newQuantity);
+      // Calcular precios para el item actualizado
+      const priceInfo = await supabaseAPI.calculatePrice(updatedItem.product_id, updatedItem.quantity, updatedItem.packaging);
       
       setCartItems(items =>
         items.map(i =>
           i.id === itemId
             ? {
                 ...i,
-                quantity: newQuantity,
+                quantity: updatedItem.quantity,
                 pricePerUnit: priceInfo?.pricePerUnit || 0,
                 totalPrice: priceInfo?.total || 0,
                 currency: priceInfo?.currency || 'COP'
@@ -175,35 +181,70 @@ export function Cart() {
       );
     }
 
+    // Agrupar items por producto
+    const productsByProductId = cartItems.reduce((acc, item) => {
+      if (!acc[item.product_id]) {
+        acc[item.product_id] = [];
+      }
+      acc[item.product_id].push(item);
+      return acc;
+    }, {} as Record<string, CartItemWithPrice[]>);
+
     // 4. Mostrar el contenido real del carrito
     return (
       <div className="grid md:grid-cols-3 gap-8 animate-in fade-in duration-500">
-        <div className="md:col-span-2 space-y-4">
-          {cartItems.map(item => (
-            <div key={item.id} className="bg-white rounded-xl p-6 shadow-lg flex gap-4 items-center border border-gray-50 hover:border-[#629960]/30 transition-all">
-              <img
-                src={item.product.images?.[0] || item.product.image || `https://via.placeholder.com/150`}
-                alt={item.translation.name}
-                className="w-24 h-24 object-cover rounded-lg"
-              />
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-[#1C5D15] mb-1">{item.translation.name}</h3>
-                <p className="text-[#629960] text-lg">
-                  ${item.pricePerUnit.toLocaleString('es-CO')}
-                </p>
+        <div className="md:col-span-2 space-y-6">
+          {Object.values(productsByProductId).map(productItems => (
+            <div key={productItems[0].product_id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-50 hover:border-[#629960]/30 transition-all">
+              <div className="flex gap-4 mb-4">
+                <img
+                  src={productItems[0].product.images?.[0] || productItems[0].product.image || `https://via.placeholder.com/150`}
+                  alt={productItems[0].translation.name}
+                  className="w-24 h-24 object-cover rounded-lg"
+                />
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-[#1C5D15] mb-1">{productItems[0].translation.name}</h3>
+                  <p className="text-sm text-[#629960] mb-2">{productItems[0].translation.short_description}</p>
+                  <div className="flex items-center gap-1 text-yellow-500">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <span key={star}>★</span>
+                    ))}
+                    <span className="text-sm text-[#629960] ml-2">(5.0)</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-full">
-                <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 rounded-full bg-white shadow-sm hover:bg-[#19FF00] transition-colors flex items-center justify-center">
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="text-xl font-bold text-[#1C5D15] w-8 text-center">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 rounded-full bg-white shadow-sm hover:bg-[#19FF00] transition-colors flex items-center justify-center">
-                  <Plus className="w-4 h-4" />
-                </button>
+              
+              <div className="border-t pt-3">
+                <h4 className="text-sm font-semibold text-[#1C5D15] mb-2">Embase(s) Seleccionada(s):</h4>
+                {productItems.map(item => (
+                  <div key={item.id} className="flex gap-4 items-center mb-2 p-2 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <p className="text-sm text-[#629960]">Embase: {item.packaging}</p>
+                      <div className="flex gap-4 mt-1">
+                        <span className="text-sm text-[#1C5D15]">Costo por unidad: ${item.pricePerUnit.toLocaleString('es-CO')}</span>
+                        <span className="text-sm text-[#1C5D15]">Costo total: ${item.totalPrice.toLocaleString('es-CO')}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 bg-white p-2 rounded-full">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 rounded-full bg-white shadow-sm hover:bg-[#19FF00] transition-colors flex items-center justify-center">
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="text-xl font-bold text-[#1C5D15] w-8 text-center">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 rounded-full bg-white shadow-sm hover:bg-[#19FF00] transition-colors flex items-center justify-center">
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-600 p-2 transition-colors">
+                      <Trash2 className="w-6 h-6" />
+                    </button>
+                  </div>
+                ))}
               </div>
-              <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-600 p-2 transition-colors">
-                <Trash2 className="w-6 h-6" />
-              </button>
+              
+              <div className="border-t pt-3 mt-3 flex justify-between items-center">
+                <span className="text-lg font-semibold text-[#1C5D15]">Total del Producto:</span>
+                <span className="text-xl font-bold text-[#1C5D15]">${productItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('es-CO')}</span>
+              </div>
             </div>
           ))}
         </div>

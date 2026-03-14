@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Carrito de Compras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1C5D15;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .test-section h2 {
+            color: #629960;
+            margin-top: 0;
+        }
+        button {
+            background-color: #1C5D15;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #629960;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .cart-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .cart-item h3 {
+            margin: 0 0 5px 0;
+            color: #1C5D15;
+        }
+        .cart-item .details {
+            font-size: 14px;
+            color: #666;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(28, 93, 21, 0.3);
+            border-radius: 50%;
+            border-top-color: #1C5D15;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prueba de Carrito de Compras</h1>
+        
+        <div class="test-section">
+            <h2>1. Iniciar Sesión</h2>
+            <button onclick="testLogin()">Iniciar Sesión con Usuario de Prueba</button>
+            <div id="login-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Limpiar Carrito</h2>
+            <button onclick="clearCart()">Limpiar Carrito</button>
+            <div id="clear-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Agregar Productos</h2>
+            <button onclick="addProduct('Botella', 5)">Agregar 5 Botellas</button>
+            <button onclick="addProduct('Galón', 3)">Agregar 3 Galones</button>
+            <div id="add-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. Ver Carrito</h2>
+            <button onclick="showCart()">Ver Contenido del Carrito</button>
+            <div id="cart-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. Actualizar Cantidad</h2>
+            <button onclick="updateQuantity()">Actualizar Cantidad de Botellas a 8</button>
+            <div id="update-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>6. Completar Prueba</h2>
+            <button onclick="completeTest()">Verificar Todo</button>
+            <div id="complete-result"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabaseAPI } from './src/app/data/supabase.ts';
+        
+        let currentUser = null;
+        let products = null;
+        let botellaItem = null;
+        let galonItem = null;
+        
+        async function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '<div class="loading"></div> Cargando...';
+        }
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+        
+        async function testLogin() {
+            showLoading('login-result');
+            try {
+                const users = await supabaseAPI.getUsers();
+                currentUser = users.find(u => u.email === 'admin@atbionano.com');
+                
+                if (!currentUser) {
+                    throw new Error('No se encontró usuario de prueba');
+                }
+                
+                showResult('login-result', `✅ Sesión iniciada como ${currentUser.email}`, 'success');
+                
+                // Obtener productos
+                products = await supabaseAPI.getProducts();
+                showResult('login-result', `✅ Sesión iniciada como ${currentUser.email} | Productos disponibles: ${products.length}`, 'success');
+            } catch (error) {
+                showResult('login-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearCart() {
+            if (!currentUser) {
+                showResult('clear-result', '❌ Debes iniciar sesión primero', 'error');
+                return;
+            }
+            
+            showLoading('clear-result');
+            try {
+                await supabaseAPI.clearCart(currentUser.id);
+                showResult('clear-result', '✅ Carrito limpiado', 'success');
+            } catch (error) {
+                showResult('clear-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function addProduct(packaging, quantity) {
+            if (!currentUser || !products) {
+                showResult('add-result', '❌ Debes iniciar sesión primero', 'error');
+                return;
+            }
+            
+            showLoading('add-result');
+            try {
+                const product = products[0];
+                const item = await supabaseAPI.addToCart(currentUser.id, product.id, quantity, packaging);
+                
+                if (packaging === 'Botella') {
+                    botellaItem = item;
+                } else if (packaging === 'Galón') {
+                    galonItem = item;
+                }
+                
+                showResult('add-result', `✅ ${quantity} ${packaging}(s) agregado(s)`);
+            } catch (error) {
+                showResult('add-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function showCart() {
+            if (!currentUser) {
+                showResult('cart-result', '❌ Debes iniciar sesión primero', 'error');
+                return;
+            }
+            
+            showLoading('cart-result');
+            try {
+                const items = await supabaseAPI.getCartItems(currentUser.id);
+                
+                if (items.length === 0) {
+                    showResult('cart-result', '⚠️ El carrito está vacío');
+                    return;
+                }
+                
+                const cartHtml = items.map(item => `
+                    <div class="cart-item">
+                        <h3>${item.translation.name}</h3>
+                        <div class="details">
+                            <p>Embase: ${item.packaging}</p>
+                            <p>Cantidad: ${item.quantity}</p>
+                            <p>Precio unitario: $${item.pricePerUnit.toLocaleString('es-CO')} COP</p>
+                            <p>Total: $${item.totalPrice.toLocaleString('es-CO')} COP</p>
+                        </div>
+                    </div>
+                `).join('');
+                
+                showResult('cart-result', `✅ ${items.length} item(s) en el carrito:<br>${cartHtml}`, 'success');
+            } catch (error) {
+                showResult('cart-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function updateQuantity() {
+            if (!currentUser || !botellaItem) {
+                showResult('update-result', '❌ Debes agregar botellas primero', 'error');
+                return;
+            }
+            
+            showLoading('update-result');
+            try {
+                await supabaseAPI.updateCartItemQuantity(botellaItem.id, 8);
+                showResult('update-result', '✅ Cantidad de botellas actualizada a 8', 'success');
+            } catch (error) {
+                showResult('update-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function completeTest() {
+            if (!currentUser || !products) {
+                showResult('complete-result', '❌ Debes iniciar sesión primero', 'error');
+                return;
+            }
+            
+            showLoading('complete-result');
+            try {
+                const cartItems = await supabaseAPI.getCartItems(currentUser.id);
+                
+                // Verificar que hay 2 items
+                if (cartItems.length !== 2) {
+                    throw new Error(`Se esperaban 2 items en el carrito, pero hay ${cartItems.length}`);
+                }
+                
+                // Verificar que cada item tiene la embase correcta
+                const botella = cartItems.find(item => item.packaging === 'Botella');
+                const galon = cartItems.find(item => item.packaging === 'Galón');
+                
+                if (!botella || !galon) {
+                    throw new Error('No se encontraron los items con las embases esperadas');
+                }
+                
+                // Verificar cantidades
+                if (botella.quantity !== 8) {
+                    throw new Error(`Cantidad de botellas esperada: 8, actual: ${botella.quantity}`);
+                }
+                
+                if (galon.quantity !== 3) {
+                    throw new Error(`Cantidad de galones esperada: 3, actual: ${galon.quantity}`);
+                }
+                
+                // Verificar que los items son diferentes
+                if (botella.id === galon.id) {
+                    throw new Error('Los items no están separados en el carrito');
+                }
+                
+                showResult('complete-result', '✅ Prueba completada con éxito! El carrito funciona correctamente con productos de diferentes embases', 'success');
+            } catch (error) {
+                showResult('complete-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Iniciar la prueba al cargar la página
+        window.addEventListener('DOMContentLoaded', () => {
+            testLogin();
+        });
+    </script>
+</body>
+</html>

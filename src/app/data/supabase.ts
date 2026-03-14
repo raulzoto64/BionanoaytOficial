@@ -189,6 +189,7 @@ export interface CartItem {
   user_id: string;
   product_id: string;
   quantity: number;
+  packaging?: string; // Tipo de embase
   created_at: string;
   updated_at: string;
 }
@@ -199,6 +200,7 @@ export interface CartItemWithProduct {
   user_id: string;
   product_id: string;
   quantity: number;
+  packaging?: string; // Tipo de embase
   created_at: string;
   updated_at: string;
   product: Product;
@@ -690,17 +692,24 @@ export const supabaseAPI = {
   calculatePrice: async (
     productId: string,
     quantity: number,
+    packaging?: string,
   ): Promise<{
     pricePerUnit: number;
     total: number;
     currency: string;
   } | null> => {
-    const { data: prices, error } = await supabase
+    let query = supabase
       .from("prices_by_quantity")
       .select("*")
       .eq("product_id", productId)
       .lte("min_quantity", quantity)
       .or(`max_quantity.is.null,max_quantity.gte.${quantity}`);
+
+    if (packaging) {
+      query = query.eq("packaging", packaging);
+    }
+
+    const { data: prices, error } = await query;
 
     if (error) throw new Error(error.message);
 
@@ -711,7 +720,7 @@ export const supabaseAPI = {
     );
 
     if (!applicablePrice) {
-      console.warn("No applicable price found for product:", productId, "quantity:", quantity);
+      console.warn("No applicable price found for product:", productId, "quantity:", quantity, "packaging:", packaging);
       return null;
     }
 
@@ -1379,13 +1388,14 @@ export const supabaseAPI = {
   // ==========================================
 
   // Agregar o actualizar un item en el carrito
-  addToCart: async (userId: string, productId: string, quantity: number = 1): Promise<CartItem> => {
-    // Verificar si el item ya existe en el carrito
+  addToCart: async (userId: string, productId: string, quantity: number = 1, packaging?: string): Promise<CartItem> => {
+    // Verificar si el item ya existe en el carrito con la misma embase
     const { data: existingItem, error: fetchError } = await supabase
       .from("cart_items")
       .select("*")
       .eq("user_id", userId)
       .eq("product_id", productId)
+      .eq("packaging", packaging || 'Sin embase')
       .single();
 
     if (fetchError && fetchError.code !== "PGRST116") {
@@ -1395,24 +1405,36 @@ export const supabaseAPI = {
     if (existingItem) {
       // Actualizar cantidad si el item ya existe
       const newQuantity = existingItem.quantity + quantity;
+      
       const { data: updatedItem, error: updateError } = await supabase
         .from("cart_items")
-        .update({ quantity: newQuantity })
+        .update({ 
+          quantity: newQuantity
+        })
         .eq("id", existingItem.id)
         .select()
         .single();
 
       if (updateError) throw new Error(updateError.message);
+      
+      console.log("Item actualizado en carrito:", updatedItem);
       return updatedItem;
     } else {
       // Agregar nuevo item al carrito
       const { data: newItem, error: insertError } = await supabase
         .from("cart_items")
-        .insert([{ user_id: userId, product_id: productId, quantity }])
+        .insert([{ 
+          user_id: userId, 
+          product_id: productId, 
+          quantity,
+          packaging: packaging || 'Sin embase'
+        }])
         .select()
         .single();
 
       if (insertError) throw new Error(insertError.message);
+      
+      console.log("Nuevo item agregado al carrito:", newItem);
       return newItem;
     }
   },
@@ -1440,19 +1462,32 @@ export const supabaseAPI = {
       })
     );
 
-    return cartItemsWithProducts.filter(item => item.product !== null);
+    // Ordenar items por tipo de embase
+    const sortedItems = cartItemsWithProducts.sort((a, b) => {
+      const packagingA = a.packaging || 'Sin embase';
+      const packagingB = b.packaging || 'Sin embase';
+      return packagingA.localeCompare(packagingB);
+    });
+
+    console.log("Items del carrito ordenados por embase:", sortedItems);
+    return sortedItems.filter(item => item.product !== null);
   },
 
   // Actualizar cantidad de un item en el carrito
   updateCartItemQuantity: async (itemId: string, quantity: number): Promise<CartItem> => {
-    const { data: updatedItem, error } = await supabase
+    // Actualizar item con nueva cantidad
+    const { data: updatedItem, error: updateError } = await supabase
       .from("cart_items")
-      .update({ quantity })
+      .update({ 
+        quantity
+      })
       .eq("id", itemId)
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (updateError) throw new Error(updateError.message);
+    
+    console.log("Item actualizado en carrito:", updatedItem);
     return updatedItem;
   },
 
