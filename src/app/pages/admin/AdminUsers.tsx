@@ -3,11 +3,10 @@ import { Plus, Edit, Trash, Mail, User as UserIcon, Shield, Key, Save, RotateCcw
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Select } from '../../components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Label } from '../../components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Checkbox } from '../../components/ui/checkbox';
 import { toast } from 'sonner';
 import { supabaseAPI, type User } from '../../data/supabase';
 import { Role, permissions, getPermissionsForRole, setPermissionsForRole, hasPermission, resetRolePermissions } from '../../data/roles';
@@ -173,18 +172,20 @@ export function AdminUsers() {
               
               <div>
                 <Label htmlFor="role">Rol</Label>
-                <select
-                  id="role"
+                <Select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                  required
-                  className="w-full p-2 border rounded-md"
+                  onValueChange={(value) => setFormData({ ...formData, role: value as Role })}
                 >
-                  <option value="viewer">Visualizador</option>
-                  <option value="editor">Editor</option>
-                  <option value="manager">Gerente</option>
-                  <option value="admin">Administrador</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="viewer">Visualizador</SelectItem>
+                    <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="manager">Gerente</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <Button 

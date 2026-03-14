@@ -190,7 +190,7 @@ export function AdminProducts() {
       category: editingProduct.category || 'cat-001',
       status: editingProduct.status,
       image: editingProduct.image, // URL ya subida por Cloudinary
-      images: editingProduct.images, // Guardar las imágenes
+      images: Array.isArray(editingProduct.images) ? editingProduct.images : [], // Asegurar que sea array
       featured: editingProduct.featured || false,
     };
 
@@ -413,8 +413,11 @@ export function AdminProducts() {
               <div>
                 <Label>Imágenes</Label>
                 <ImageUpload
-                  currentImages={editingProduct.images || []}
-                  onImageUpload={(urls) => setEditingProduct({ ...editingProduct, images: urls })}
+                  currentImages={Array.isArray(editingProduct.images) ? editingProduct.images : []}
+                  onImageUpload={(urls) => setEditingProduct({ 
+                    ...editingProduct, 
+                    images: Array.isArray(urls) ? urls : [urls]
+                  })}
                   type="product"
                 />
               </div>

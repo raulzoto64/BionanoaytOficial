@@ -4,7 +4,7 @@ import { Upload, X } from 'lucide-react';
 
 interface ImageUploadProps {
   onImageUpload: (url: string | string[]) => void;
-  currentImages?: string[];
+  currentImages?: string[] | string;
   currentImage?: string;
   userId?: string;
   type?: 'avatar' | 'banner' | 'product';
@@ -97,7 +97,8 @@ export function ImageUpload({
   };
 
   const handleRemoveImage = (index: number) => {
-    const updatedImages = currentImages.filter((_, i) => i !== index);
+    const imagesArray = Array.isArray(currentImages) ? currentImages : [];
+    const updatedImages = imagesArray.filter((_, i) => i !== index);
     if (currentImage !== undefined) {
       onImageUpload('');
     } else {
@@ -107,7 +108,7 @@ export function ImageUpload({
 
   return (
     <div className="space-y-4">
-      {images.length > 0 && (
+      {Array.isArray(images) && images.length > 0 && (
         <div className="grid grid-cols-4 gap-2">
           {images.map((image, index) => (
             <div key={index} className="relative aspect-square w-full">
