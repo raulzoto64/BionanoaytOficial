@@ -45,9 +45,12 @@ export function AdminSettings() {
 
     setSaving(true);
     try {
-      await supabaseAPI.updateSiteSettings(settings);
+      console.log('Guardando configuración:', settings);
+      const result = await supabaseAPI.updateSiteSettings(settings);
+      console.log('Resultado de guardado:', result);
       toast.success('Configuración guardada exitosamente');
     } catch (error) {
+      console.error('Error al guardar configuración:', error);
       toast.error('Error al guardar configuración');
     } finally {
       setSaving(false);

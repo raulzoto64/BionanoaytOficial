@@ -252,20 +252,48 @@ export function Cart() {
         <div className="md:col-span-1">
           <div className="bg-white rounded-xl p-6 shadow-xl sticky top-24 border border-gray-100">
             <h2 className="text-2xl font-bold text-[#1C5D15] mb-6">Resumen del Pedido</h2>
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-[#629960] text-lg">
-                <span>Subtotal</span>
-                <span>${subtotal.toLocaleString('es-CO')}</span>
-              </div>
-              <div className="flex justify-between text-[#629960] text-lg">
-                <span>Envío</span>
-                <span>${shipping.toLocaleString('es-CO')}</span>
-              </div>
-              <div className="border-t pt-3 flex justify-between text-2xl font-bold text-[#1C5D15]">
-                <span>Total</span>
-                <span>${total.toLocaleString('es-CO')}</span>
+            
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-[#1C5D15] mb-4">Lista de productos seleccionados</h3>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {cartItems.map((item, index) => (
+                  <div key={index} className="flex flex-col gap-1">
+                    <div className="flex justify-between items-start text-sm">
+                      <span className="text-[#629960] flex-1 pr-10">
+                        ({item.quantity}) {item.packaging || 'Sin embase'} de {item.translation.name}
+                      </span>
+                      <span className="font-semibold text-[#1C5D15] whitespace-nowrap">
+                        ${item.totalPrice.toLocaleString('es-CO')}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#629960]/70">
+                      {item.pricePerUnit.toLocaleString('es-CO')} COP x {item.quantity} unidades
+                    </div>
+                    {index < cartItems.length - 1 && (
+                      <div className="border-t border-gray-100 my-1"></div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
+
+            <div className="border-t pt-4 mb-6">
+              <div className="space-y-3">
+                <div className="flex justify-between text-[#629960] text-lg">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toLocaleString('es-CO')}</span>
+                </div>
+                <div className="flex justify-between text-[#629960] text-lg">
+                  <span>Envío</span>
+                  <span>${shipping.toLocaleString('es-CO')}</span>
+                </div>
+                <div className="border-t pt-3 flex justify-between text-2xl font-bold text-[#1C5D15]">
+                  <span>Total</span>
+                  <span>${total.toLocaleString('es-CO')}</span>
+                </div>
+              </div>
+            </div>
+            
             <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] py-7 text-xl font-bold mb-4 shadow-lg shadow-[#1C5D15]/20">
               Proceder al Pago
             </Button>

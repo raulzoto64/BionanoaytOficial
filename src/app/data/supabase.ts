@@ -506,12 +506,37 @@ export const supabaseAPI = {
   updateSiteSettings: async (
     data: Partial<SiteSettings>,
   ): Promise<SiteSettings> => {
+    console.log('Intentando actualizar configuración:', data);
+    // La tabla site_settings solo tiene una fila (id = 1)
     const { data: settings, error } = await supabase
       .from("site_settings")
       .update(data)
+      .eq("id", "1") // Especificamos la fila a actualizar
+      .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('Error al actualizar configuración:', error);
+      // Si la fila no existe, intentamos crearla
+      if (error.code === 'PGRST116') {
+        console.log('Configuración no encontrada, creando nueva...');
+        const { data: newSettings, error: insertError } = await supabase
+          .from("site_settings")
+          .insert([{ id: "1", ...data }])
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Error al crear configuración:', insertError);
+          throw new Error(insertError.message);
+        }
+        
+        return newSettings;
+      }
+      throw new Error(error.message);
+    }
+
+    console.log('Configuración actualizada exitosamente:', settings);
     return settings;
   },
 

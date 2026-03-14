@@ -90,6 +90,9 @@ export function Navigation() {
                 <DropdownMenuItem onClick={() => scrollToSection("products")}>
                   {t('nav.products_catalog')}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("timeline")}>
+                  {language === 'es' ? 'Trayectoria' : 'Timeline'}
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("team")}>
                   {language === 'es' ? 'Equipo de trabajo' : 'Work team'}
                 </DropdownMenuItem>
@@ -98,9 +101,6 @@ export function Navigation() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("ecosystem")}>
                   {language === 'es' ? 'Ecosistema colaborativo' : 'Collaborative ecosystem'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/process")}>
-                  {language === 'es' ? 'Nuestro proceso' : 'Our process'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection("contact")}>
                   {t('footer.contact')}
@@ -117,8 +117,8 @@ export function Navigation() {
                 <DropdownMenuItem onClick={() => navigate("/technology")}>
                   {language === 'es' ? 'Nuestra tecnología' : 'Our technology'}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("timeline")}>
-                  {language === 'es' ? 'Trayectoria' : 'Timeline'}
+                <DropdownMenuItem onClick={() => navigate("/process")}>
+                  {language === 'es' ? 'Nuestro proceso' : 'Our process'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
