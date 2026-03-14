@@ -11,7 +11,6 @@ interface PurposeProps {
 }
 
 export function Purpose({ purposes }: PurposeProps) {
-  console.log('Purpose component received:', purposes);
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
       case 'Users':

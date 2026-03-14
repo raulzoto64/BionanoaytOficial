@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash, Mail, User as UserIcon, Shield, Key, Save, RotateCcw } from 'lucide-react';
+import { Plus, Edit, Trash, User as UserIcon } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { toast } from 'sonner';
 import { supabaseAPI, type User } from '../../data/supabase';
-import { Role, permissions, getPermissionsForRole, setPermissionsForRole, hasPermission, resetRolePermissions } from '../../data/roles';
+import { Role } from '../../data/roles';
 import { RolePermissionsCard } from '../../components/admin/RolePermissionsCard';
 
 export function AdminUsers() {

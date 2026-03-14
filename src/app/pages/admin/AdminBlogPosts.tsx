@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2, Plus, Save, X, Eye, Edit } from 'lucide-react';
+import { Trash2, Plus, Eye, Edit } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -7,10 +7,6 @@ import { Textarea } from '../../components/ui/textarea';
 import { Badge } from '../../components/ui/badge';
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '../../components/ui/card';
 import {
   Dialog,
@@ -28,7 +24,7 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { useDatabase } from '../../hooks/useDatabase';
-import { BlogPost, BlogPostTranslation, BlogCategory, BlogPostCategory, supabaseAPI } from '../../data/supabase';
+import { BlogPost, BlogPostTranslation, BlogCategory, supabaseAPI } from '../../data/supabase';
 import { toast } from 'sonner';
 import { ImageUpload } from '../../components/ImageUpload';
 import { BlogContentSection, SectionType } from '../../components/admin/BlogContentSection';
@@ -266,9 +262,6 @@ export function AdminBlogPosts() {
           order: index++,
         });
       } else if (element.tagName === 'UL') {
-        // Check if this UL contains checklist items
-        const hasCheckboxes = Array.from(element.querySelectorAll('input[type="checkbox"]')).length > 0;
-        
         // Regular unordered list (treat as text section)
         sections.push({
           id: Math.random().toString(36).substr(2, 9),
@@ -644,13 +637,13 @@ export function AdminBlogPosts() {
                       <Plus className="w-4 h-4 mr-2" />
                       <SelectValue placeholder="Agregar" />
                     </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="text">Texto</SelectItem>
-                    <SelectItem value="image">Imagen</SelectItem>
-                    <SelectItem value="video">Video</SelectItem>
-                    <SelectItem value="quote">Cita</SelectItem>
-                    <SelectItem value="gallery">Galería</SelectItem>
-                  </SelectContent>
+                    <SelectContent>
+                      <SelectItem value="text">Texto</SelectItem>
+                      <SelectItem value="image">Imagen</SelectItem>
+                      <SelectItem value="video">Video</SelectItem>
+                      <SelectItem value="quote">Cita</SelectItem>
+                      <SelectItem value="gallery">Galería</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
 

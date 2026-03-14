@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
 import { toast } from 'sonner';
 import { DatabaseManager } from '../../data/DatabaseManager';
 import { FooterSettings, FooterColumn, FooterLink } from '../../data/supabase';
