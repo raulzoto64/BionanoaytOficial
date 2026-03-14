@@ -22,8 +22,11 @@ import { AdminBlogPosts } from "./pages/admin/AdminBlogPosts";
 import { AdminBlogCategories } from "./pages/admin/AdminBlogCategories";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminEcosystem } from "./pages/admin/AdminEcosystem";
+import { AdminLegalPages } from "./pages/admin/AdminLegalPages";
+import { AdminFooterSettings } from "./pages/admin/AdminFooterSettings";
 import { EcosystemMemberDetail } from "./pages/EcosystemMemberDetail";
 import { EcosystemPage } from "./pages/Ecosystem";
+import { LegalPage } from "./pages/LegalPage";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
 // Wrapper component for Login to include LanguageProvider
@@ -79,6 +82,10 @@ export const router = createBrowserRouter([
       {
         path: "ecosystem/:slug",
         element: <EcosystemMemberDetail />,
+      },
+      {
+        path: "legal/:slug",
+        element: <LegalPage />,
       },
       {
         path: "*",
@@ -137,6 +144,14 @@ export const router = createBrowserRouter([
       {
         path: "ecosystem",
         element: <AdminEcosystem />,
+      },
+      {
+        path: "legal",
+        element: <AdminLegalPages />,
+      },
+      {
+        path: "footer",
+        element: <AdminFooterSettings />,
       },
     ],
   },

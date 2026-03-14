@@ -181,6 +181,55 @@ export interface Translation {
 }
 
 // ==========================================
+// LEGAL PAGES
+// ==========================================
+
+export interface LegalPage {
+  id: string;
+  slug: string;
+  title_es: string;
+  title_en: string;
+  content_es: string;
+  content_en: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ==========================================
+// FOOTER SETTINGS
+// ==========================================
+
+export interface FooterLink {
+  id: string;
+  label_es: string;
+  label_en: string;
+  url: string;
+}
+
+export interface FooterColumn {
+  id: string;
+  title_es: string;
+  title_en: string;
+  links: FooterLink[];
+}
+
+export interface FooterSettings {
+  id: string;
+  columns: FooterColumn[];
+  social_media: {
+    facebook: string;
+    twitter: string;
+    instagram: string;
+    linkedin: string;
+  };
+  copyright_text_es: string;
+  copyright_text_en: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ==========================================
 // CART ITEMS
 // ==========================================
 
@@ -455,7 +504,7 @@ export const supabaseAPI = {
       console.warn("Error al cargar configuración, usando valores predeterminados");
       // Devolver configuración predeterminada si no existe o hay error
       return {
-        id: "1",
+        id: "settings-001",
         site_name: "BionanoAyt",
         site_email: "contacto@bionanoayt.com",
         site_phone: "+51 999 123 456",
@@ -507,11 +556,11 @@ export const supabaseAPI = {
     data: Partial<SiteSettings>,
   ): Promise<SiteSettings> => {
     console.log('Intentando actualizar configuración:', data);
-    // La tabla site_settings solo tiene una fila (id = 1)
+    // La tabla site_settings solo tiene una fila (id = settings-001)
     const { data: settings, error } = await supabase
       .from("site_settings")
       .update(data)
-      .eq("id", "1") // Especificamos la fila a actualizar
+      .eq("id", "settings-001") // Especificamos la fila a actualizar
       .select()
       .single();
 
@@ -522,7 +571,7 @@ export const supabaseAPI = {
         console.log('Configuración no encontrada, creando nueva...');
         const { data: newSettings, error: insertError } = await supabase
           .from("site_settings")
-          .insert([{ id: "1", ...data }])
+          .insert([{ id: "settings-001", ...data }])
           .select()
           .single();
         
@@ -1528,6 +1577,196 @@ export const supabaseAPI = {
     const { error } = await supabase.from("cart_items").delete().eq("user_id", userId);
 
     if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // LEGAL PAGES
+  // ==========================================
+
+  getLegalPages: async (): Promise<LegalPage[]> => {
+    const { data: pages, error } = await supabase
+      .from("legal_pages")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return pages || [];
+  },
+
+  getLegalPageById: async (id: string): Promise<LegalPage | null> => {
+    const { data: page, error } = await supabase
+      .from("legal_pages")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return page || null;
+  },
+
+  getLegalPageBySlug: async (slug: string): Promise<LegalPage | null> => {
+    const { data: page, error } = await supabase
+      .from("legal_pages")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw new Error(error.message);
+    return page || null;
+  },
+
+  createLegalPage: async (
+    data: Omit<LegalPage, "id" | "created_at" | "updated_at">,
+  ): Promise<LegalPage> => {
+    const { data: page, error } = await supabase
+      .from("legal_pages")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return page;
+  },
+
+  updateLegalPage: async (
+    id: string,
+    data: Partial<LegalPage>,
+  ): Promise<LegalPage> => {
+    const { data: page, error } = await supabase
+      .from("legal_pages")
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return page;
+  },
+
+  deleteLegalPage: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("legal_pages").delete().eq("id", id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // ==========================================
+  // FOOTER SETTINGS
+  // ==========================================
+
+  getFooterSettings: async (): Promise<FooterSettings> => {
+    const { data: settings, error } = await supabase
+      .from("footer_settings")
+      .select("*")
+      .single();
+
+    if (error) {
+      console.warn("Error al cargar configuración del footer, usando valores predeterminados");
+      // Devolver configuración predeterminada si no existe o hay error
+      return {
+        id: "footer-001",
+        columns: [
+          {
+            id: "col-1",
+            title_es: "Empresa",
+            title_en: "Company",
+            links: [
+              { id: "link-1", label_es: "Sobre Nosotros", label_en: "About Us", url: "/about" },
+              { id: "link-2", label_es: "Nuestra Tecnología", label_en: "Our Technology", url: "/technology" },
+              { id: "link-3", label_es: "Proceso", label_en: "Process", url: "/process" },
+              { id: "link-4", label_es: "Ecosistema", label_en: "Ecosystem", url: "/ecosystem" }
+            ]
+          },
+          {
+            id: "col-2",
+            title_es: "Productos",
+            title_en: "Products",
+            links: [
+              { id: "link-5", label_es: "Antimicrobianos", label_en: "Antimicrobials", url: "/store?category=antimicrobianos" },
+              { id: "link-6", label_es: "Limpieza Industrial", label_en: "Industrial Cleaning", url: "/store?category=limpieza-industrial" },
+              { id: "link-7", label_es: "Fertilizantes", label_en: "Fertilizers", url: "/store?category=fertilizantes" },
+              { id: "link-8", label_es: "Fungicidas", label_en: "Fungicides", url: "/store?category=fungicidas" }
+            ]
+          },
+          {
+            id: "col-3",
+            title_es: "Legal",
+            title_en: "Legal",
+            links: [
+              { id: "link-9", label_es: "Política de Privacidad", label_en: "Privacy Policy", url: "/legal/privacy-policy" },
+              { id: "link-10", label_es: "Términos y Condiciones", label_en: "Terms and Conditions", url: "/legal/terms-conditions" },
+              { id: "link-11", label_es: "Política de Cookies", label_en: "Cookie Policy", url: "/legal/cookie-policy" },
+              { id: "link-12", label_es: "Aviso Legal", label_en: "Legal Notice", url: "/legal/legal-notice" }
+            ]
+          },
+          {
+            id: "col-4",
+            title_es: "Contacto",
+            title_en: "Contact",
+            links: [
+              { id: "link-13", label_es: "Contáctanos", label_en: "Contact Us", url: "/#contact" },
+              { id: "link-14", label_es: "Preguntas Frecuentes", label_en: "FAQ", url: "/faq" },
+              { id: "link-15", label_es: "Blog", label_en: "Blog", url: "/blog" }
+            ]
+          }
+        ],
+        social_media: {
+          facebook: "https://facebook.com/atbionano",
+          twitter: "https://twitter.com/atbionano",
+          instagram: "https://instagram.com/atbionano",
+          linkedin: "https://linkedin.com/company/atbionano"
+        },
+        copyright_text_es: "© {{year}} Bionanoaxus. Todos los derechos reservados.",
+        copyright_text_en: "© {{year}} Bionanoaxus. All rights reserved.",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    }
+
+    return {
+      ...settings,
+      social_media: settings.social_media || {
+        facebook: "",
+        twitter: "",
+        instagram: "",
+        linkedin: ""
+      },
+      columns: settings.columns || []
+    };
+  },
+
+  updateFooterSettings: async (
+    data: Partial<FooterSettings>,
+  ): Promise<FooterSettings> => {
+    // La tabla footer_settings solo tiene una fila (id = footer-001)
+    const { data: settings, error } = await supabase
+      .from("footer_settings")
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq("id", "footer-001")
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al actualizar configuración del footer:', error);
+      // Si la fila no existe, intentamos crearla
+      if (error.code === 'PGRST116') {
+        console.log('Configuración del footer no encontrada, creando nueva...');
+        const { data: newSettings, error: insertError } = await supabase
+          .from("footer_settings")
+          .insert([{ id: "footer-001", ...data }])
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Error al crear configuración del footer:', insertError);
+          throw new Error(insertError.message);
+        }
+        
+        return newSettings;
+      }
+      throw new Error(error.message);
+    }
+
+    return settings;
   },
 
 };

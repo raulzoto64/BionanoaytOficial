@@ -14,6 +14,8 @@ import {
   PageContent,
   SiteSettings,
   Translation,
+  LegalPage,
+  FooterSettings,
 } from './supabase';
 
 // ==========================================
@@ -137,5 +139,45 @@ export class DatabaseManager {
       if (enTranslation) translations.push(enTranslation);
     }
     return translations;
+  }
+
+  // ==========================================
+  // LEGAL PAGES
+  // ==========================================
+
+  static async getLegalPages(): Promise<LegalPage[]> {
+    return await supabaseAPI.getLegalPages();
+  }
+
+  static async getLegalPageById(id: string): Promise<LegalPage | null> {
+    return await supabaseAPI.getLegalPageById(id);
+  }
+
+  static async getLegalPageBySlug(slug: string): Promise<LegalPage | null> {
+    return await supabaseAPI.getLegalPageBySlug(slug);
+  }
+
+  static async createLegalPage(data: Omit<LegalPage, 'id' | 'created_at' | 'updated_at'>): Promise<LegalPage> {
+    return await supabaseAPI.createLegalPage(data);
+  }
+
+  static async updateLegalPage(id: string, data: Partial<LegalPage>): Promise<LegalPage> {
+    return await supabaseAPI.updateLegalPage(id, data);
+  }
+
+  static async deleteLegalPage(id: string): Promise<void> {
+    await supabaseAPI.deleteLegalPage(id);
+  }
+
+  // ==========================================
+  // FOOTER SETTINGS
+  // ==========================================
+
+  static async getFooterSettings(): Promise<FooterSettings> {
+    return await supabaseAPI.getFooterSettings();
+  }
+
+  static async updateFooterSettings(data: Partial<FooterSettings>): Promise<FooterSettings> {
+    return await supabaseAPI.updateFooterSettings(data);
   }
 }

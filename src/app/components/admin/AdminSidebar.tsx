@@ -1,3 +1,5 @@
+"use client";
+
 import { Link, useLocation } from 'react-router';
 import { 
   LayoutDashboard, 
@@ -31,7 +33,9 @@ export function AdminSidebar() {
     { path: '/admin/translations', icon: Languages, label: 'Traducciones' },
     { path: '/admin/blog/posts', icon: FileEdit, label: 'Artículos del Blog' },
     { path: '/admin/blog/categories', icon: BookOpen, label: 'Categorías del Blog' },
-    { path: '/admin/ecosystem', icon: UsersRound, label: 'Miembros del Ecosistema' },
+    { path: '/admin/ecosystem', icon: UsersRound, label: 'Ecosistema' },
+    { path: '/admin/legal', icon: FileText, label: 'Páginas Legales' },
+    { path: '/admin/footer', icon: FileText, label: 'Footer' },
     { path: '/admin/settings', icon: Settings, label: 'Configuración' },
   ];
 
@@ -46,10 +50,10 @@ export function AdminSidebar() {
     <aside
       className={`${
         collapsed ? 'w-20' : 'w-64'
-      } bg-[#1C5D15] text-white transition-all duration-300 flex flex-col`}
+      } bg-[#1C5D15] text-white transition-all duration-300 flex flex-col h-screen sticky top-0 left-0 z-50`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-[#629960]/30">
+      <div className="p-4 border-b border-[#629960]/30 flex-shrink-0">
         <div className="flex items-center justify-between">
           {!collapsed && (
             <h2 className="text-xl font-bold text-[#19FF00]">Admin Panel</h2>
@@ -65,8 +69,8 @@ export function AdminSidebar() {
         </div>
       </div>
 
-      {/* Menu Items */}
-      <nav className="flex-1 py-6">
+      {/* Menu Items - Scroll Invisible */}
+      <nav className="flex-1 py-6 overflow-y-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ul className="space-y-2 px-3">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -84,7 +88,7 @@ export function AdminSidebar() {
                   title={collapsed ? item.label : ''}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               </li>
             );
@@ -93,12 +97,12 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-[#629960]/30">
+      <div className="p-4 border-t border-[#629960]/30 flex-shrink-0">
         <Link
           to="/"
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-white hover:bg-[#629960]/30 transition-colors"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span>Volver al sitio</span>}
         </Link>
       </div>

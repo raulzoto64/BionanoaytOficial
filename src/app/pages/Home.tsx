@@ -324,12 +324,6 @@ export function Home() {
                 <NewsSection />
               </div>
             );
-          case "contact":
-            return (
-              <div key={section.id} id="contact">
-                <Footer contactInfo={section.content.contactInfo} />
-              </div>
-            );
           default:
             return null;
         }
