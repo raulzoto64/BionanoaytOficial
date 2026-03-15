@@ -67,15 +67,12 @@ export function Store() {
   const loadData = async () => {
     setLoading(true);
     try {
-      console.log('Loading products from Supabase...');
       
       // Cargar productos
       const productsData = await supabaseAPI.getProducts();
-      console.log('Products loaded:', productsData.length);
       
       // Cargar categorías
       const categoriesData = await supabaseAPI.getCategories();
-      console.log('Categories loaded:', categoriesData.length);
       
       // Combinar productos con sus traducciones y categorías
       const productsWithDetails = await Promise.all(
@@ -91,7 +88,6 @@ export function Store() {
         })
       );
 
-      console.log('Products with details:', productsWithDetails.length);
 
       // Combinar categorías con traducciones
       const categoriesWithTranslations = await Promise.all(
@@ -110,11 +106,8 @@ export function Store() {
         ...categoriesWithTranslations,
       ]);
       
-      console.log('Data loading completed');
     } catch (error) {
-      console.error('Error loading data:', error);
       // En caso de error, usar datos hardcodeados como fallback
-      console.log('Using fallback data');
     } finally {
       setLoading(false);
     }

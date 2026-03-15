@@ -31,7 +31,6 @@ export function EcosystemMemberDetail() {
         setTranslation(memberTranslation);
       }
     } catch (error) {
-      console.error('Error al cargar el miembro del ecosistema:', error);
     } finally {
       setLoading(false);
     }

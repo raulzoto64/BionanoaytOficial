@@ -101,7 +101,6 @@ export function ProductDetail() {
         setSelectedPackagingType(availablePackagingTypes[0]);
       }
     } catch (error) {
-      console.error('Error loading product:', error);
       toast.error('Error al cargar el producto');
     } finally {
       setLoading(false);
@@ -154,25 +153,10 @@ export function ProductDetail() {
         return formatted === selectedPackagingType;
       })?.packaging;
 
-      // Log de información enviada al carrito
-      console.log("Enviando al carrito:", {
-        userId: user.id,
-        productId: product.id,
-        productName: translation.name,
-        quantity: quantity,
-        packaging: originalPackaging,
-        calculatedPrice: calculatedPrice,
-        selectedPackagingType: selectedPackagingType
-      });
-
       const cartItem = await supabaseAPI.addToCart(user.id, product.id, quantity, originalPackaging);
-      
-      // Log de información recibida del carrito
-      console.log("Item agregado al carrito:", cartItem);
       
       toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
     } catch (error) {
-      console.error('Error al agregar al carrito:', error);
       toast.error('Error al agregar el producto al carrito');
     }
   };

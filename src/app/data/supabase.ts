@@ -319,7 +319,6 @@ export const supabaseAPI = {
   },
 
   updateUser: async (id: string, data: Partial<User>): Promise<User> => {
-    console.log('Update user data:', id, data);
     const { data: user, error } = await supabase
       .from("users")
       .update(data)
@@ -328,11 +327,9 @@ export const supabaseAPI = {
       .single();
     
     if (error) {
-      console.error('Update user error:', error);
       throw new Error(error.message);
     }
     
-    console.log('Updated user:', user);
     return user;
   },
 
@@ -425,7 +422,6 @@ export const supabaseAPI = {
     .single();
 
   if (error) {
-    console.error("Error detallado:", error);
     throw new Error(error.message);
   }
   return content;
@@ -501,7 +497,6 @@ export const supabaseAPI = {
       .single();
 
     if (error) {
-      console.warn("Error al cargar configuración, usando valores predeterminados");
       // Devolver configuración predeterminada si no existe o hay error
       return {
         id: "settings-001",
@@ -555,7 +550,6 @@ export const supabaseAPI = {
   updateSiteSettings: async (
     data: Partial<SiteSettings>,
   ): Promise<SiteSettings> => {
-    console.log('Intentando actualizar configuración:', data);
     // La tabla site_settings solo tiene una fila (id = settings-001)
     const { data: settings, error } = await supabase
       .from("site_settings")
@@ -565,10 +559,8 @@ export const supabaseAPI = {
       .single();
 
     if (error) {
-      console.error('Error al actualizar configuración:', error);
       // Si la fila no existe, intentamos crearla
       if (error.code === 'PGRST116') {
-        console.log('Configuración no encontrada, creando nueva...');
         const { data: newSettings, error: insertError } = await supabase
           .from("site_settings")
           .insert([{ id: "settings-001", ...data }])
@@ -576,7 +568,6 @@ export const supabaseAPI = {
           .single();
         
         if (insertError) {
-          console.error('Error al crear configuración:', insertError);
           throw new Error(insertError.message);
         }
         
@@ -585,7 +576,6 @@ export const supabaseAPI = {
       throw new Error(error.message);
     }
 
-    console.log('Configuración actualizada exitosamente:', settings);
     return settings;
   },
 
@@ -627,7 +617,6 @@ export const supabaseAPI = {
       .from("products")
       .select("*");
 
-    console.log("Todos los productos:", products);
     if (error) throw new Error(error.message);
     return products;
   },
@@ -794,7 +783,6 @@ export const supabaseAPI = {
     );
 
     if (!applicablePrice) {
-      console.warn("No applicable price found for product:", productId, "quantity:", quantity, "packaging:", packaging);
       return null;
     }
 
@@ -1199,7 +1187,6 @@ export const supabaseAPI = {
     const { data: pages, error } = await supabase.from("pages").select("*");
     
     if (error) {
-      console.error("Error al obtener páginas:", error);
       return [];
     }
     
@@ -1219,8 +1206,7 @@ export const supabaseAPI = {
 
     if (error || !content) {
       if (error && error.code !== "PGRST116" && error.code !== "406") {
-        console.warn("Error al obtener contenido de página:", error);
-      }
+        }
       return null;
     }
 
@@ -1389,7 +1375,6 @@ export const supabaseAPI = {
       .select();
 
     if (updateError) {
-      console.error('Error updating ecosystem member:', updateError);
       throw new Error(updateError.message);
     }
 
@@ -1402,7 +1387,6 @@ export const supabaseAPI = {
         .single();
 
       if (getError) {
-        console.error('Error getting ecosystem member:', getError);
         throw new Error(`Miembro con ID ${id} no encontrado`);
       }
       
@@ -1490,8 +1474,7 @@ export const supabaseAPI = {
         .single();
 
       if (updateError) throw new Error(updateError.message);
-      
-      console.log("Item actualizado en carrito:", updatedItem);
+  
       return updatedItem;
     } else {
       // Agregar nuevo item al carrito
@@ -1507,8 +1490,6 @@ export const supabaseAPI = {
         .single();
 
       if (insertError) throw new Error(insertError.message);
-      
-      console.log("Nuevo item agregado al carrito:", newItem);
       return newItem;
     }
   },
@@ -1543,7 +1524,6 @@ export const supabaseAPI = {
       return packagingA.localeCompare(packagingB);
     });
 
-    console.log("Items del carrito ordenados por embase:", sortedItems);
     return sortedItems.filter(item => item.product !== null);
   },
 
@@ -1561,7 +1541,6 @@ export const supabaseAPI = {
 
     if (updateError) throw new Error(updateError.message);
     
-    console.log("Item actualizado en carrito:", updatedItem);
     return updatedItem;
   },
 
@@ -1660,7 +1639,6 @@ export const supabaseAPI = {
       .single();
 
     if (error) {
-      console.warn("Error al cargar configuración del footer, usando valores predeterminados");
       // Devolver configuración predeterminada si no existe o hay error
       return {
         id: "footer-001",
@@ -1746,10 +1724,8 @@ export const supabaseAPI = {
       .single();
 
     if (error) {
-      console.error('Error al actualizar configuración del footer:', error);
       // Si la fila no existe, intentamos crearla
       if (error.code === 'PGRST116') {
-        console.log('Configuración del footer no encontrada, creando nueva...');
         const { data: newSettings, error: insertError } = await supabase
           .from("footer_settings")
           .insert([{ id: "footer-001", ...data }])
@@ -1757,7 +1733,6 @@ export const supabaseAPI = {
           .single();
         
         if (insertError) {
-          console.error('Error al crear configuración del footer:', insertError);
           throw new Error(insertError.message);
         }
         

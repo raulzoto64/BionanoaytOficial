@@ -142,7 +142,6 @@ export function AdminBlogCategories() {
       setDialogOpen(false);
       loadCategories();
     } catch (error: any) {
-      console.error('Error detallado:', error);
       
       if (error.message?.includes('duplicate key')) {
         toast.error('El slug ya existe. Por favor usa un nombre diferente.');

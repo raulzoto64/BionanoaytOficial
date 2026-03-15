@@ -29,7 +29,6 @@ export function Technology() {
       const content = await supabaseAPI.getPageContent('page-technology', language);
       setPageContent(content);
     } catch (error) {
-      console.error('Error al cargar contenido de página:', error);
     }
   };
 

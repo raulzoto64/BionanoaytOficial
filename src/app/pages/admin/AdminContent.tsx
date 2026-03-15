@@ -245,7 +245,6 @@ export function AdminContent() {
       // Actualizar datos locales
       loadPages();
     } catch (error) {
-      console.error('Error al guardar la sección:', error);
       throw error;
     }
   };

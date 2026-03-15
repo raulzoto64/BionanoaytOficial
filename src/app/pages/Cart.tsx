@@ -67,9 +67,7 @@ export function Cart() {
       const total = itemsWithPrices.reduce((sum, item) => sum + item.totalPrice, 0);
       setSubtotal(total);
       
-      console.log("Items del carrito con precios:", itemsWithPrices);
     } catch (error) {
-      console.error('Error al cargar el carrito:', error);
       toast.error('Error al conectar con la base de datos');
     } finally {
       // Un pequeño delay para que la transición sea visualmente suave

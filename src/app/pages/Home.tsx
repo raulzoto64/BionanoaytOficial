@@ -33,20 +33,15 @@ export function Home() {
 
   const loadPageContent = async () => {
     try {
-      console.log("Loading page content for language:", language);
       const content = await supabaseAPI.getPageContent("page-home", language);
-      console.log("Page content received:", content);
       setPageContent(content);
     } catch (error) {
-      console.error("Error al cargar contenido de página:", error);
     }
   };
 
   const loadFeaturedProducts = async () => {
     try {
-      console.log("Loading featured products...");
       const products = await supabaseAPI.getFeaturedProducts();
-      console.log("Featured products from DB:", products);
 
       // Get translations for each featured product and category
       const productsWithTranslations = await Promise.all(
@@ -67,10 +62,8 @@ export function Home() {
         }),
       );
 
-      console.log("Products with translations:", productsWithTranslations);
       setFeaturedProducts(productsWithTranslations);
     } catch (error) {
-      console.error("Error al cargar productos destacados:", error);
     }
   };
 
@@ -247,8 +240,6 @@ export function Home() {
   const seoData =
     pageContent.sections.find((sec) => sec.type === "hero")?.content?.seo || {};
 
-  console.log("Page content sections:", pageContent.sections);
-
   return (
     <>
       <SEO
@@ -259,8 +250,6 @@ export function Home() {
 
       {pageContent.sections.map((section: Section) => {
         if (!section.visible) return null;
-
-        console.log("Rendering section:", section.type);
 
         switch (section.type) {
           case "hero":
@@ -276,7 +265,6 @@ export function Home() {
               </div>
             );
           case "features":
-            console.log("Features section content:", section.content);
             return (
               <div key={section.id} id="purpose">
                 <Purpose purposes={section.content.items} />

@@ -12,25 +12,15 @@ export function LoginButton() {
   const isAdmin = user?.role === 'admin';
 
   const handleLoginClick = () => {
-    // LOGS DE VERIFICACIÓN
-    console.log("--- Verificación de Autenticación ---");
-    console.log("¿Está autenticado?:", isAuthenticated);
-    console.log("Datos del usuario:", user);
-    console.log("Rol del usuario:", user?.role);
-    console.log("¿Es Admin (check interno)?:", isAdmin);
 
     if (isAdmin) {
-      console.log("Resultado: Es Admin. Redirigiendo a /admin");
       navigate("/admin");
     } else if (isAuthenticated) {
-      console.log("Resultado: Usuario autenticado (no admin). Redirigiendo a /admin");
       navigate("/admin"); 
     } else {
-      console.log("Resultado: No autenticado. Redirigiendo a /login");
       navigate("/login");
     }
-    console.log("-------------------------------------");
-  };
+    };
 
   return (
     <Button
@@ -39,7 +29,7 @@ export function LoginButton() {
       onClick={handleLoginClick}
     >
       <User className="w-4 h-4 mr-2" />
-      {isAdmin ? t('nav.adminPanel') : (isAuthenticated ? t('nav.admin') : t('nav.login'))}
+      {isAdmin ? t('adminPanel') : (isAuthenticated ? t('admin') : t('login'))}
     </Button>
   );
 }

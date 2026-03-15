@@ -42,7 +42,6 @@ export function BlogPost() {
           }
         }
       } catch (error) {
-        console.error('Error loading post:', error);
         setError('Error loading post');
       } finally {
         setLoading(false);

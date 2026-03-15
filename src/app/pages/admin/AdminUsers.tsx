@@ -48,7 +48,6 @@ export function AdminUsers() {
           email: formData.email,
           role: formData.role,
         });
-        console.log('Updated user:', updatedUser);
         toast.success('Usuario actualizado exitosamente');
       } else {
         // Crear nuevo usuario (se genera un nombre y contraseña temporal)
@@ -59,7 +58,6 @@ export function AdminUsers() {
           password: tempPassword,
           role: formData.role,
         });
-        console.log('New user:', newUser);
         toast.success('Usuario creado exitosamente');
       }
 
@@ -67,7 +65,6 @@ export function AdminUsers() {
       loadUsers();
       resetForm();
     } catch (error) {
-      console.error('Error al guardar usuario:', error);
       toast.error('Error al guardar usuario');
     } finally {
       setIsLoading(false);

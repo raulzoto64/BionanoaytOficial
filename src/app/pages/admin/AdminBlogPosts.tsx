@@ -108,7 +108,6 @@ export function AdminBlogPosts() {
       }
       setCategoriesNames(names);
     } catch (error) {
-      console.error('Error al cargar categorías del blog:', error);
     }
   };
 
@@ -121,7 +120,6 @@ export function AdminBlogPosts() {
         setSelectedCategory('none');
       }
     } catch (error) {
-      console.error('Error al cargar categoría del artículo:', error);
       setSelectedCategory('none');
     }
   };
@@ -419,7 +417,6 @@ export function AdminBlogPosts() {
       setDialogOpen(false);
       loadPosts();
     } catch (error: any) {
-      console.error('Error detallado:', error);
       
       if (error.message?.includes('duplicate key')) {
         toast.error('El slug ya existe. Por favor usa un título diferente.');

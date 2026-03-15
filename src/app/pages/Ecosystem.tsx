@@ -51,7 +51,6 @@ export function EcosystemPage() {
 
       setTranslations(translationMap);
     } catch (error) {
-      console.error('Error al cargar miembros del ecosistema:', error);
     } finally {
       setLoading(false);
     }

@@ -17,7 +17,6 @@ export function Process() {
       const content = await supabaseAPI.getPageContent('page-process', language);
       setPageContent(content);
     } catch (error) {
-      console.error('Error al cargar contenido de página:', error);
     }
   };
 
@@ -124,7 +123,6 @@ export function Process() {
                                       return <Icon className="w-8 h-8 text-[#1C5D15]" />;
                                     }
                                   } catch (error) {
-                                    console.error('Error rendering icon:', error);
                                   }
                                   return <FlaskConical className="w-8 h-8 text-[#1C5D15]" />;
                                 })()}
@@ -162,8 +160,7 @@ export function Process() {
                                       const Icon = getIconComponent(step.icon);
                                       return <Icon className="w-32 h-32 opacity-20" />;
                                     }
-                                  } catch (error) {
-                                    console.error('Error rendering large icon:', error);
+                                                                } catch (error) {
                                   }
                                   return null;
                                 })()

@@ -253,8 +253,7 @@ export function AdminContentEditor() {
 
       // Actualizar datos locales
       loadPages();
-    } catch (error) {
-      console.error('Error al guardar la sección:', error);
+      } catch (error) {
       throw error;
     }
   };
@@ -373,7 +372,7 @@ export function AdminContentEditor() {
               case 'ecosystem':
                 return (
                   <div key={section.id} className="mb-12">
-                    <Ecosystem allies={content.allies} />
+                    <Ecosystem />
                   </div>
                 );
               case 'contact':

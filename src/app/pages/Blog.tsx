@@ -76,7 +76,6 @@ export function Blog() {
 
         setPosts(postsWithTranslations);
       } catch (error) {
-        console.error('Error loading blog content:', error);
       } finally {
         setLoading(false);
       }

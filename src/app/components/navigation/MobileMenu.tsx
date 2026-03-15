@@ -88,7 +88,7 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
           className="hover:text-[#19FF00] transition-colors"
           onClick={onClose}
         >
-          {isAuthenticated ? t("nav.admin") : t("nav.login")}
+          {isAuthenticated ? t("admin") : t("login")}
         </Link>
       </div>
     </div>

@@ -125,12 +125,10 @@ export function AdminEcosystem() {
   };
 
   const handleSelectMember = async (memberId: string) => {
-    console.log('handleSelectMember called with memberId:', memberId);
     setLoadingMember(memberId);
     try {
       const member = await supabaseAPI.getEcosystemMemberById(memberId);
       if (member) {
-        console.log('Selected member:', member);
         setSelectedMember(member);
         
         // Cargar traducciones
@@ -139,14 +137,12 @@ export function AdminEcosystem() {
           supabaseAPI.getEcosystemMemberTranslation(memberId, 'en')
         ]);
         
-        console.log('Translations:', { es: translationES, en: translationEN });
         setTranslations({
           es: translationES,
           en: translationEN
         });
       }
     } catch (error) {
-      console.error('Error al cargar miembro:', error);
       toast.error('Error al cargar miembro');
     } finally {
       setLoadingMember(null);
@@ -157,12 +153,9 @@ export function AdminEcosystem() {
     if (!selectedMember) return;
 
     try {
-      console.log('Guardando miembro:', selectedMember);
-      console.log('Guardando traducciones:', translations);
       
       // Actualizar datos del miembro
       const updatedMember = await supabaseAPI.updateEcosystemMember(selectedMember.id, selectedMember);
-      console.log('Miembro actualizado:', updatedMember);
 
       // Actualizar traducciones
       const [updatedES, updatedEN] = await Promise.all([
@@ -170,13 +163,10 @@ export function AdminEcosystem() {
         supabaseAPI.updateEcosystemMemberTranslation(selectedMember.id, 'en', translations.en)
       ]);
       
-      console.log('Traducción ES actualizada:', updatedES);
-      console.log('Traducción EN actualizada:', updatedEN);
 
       toast.success('Miembro guardado exitosamente');
       loadMembers();
     } catch (error) {
-      console.error('Error al guardar el miembro:', error);
       toast.error('Error al guardar el miembro');
     }
   };
@@ -793,7 +783,6 @@ export function AdminEcosystem() {
                     <button
                       className="border border-[#1C5D15] text-[#1C5D15] px-3 py-1 rounded-md text-sm hover:bg-[#1C5D15] hover:text-white transition-colors disabled:opacity-50 flex items-center"
                       onClick={() => {
-                        console.log('Edit button clicked for member id:', member.id);
                         handleSelectMember(member.id);
                       }}
                       disabled={loadingMember === member.id}

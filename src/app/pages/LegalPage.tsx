@@ -29,7 +29,6 @@ export function LegalPage() {
       }
       setLegalPage(page);
     } catch (error) {
-      console.error('Error loading legal page:', error);
       navigate('/');
     } finally {
       setIsLoading(false);
