@@ -34,25 +34,18 @@ export function Cart() {
 
       let items: CartItemWithProduct[] = [];
       if (isAuthenticated && user) {
-        console.log("Cargando carrito para usuario autenticado:", user.id);
         items = await supabaseAPI.getCartItems(user.id);
       } else {
         // Para visitantes, necesitamos obtener el guestId
         const guestId = localStorage.getItem("guest_id");
-        console.log("Cargando carrito para visitante, guestId:", guestId);
         if (guestId) {
           items = await supabaseAPI.getCartItemsByGuest(guestId);
         }
       }
 
-      console.log("Items cargados del carrito:", items);
-      console.log("Cantidad de items:", items?.length || 0);
-
       // Si no hay items, mostrar carrito vacío
       if (!items || items.length === 0) {
-        console.log(
-          "No se encontraron items en el carrito, mostrando carrito vacío",
-        );
+        
         setCartItems([]);
         setSubtotal(0);
         return;
@@ -76,16 +69,13 @@ export function Cart() {
         }),
       );
 
-      console.log("Items con precios calculados:", itemsWithPrices);
       setCartItems(itemsWithPrices);
       const total = itemsWithPrices.reduce(
         (sum, item) => sum + item.totalPrice,
         0,
       );
-      console.log("Subtotal calculado:", total);
       setSubtotal(total);
     } catch (error) {
-      console.error("Error al cargar el carrito:", error);
       toast.error("Error al conectar con la base de datos");
     } finally {
       // Un pequeño delay para que la transición sea visualmente suave
@@ -182,7 +172,6 @@ export function Cart() {
 
     // 2. Si no está cargando y el carrito está vacío (ya sea usuario o visitante)
     if (cartItems.length === 0) {
-      console.log("Renderizando carrito vacío");
       return (
         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
           <ShoppingBag className="w-24 h-24 text-[#629960] mx-auto mb-6 opacity-30" />
@@ -215,8 +204,6 @@ export function Cart() {
 
     // 3. Si no está cargando y el carrito está realmente vacío tras consultar la DB
     if (cartItems.length === 0) {
-      console.log("Renderizando carrito vacío");
-      console.log("Estado actual de cartItems:", cartItems);
       return (
         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
           <ShoppingBag className="w-24 h-24 text-[#629960] mx-auto mb-6 opacity-30" />

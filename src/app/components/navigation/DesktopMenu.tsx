@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
-import { ShoppingCart, ChevronDown } from "lucide-react";
-import { Button } from "../ui/button";
+import { Link, useNavigate } from "react-router";
+import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +11,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { supabaseAPI, Category } from "../../data/supabase";
 import { LoginButton } from "./LoginButton";
 import { LanguageSelector } from "./LanguageSelector";
+import { CartIndicator } from "./CartIndicator";
 
 interface DesktopMenuProps {
   scrollToSection: (sectionId: string) => void;
@@ -22,7 +22,6 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
 
-  // Load categories on component mount and when language changes
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -38,10 +37,9 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
         );
         setCategories(categoriesWithTranslations);
       } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error("Error loading categories:", error);
       }
     };
-
     loadCategories();
   }, [language]);
 
@@ -50,32 +48,32 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
       {/* Conócenos Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
-          {t('nav.about')} <ChevronDown className="w-4 h-4" />
+          {t("nav.about")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white">
           <DropdownMenuItem onClick={() => scrollToSection("purpose")}>
-            {language === 'es' ? 'Propósito empresarial' : 'Business purpose'}
+            {language === "es" ? "Propósito empresarial" : "Business purpose"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("featured")}>
-            {language === 'es' ? 'Producto estrella: Bionanoaxus' : 'Star product: Bionanoaxus'}
+            {language === "es" ? "Producto estrella: Bionanoaxus" : "Star product: Bionanoaxus"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("products")}>
-            {t('nav.products_catalog')}
+            {t("nav.products_catalog")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("timeline")}>
-            {language === 'es' ? 'Trayectoria' : 'Timeline'}
+            {language === "es" ? "Trayectoria" : "Timeline"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("team")}>
-            {language === 'es' ? 'Equipo de trabajo' : 'Work team'}
+            {language === "es" ? "Equipo de trabajo" : "Work team"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("allies")}>
-            {language === 'es' ? 'Empresas aliadas' : 'Allied companies'}
+            {language === "es" ? "Empresas aliadas" : "Allied companies"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("ecosystem")}>
-            {language === 'es' ? 'Ecosistema colaborativo' : 'Collaborative ecosystem'}
+            {language === "es" ? "Ecosistema colaborativo" : "Collaborative ecosystem"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("contact")}>
-            {t('footer.contact')}
+            {t("footer.contact")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -83,14 +81,14 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
       {/* Tecnología Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
-          {t('nav.technology')} <ChevronDown className="w-4 h-4" />
+          {t("nav.technology")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white">
           <DropdownMenuItem onClick={() => navigate("/technology")}>
-            {language === 'es' ? 'Nuestra tecnología' : 'Our technology'}
+            {language === "es" ? "Nuestra tecnología" : "Our technology"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate("/process")}>
-            {language === 'es' ? 'Nuestro proceso' : 'Our process'}
+            {language === "es" ? "Nuestro proceso" : "Our process"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -98,11 +96,11 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
       {/* Productos Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
-          {t('nav.products')} <ChevronDown className="w-4 h-4" />
+          {t("nav.products")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white">
           <DropdownMenuItem onClick={() => navigate("/store")}>
-            {language === 'es' ? 'Todos los productos' : 'All products'}
+            {language === "es" ? "Todos los productos" : "All products"}
           </DropdownMenuItem>
           {categories.map((cat) => (
             <DropdownMenuItem key={cat.id} onClick={() => navigate(`/store?category=${cat.id}`)}>
@@ -112,37 +110,24 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Blog */}
-      <Link 
-        to="/blog" 
-        className="hover:text-[#19FF00] transition-colors"
-      >
-        {t('nav.blog')}
+      <Link to="/blog" className="hover:text-[#19FF00] transition-colors">
+        {t("nav.blog")}
       </Link>
 
-      {/* Tienda */}
-      <Link 
-        to="/store" 
-        className="hover:text-[#19FF00] transition-colors"
-      >
-        {t('nav.store')}
+      <Link to="/store" className="hover:text-[#19FF00] transition-colors">
+        {t("nav.store")}
       </Link>
 
-      {/* Language Selector */}
       <LanguageSelector />
 
-      {/* Cart & Login */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-white hover:text-[#19FF00] hover:bg-[#19FF00]/10"
-          onClick={() => navigate("/cart")}
-        >
-          <ShoppingCart className="w-5 h-5" />
-        </Button>
+      {/* Contenedor de Carrito y Login con mayor separación */}
+      <div className="flex items-center gap-4 ml-2">
+        <CartIndicator />
         
-        <LoginButton />
+        {/* Usamos ml-6 para dar una separación clara hacia la derecha */}
+        <div className="ml-6">
+          <LoginButton />
+        </div>
       </div>
     </div>
   );
