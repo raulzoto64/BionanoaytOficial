@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ShoppingCart, Plus, Check } from "lucide-react";
+import { ShoppingCart, Check } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabaseAPI } from "../data/supabase";
 import { toast } from "sonner";
 
-export function AddToCartButton({ productId, packaging, onSuccess }) {
-  const { user, guestId, isAuthenticated, isGuest } = useAuth();
+interface AddToCartButtonProps {
+  productId: string;
+  packaging?: string;
+  onSuccess?: () => void;
+}
+
+export function AddToCartButton({ productId, packaging, onSuccess }: AddToCartButtonProps) {
+  const { user, getGuestId, isAuthenticated, isGuest } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
   const navigate = useNavigate();
@@ -18,18 +24,29 @@ export function AddToCartButton({ productId, packaging, onSuccess }) {
     setIsAdded(false);
 
     try {
-      const userId = isAuthenticated ? user!.id : (isGuest ? guestId! : null);
+      const userId = isAuthenticated ? user!.id : null;
+      const guestId = isGuest ? getGuestId() : null;
 
-      if (!userId) {
+      if (!userId && !guestId) {
         toast.error('No se pudo obtener la sesión de usuario');
         setIsLoading(false);
         return;
       }
 
-      await supabaseAPI.addToCart(userId, productId, 1, packaging);
+      await supabaseAPI.addToCart(userId, guestId, productId, 1, packaging);
       setIsAdded(true);
 
-      // Mostrar
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      toast.error('Error al agregar al carrito');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCartRedirect = () => {
     navigate("/cart");
   };

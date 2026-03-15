@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
@@ -132,10 +132,11 @@ export function ProductDetail() {
     if (!product || !translation || !calculatedPrice) return;
 
     try {
-      // Verificar que el usuario esté autenticado
-      if (!isAuthenticated || !user) {
-        toast.error('Debes iniciar sesión para agregar productos al carrito');
-        navigate('/login');
+      const userId = isAuthenticated && user ? user.id : null;
+      const guestId = !isAuthenticated ? useAuth().getGuestId() : null;
+
+      if (!userId && !guestId) {
+        toast.error('No se pudo obtener la sesión de usuario');
         return;
       }
       
@@ -153,7 +154,7 @@ export function ProductDetail() {
         return formatted === selectedPackagingType;
       })?.packaging;
 
-      const cartItem = await supabaseAPI.addToCart(user.id, product.id, quantity, originalPackaging);
+      await supabaseAPI.addToCart(userId, guestId, product.id, quantity, originalPackaging);
       
       toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
     } catch (error) {

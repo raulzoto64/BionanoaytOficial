@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { useLanguage } from '../contexts/LanguageContext';
-import { supabaseAPI, BlogPost as BlogPostType, BlogPostTranslation, BlogCategory } from '../data/supabase';
+import { supabaseAPI, BlogPost as BlogPostType, BlogPostTranslation } from '../data/supabase';
 import '../../styles/blog-content.css';
 
 export function BlogPost() {

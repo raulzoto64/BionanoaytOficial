@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { PageContent, Section, supabaseAPI } from "../data/supabase";
 import { Hero } from "../components/Hero";
-import { Purpose } from "../components/Purpose";
-import { Timeline } from "../components/Timeline";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 import { Microscope, Atom, Shield, Leaf } from "lucide-react";

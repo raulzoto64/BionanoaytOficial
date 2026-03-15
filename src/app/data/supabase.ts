@@ -1446,12 +1446,19 @@ export const supabaseAPI = {
   // ==========================================
 
   // Agregar o actualizar un item en el carrito
-  addToCart: async (userId: string, productId: string, quantity: number = 1, packaging?: string): Promise<CartItem> => {
+  addToCart: async (userId: string | null, guestId: string | null, productId: string, quantity: number = 1, packaging?: string): Promise<CartItem> => {
     // Verificar si el item ya existe en el carrito con la misma embase
-    const { data: existingItem, error: fetchError } = await supabase
-      .from("cart_items")
-      .select("*")
-      .eq("user_id", userId)
+    let query = supabase.from("cart_items").select("*");
+    
+    if (userId) {
+      query = query.eq("user_id", userId);
+    } else if (guestId) {
+      query = query.eq("guest_id", guestId);
+    } else {
+      throw new Error("Se requiere userId o guestId");
+    }
+
+    const { data: existingItem, error: fetchError } = await query
       .eq("product_id", productId)
       .eq("packaging", packaging || 'Sin embase')
       .single();
@@ -1474,18 +1481,25 @@ export const supabaseAPI = {
         .single();
 
       if (updateError) throw new Error(updateError.message);
-  
+
       return updatedItem;
     } else {
       // Agregar nuevo item al carrito
+      const insertData: any = {
+        product_id: productId,
+        quantity,
+        packaging: packaging || 'Sin embase'
+      };
+
+      if (userId) {
+        insertData.user_id = userId;
+      } else if (guestId) {
+        insertData.guest_id = guestId;
+      }
+
       const { data: newItem, error: insertError } = await supabase
         .from("cart_items")
-        .insert([{ 
-          user_id: userId, 
-          product_id: productId, 
-          quantity,
-          packaging: packaging || 'Sin embase'
-        }])
+        .insert([insertData])
         .select()
         .single();
 

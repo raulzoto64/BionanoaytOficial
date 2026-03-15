@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '../data/supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -12,7 +13,6 @@ export const useAuth = () => {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
-        console.error('Error al parsear usuario:', error);
         localStorage.removeItem('user');
       }
     }
@@ -31,11 +31,25 @@ export const useAuth = () => {
 
   const isAuthenticated = !!user;
 
+  // Generar o obtener guest_id
+  const getGuestId = () => {
+    let guestId = localStorage.getItem('guest_id');
+    if (!guestId) {
+      guestId = uuidv4();
+      localStorage.setItem('guest_id', guestId);
+    }
+    return guestId;
+  };
+
+  const isGuest = !isAuthenticated;
+
   return {
     user,
     isLoading,
     login,
     logout,
     isAuthenticated,
+    getGuestId,
+    isGuest,
   };
 };

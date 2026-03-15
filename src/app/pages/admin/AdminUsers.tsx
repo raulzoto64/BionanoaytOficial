@@ -44,7 +44,7 @@ export function AdminUsers() {
     try {
       if (editingUser) {
         // Editar usuario existente
-        const updatedUser = await supabaseAPI.updateUser(editingUser.id, {
+        await supabaseAPI.updateUser(editingUser.id, {
           email: formData.email,
           role: formData.role,
         });
@@ -52,7 +52,7 @@ export function AdminUsers() {
       } else {
         // Crear nuevo usuario (se genera un nombre y contraseña temporal)
         const tempPassword = Math.random().toString(36).slice(-8);
-        const newUser = await supabaseAPI.registerUser({
+        await supabaseAPI.registerUser({
           email: formData.email,
           name: formData.email.split('@')[0], // Usar parte del email como nombre
           password: tempPassword,

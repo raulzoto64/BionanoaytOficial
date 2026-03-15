@@ -1,10 +1,8 @@
 "use client";
 
 import { useLanguage } from "../contexts/LanguageContext";
-import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import { supabaseAPI, EcosystemMember, EcosystemMemberTranslation } from "../data/supabase";
-import { Button } from "../components/ui/button";
 import { 
   Select,
   SelectContent,

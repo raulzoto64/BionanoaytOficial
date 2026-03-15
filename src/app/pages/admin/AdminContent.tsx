@@ -7,7 +7,6 @@ import { Badge } from '../../components/ui/badge';
 import { 
   FileText, 
   Globe, 
-  Edit, 
   Save, 
   X, 
   Plus, 
@@ -34,7 +33,6 @@ interface PageWithContent extends Page {
 export function AdminContent() {
   const [pagesData, setPagesData] = useState<PageWithContent[]>([]);
   const [editingPage, setEditingPage] = useState<Page | null>(null);
-  const [editingLanguage, setEditingLanguage] = useState<'es' | 'en'>('es');
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -264,7 +262,7 @@ export function AdminContent() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-3xl text-[#1C5D15] mb-2">
-              Editar: {editingPage.slug} ({editingLanguage === 'es' ? '🇪🇸 Español' : '🇬🇧 English'})
+              Editar: {editingPage.slug}
             </h2>
             <p className="text-[#629960]">
               Gestiona las secciones de la página
@@ -559,7 +557,6 @@ function SectionEditor({
                       type="text"
                       value={section.content.title || ''}
                       onChange={(e) => {
-                        const currentContent = section.content || {};
                         onUpdateContent('title', e.target.value);
                       }}
                       className="mt-1"
@@ -1378,7 +1375,6 @@ function SectionEditor({
                       type="text"
                       value={section.content.title || ''}
                       onChange={(e) => {
-                        const currentContent = section.content || {};
                         onUpdateContent('title', e.target.value);
                       }}
                       className="mt-1"

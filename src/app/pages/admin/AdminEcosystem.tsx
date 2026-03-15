@@ -3,19 +3,16 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Select } from '../../components/ui/select';
 import { Textarea } from '../../components/ui/textarea';
 import { Badge } from '../../components/ui/badge';
 import { 
   FileText, 
-  Globe, 
   Edit, 
   Save, 
   X, 
   Plus, 
   Trash2, 
-  Image as ImageIcon,
-  Link as LinkIcon
+  Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -155,10 +152,10 @@ export function AdminEcosystem() {
     try {
       
       // Actualizar datos del miembro
-      const updatedMember = await supabaseAPI.updateEcosystemMember(selectedMember.id, selectedMember);
+      await supabaseAPI.updateEcosystemMember(selectedMember.id, selectedMember);
 
       // Actualizar traducciones
-      const [updatedES, updatedEN] = await Promise.all([
+      await Promise.all([
         supabaseAPI.updateEcosystemMemberTranslation(selectedMember.id, 'es', translations.es),
         supabaseAPI.updateEcosystemMemberTranslation(selectedMember.id, 'en', translations.en)
       ]);

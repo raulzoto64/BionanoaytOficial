@@ -48,7 +48,6 @@ export function Cart() {
         return;
       }
       
-      // Usar los precios almacenados en el carrito o calcularlos si no existen
       // Calcular precios para cada item del carrito
       const itemsWithPrices = await Promise.all(
         items.map(async (item) => {

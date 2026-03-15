@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { ShoppingCart, Filter, Search, Star } from "lucide-react";
+import { Filter, Search, Star } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useLanguage } from "../contexts/LanguageContext";

@@ -7,7 +7,6 @@ import { Badge } from '../../components/ui/badge';
 import { 
   FileText, 
   Globe, 
-  Edit, 
   Save, 
   X, 
   Plus, 
@@ -43,7 +42,6 @@ interface PageWithContent extends Page {
 export function AdminContentEditor() {
   const [pagesData, setPagesData] = useState<PageWithContent[]>([]);
   const [editingPage, setEditingPage] = useState<Page | null>(null);
-  const [editingLanguage, setEditingLanguage] = useState<'es' | 'en'>('es');
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -268,13 +266,13 @@ export function AdminContentEditor() {
             Vista Previa: {editingPage.slug.replace(/-/g, ' ')}
           </h3>
           <p className="text-sm text-[#629960]">
-            Idioma: {editingLanguage === 'es' ? '🇪🇸 Español' : '🇬🇧 English'}
+            Idioma: Español
           </p>
         </div>
 
         <div className="p-4">
           {sections.filter(sec => sec.visible).map((section) => {
-            const content = editingLanguage === 'es' ? section.content : (section as any).contentEN;
+            const content = section.content;
             
             switch (section.type) {
               case 'hero':
@@ -312,7 +310,7 @@ export function AdminContentEditor() {
                     featured: true,
                     translation: {
                       product_id: '1',
-                      language: editingLanguage,
+                      language: 'es' as const,
                       name: 'Producto Mock 1',
                       short_description: 'Descripción corta del producto mock 1',
                       description: 'Descripción detallada del producto mock 1',
@@ -331,7 +329,7 @@ export function AdminContentEditor() {
                     featured: false,
                     translation: {
                       product_id: '2',
-                      language: editingLanguage,
+                      language: 'es' as const,
                       name: 'Producto Mock 2',
                       short_description: 'Descripción corta del producto mock 2',
                       description: 'Descripción detallada del producto mock 2',
@@ -431,7 +429,7 @@ export function AdminContentEditor() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl text-[#1C5D15] mb-1">
-                  Editar: {editingPage.slug} ({editingLanguage === 'es' ? '🇪🇸 Español' : '🇬🇧 English'})
+                  Editar: {editingPage.slug} (Español)
                 </h2>
                 <p className="text-[#629960] text-sm">
                   Gestiona las secciones de la página
@@ -734,7 +732,6 @@ function SectionEditor({
                       type="text"
                       value={section.content.title || ''}
                       onChange={(e) => {
-                        const currentContent = section.content || {};
                         onUpdateContent('title', e.target.value);
                       }}
                       className="mt-1 text-sm"

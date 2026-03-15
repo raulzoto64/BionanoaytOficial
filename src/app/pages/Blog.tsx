@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { supabaseAPI, BlogPostTranslation, BlogCategory } from '../data/supabase';
-import { Link } from 'react-router';
+import { supabaseAPI, BlogPostTranslation} from '../data/supabase';
 import { ContentCard } from '../components/ContentCard';
 
 interface PostWithTranslation {
@@ -26,20 +25,6 @@ export function Blog() {
   const { language } = useLanguage();
   const [posts, setPosts] = useState<PostWithTranslation[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Función para truncar texto a un número máximo de líneas y agregar puntos suspensivos
-  const truncateText = (text: string, maxLines: number = 4, charsPerLine: number = 40) => {
-    if (!text) return '';
-    
-    const maxChars = maxLines * charsPerLine;
-    
-    if (text.length <= maxChars) {
-      return text;
-    }
-    
-    // Truncar el texto a maxChars caracteres y agregar puntos suspensivos
-    return text.slice(0, maxChars) + '...';
-  };
 
   useEffect(() => {
     const loadData = async () => {

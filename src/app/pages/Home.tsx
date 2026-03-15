@@ -15,7 +15,6 @@ import { Timeline } from "../components/Timeline";
 import { Leadership } from "../components/Leadership";
 import { Ecosystem } from "../components/Ecosystem";
 import { NewsSection } from "../components/NewsSection";
-import { Footer } from "../components/Footer";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 
