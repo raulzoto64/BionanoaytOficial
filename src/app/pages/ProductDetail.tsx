@@ -133,7 +133,17 @@ export function ProductDetail() {
 
     try {
       const userId = isAuthenticated && user ? user.id : null;
-      const guestId = !isAuthenticated ? useAuth().getGuestId() : null;
+      const guestId = !isAuthenticated ? localStorage.getItem('guest_id') : null;
+
+      console.log('handleAddToCart - Debug Info:', {
+        userId,
+        guestId,
+        isAuthenticated,
+        user,
+        product: product.id,
+        quantity,
+        selectedPackagingType
+      });
 
       if (!userId && !guestId) {
         toast.error('No se pudo obtener la sesión de usuario');
@@ -154,10 +164,16 @@ export function ProductDetail() {
         return formatted === selectedPackagingType;
       })?.packaging;
 
+      console.log('handleAddToCart - Packaging Info:', {
+        originalPackaging,
+        selectedPackagingType
+      });
+
       await supabaseAPI.addToCart(userId, guestId, product.id, quantity, originalPackaging);
       
       toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
     } catch (error) {
+      console.error('Error al agregar al carrito:', error);
       toast.error('Error al agregar el producto al carrito');
     }
   };

@@ -1458,9 +1458,13 @@ export const supabaseAPI = {
       throw new Error("Se requiere userId o guestId");
     }
 
+    // Escapar el valor de packaging para evitar problemas con espacios
+    const packagingValue = packaging || 'Sin embase';
+    const escapedPackaging = packagingValue.replace(/'/g, "''");
+
     const { data: existingItem, error: fetchError } = await query
       .eq("product_id", productId)
-      .eq("packaging", packaging || 'Sin embase')
+      .eq("packaging", escapedPackaging)
       .single();
 
     if (fetchError && fetchError.code !== "PGRST116") {
@@ -1488,7 +1492,7 @@ export const supabaseAPI = {
       const insertData: any = {
         product_id: productId,
         quantity,
-        packaging: packaging || 'Sin embase'
+        packaging: escapedPackaging
       };
 
       if (userId) {
@@ -1508,12 +1512,45 @@ export const supabaseAPI = {
     }
   },
 
-  // Obtener todos los items del carrito de un usuario
+  // Obtener todos los items del carrito de un usuario o visitante
   getCartItems: async (userId: string): Promise<CartItemWithProduct[]> => {
     const { data: cartItems, error: cartError } = await supabase
       .from("cart_items")
       .select("*")
       .eq("user_id", userId);
+
+    if (cartError) throw new Error(cartError.message);
+
+    // Obtener datos de productos y traducciones para cada item del carrito
+    const cartItemsWithProducts = await Promise.all(
+      (cartItems || []).map(async (item) => {
+        const product = await supabaseAPI.getProductById(item.product_id);
+        const translation = await supabaseAPI.getProductTranslation(item.product_id, "es"); // Default to Spanish
+
+        return {
+          ...item,
+          product: product!,
+          translation: translation,
+        };
+      })
+    );
+
+    // Ordenar items por tipo de embase
+    const sortedItems = cartItemsWithProducts.sort((a, b) => {
+      const packagingA = a.packaging || 'Sin embase';
+      const packagingB = b.packaging || 'Sin embase';
+      return packagingA.localeCompare(packagingB);
+    });
+
+    return sortedItems.filter(item => item.product !== null);
+  },
+
+  // Obtener todos los items del carrito de un visitante (guest)
+  getCartItemsByGuest: async (guestId: string): Promise<CartItemWithProduct[]> => {
+    const { data: cartItems, error: cartError } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq("guest_id", guestId);
 
     if (cartError) throw new Error(cartError.message);
 

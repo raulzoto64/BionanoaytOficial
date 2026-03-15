@@ -24,25 +24,33 @@ export function Cart() {
   const [subtotal, setSubtotal] = useState(0);
 
   useEffect(() => {
-    // Solo ejecutamos la carga si el estado de auth está definido
-    // Si no hay usuario ni autenticación, dejamos de cargar para mostrar el estado "Login"
-    if (isAuthenticated === false) {
-      setLoading(false);
-      return;
-    }
-
-    if (isAuthenticated && user) {
-      loadCartItems();
-    }
+    // Cargar carrito tanto para usuarios autenticados como para visitantes
+    loadCartItems();
   }, [user, isAuthenticated]);
 
   const loadCartItems = async () => {
     try {
       setLoading(true); // Bloqueamos la vista con el Skeleton
       
-      const items = await supabaseAPI.getCartItems(user!.id);
+      let items: CartItemWithProduct[] = [];
+      if (isAuthenticated && user) {
+        console.log('Cargando carrito para usuario autenticado:', user.id);
+        items = await supabaseAPI.getCartItems(user.id);
+      } else {
+        // Para visitantes, necesitamos obtener el guestId
+        const guestId = localStorage.getItem('guest_id');
+        console.log('Cargando carrito para visitante, guestId:', guestId);
+        if (guestId) {
+          items = await supabaseAPI.getCartItemsByGuest(guestId);
+        }
+      }
       
+      console.log('Items cargados del carrito:', items);
+      console.log('Cantidad de items:', items?.length || 0);
+      
+      // Si no hay items, mostrar carrito vacío
       if (!items || items.length === 0) {
+        console.log('No se encontraron items en el carrito, mostrando carrito vacío');
         setCartItems([]);
         setSubtotal(0);
         return;
@@ -67,6 +75,7 @@ export function Cart() {
       setSubtotal(total);
       
     } catch (error) {
+      console.error('Error al cargar el carrito:', error);
       toast.error('Error al conectar con la base de datos');
     } finally {
       // Un pequeño delay para que la transición sea visualmente suave
@@ -153,7 +162,7 @@ export function Cart() {
     }
 
     // 2. Si no está cargando y no hay sesión
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated && !user) {
       return (
         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
           <ShoppingBag className="w-24 h-24 text-[#629960] mx-auto mb-6 opacity-30" />

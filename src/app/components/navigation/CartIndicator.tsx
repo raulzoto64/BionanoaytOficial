@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { ShoppingCart, ShoppingBag } from "lucide-react";
+import { ShoppingCart} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { supabaseAPI } from "../../data/supabase";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ export function CartIndicator() {
         const items = await supabaseAPI.getCartItems(user.id);
         setItemCount(items.reduce((total, item) => total + item.quantity, 0));
       } else if (isGuest && guestId) {
-        const items = await supabaseAPI.getCartItems(guestId);
+        const items = await supabaseAPI.getCartItemsByGuest(guestId);
         setItemCount(items.reduce((total, item) => total + item.quantity, 0));
       } else {
         setItemCount(0);

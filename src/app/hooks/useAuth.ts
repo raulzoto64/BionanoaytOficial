@@ -51,5 +51,6 @@ export const useAuth = () => {
     isAuthenticated,
     getGuestId,
     isGuest,
+    guestId: getGuestId(),
   };
 };
