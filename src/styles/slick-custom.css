@@ -161,3 +161,36 @@
 .slick-next {
   right: -25px;
 }
+
+/* Mobile responsiveness fixes */
+@media (max-width: 768px) {
+  .slick-track {
+    width: 100% !important;
+  }
+  
+  .slick-slide {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+  
+  .slick-slide > div {
+    width: 100%;
+  }
+  
+  .slick-list {
+    width: 100%;
+  }
+}
+
+/* Force proper width calculation */
+.slick-slider {
+  width: 100%;
+}
+
+.slick-track {
+  width: 100%;
+}
+
+.slick-slide {
+  width: 100%;
+}

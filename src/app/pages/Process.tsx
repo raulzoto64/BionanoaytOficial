@@ -190,9 +190,9 @@ export function Process() {
                   <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
                     {section.content.milestones.map((item: any, index: number) => (
                       <div key={index} className="flex items-center gap-4">
-                        <div className="text-center bg-white p-6 rounded-xl shadow-lg border-2 border-[#19FF00]">
-                          <div className="text-2xl text-[#1C5D15] mb-2">{item.phase}</div>
-                          <div className="text-[#629960]">{item.time}</div>
+                        <div className="text-center bg-white p-4 sm:p-6 rounded-xl shadow-lg border-2 border-[#19FF00] w-full max-w-xs">
+                          <div className="text-xl sm:text-2xl text-[#1C5D15] mb-2">{item.phase}</div>
+                          <div className="text-[#629960] text-sm sm:text-base">{item.time}</div>
                         </div>
                         {index < 3 && (
                           <div className="hidden md:block text-[#19FF00] text-3xl">→</div>

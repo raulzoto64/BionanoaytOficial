@@ -19,7 +19,7 @@ export function Hero({ content }: HeroProps) {
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center text-white">
-        <h1 className="text-5xl md:text-7xl mb-6 leading-tight">
+        <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6 leading-tight">
           {content.title}
         </h1>
         <p className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-95">
@@ -27,7 +27,7 @@ export function Hero({ content }: HeroProps) {
         </p>
         <Button 
           size="lg"
-          className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90 px-8 py-6 text-lg shadow-lg"
+          className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg shadow-lg"
         >
           {content.ctaText}
         </Button>
