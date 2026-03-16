@@ -499,8 +499,8 @@ export function ProductDetail() {
 
         {/* Call to Action Final */}
         <Card className="bg-gradient-to-r from-[#1C5D15] to-[#629960] text-white p-8 text-center">
-          <h2 className="text-3xl mb-4">{language === 'es' ? '¿Listo para ordenar?' : 'Ready to order?'}</h2>
-          <p className="text-xl mb-6 opacity-90">
+          <h2 className="text-3xl mb-4 text-white">{language === 'es' ? '¿Listo para ordenar?' : 'Ready to order?'}</h2>
+          <p className="text-xl mb-6 opacity-90 text-white">
             {language === 'es' 
               ? 'Contáctanos para más información o realiza tu pedido ahora' 
               : 'Contact us for more information or place your order now'}
@@ -509,7 +509,7 @@ export function ProductDetail() {
             <Button
               onClick={handleAddToCart}
               size="lg"
-              className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90"
+              className="bg-white text-[#1C5D15] hover:bg-white/90"
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
               {t('btn.add_to_cart')}
@@ -518,7 +518,7 @@ export function ProductDetail() {
               onClick={handleRequestQuote}
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-[#1C5D15]"
+              className="border-white text-[#1C5D15] hover:bg-white hover:text-[#1C5D15]"
             >
               {t('btn.contact')}
             </Button>

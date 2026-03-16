@@ -205,6 +205,8 @@ export interface FooterLink {
   label_es: string;
   label_en: string;
   url: string;
+  type: 'link' | 'category_dropdown'; // Nuevo tipo para dropdown de categorías
+  category_id?: string; // ID de categoría si es un dropdown
 }
 
 export interface FooterColumn {
@@ -217,6 +219,11 @@ export interface FooterColumn {
 export interface FooterSettings {
   id: string;
   columns: FooterColumn[];
+  contact_info: {
+    phone: string;
+    email: string;
+    location: string;
+  };
   social_media: {
     facebook: string;
     twitter: string;
@@ -1699,10 +1706,10 @@ export const supabaseAPI = {
             title_es: "Empresa",
             title_en: "Company",
             links: [
-              { id: "link-1", label_es: "Sobre Nosotros", label_en: "About Us", url: "/about" },
-              { id: "link-2", label_es: "Nuestra Tecnología", label_en: "Our Technology", url: "/technology" },
-              { id: "link-3", label_es: "Proceso", label_en: "Process", url: "/process" },
-              { id: "link-4", label_es: "Ecosistema", label_en: "Ecosystem", url: "/ecosystem" }
+              { id: "link-1", label_es: "Sobre Nosotros", label_en: "About Us", url: "/about", type: "link" },
+              { id: "link-2", label_es: "Nuestra Tecnología", label_en: "Our Technology", url: "/technology", type: "link" },
+              { id: "link-3", label_es: "Proceso", label_en: "Process", url: "/process", type: "link" },
+              { id: "link-4", label_es: "Ecosistema", label_en: "Ecosystem", url: "/ecosystem", type: "link" }
             ]
           },
           {
@@ -1710,10 +1717,10 @@ export const supabaseAPI = {
             title_es: "Productos",
             title_en: "Products",
             links: [
-              { id: "link-5", label_es: "Antimicrobianos", label_en: "Antimicrobials", url: "/store?category=antimicrobianos" },
-              { id: "link-6", label_es: "Limpieza Industrial", label_en: "Industrial Cleaning", url: "/store?category=limpieza-industrial" },
-              { id: "link-7", label_es: "Fertilizantes", label_en: "Fertilizers", url: "/store?category=fertilizantes" },
-              { id: "link-8", label_es: "Fungicidas", label_en: "Fungicides", url: "/store?category=fungicidas" }
+              { id: "link-5", label_es: "Antimicrobianos", label_en: "Antimicrobials", url: "/store?category=antimicrobianos", type: "link" },
+              { id: "link-6", label_es: "Limpieza Industrial", label_en: "Industrial Cleaning", url: "/store?category=limpieza-industrial", type: "link" },
+              { id: "link-7", label_es: "Fertilizantes", label_en: "Fertilizers", url: "/store?category=fertilizantes", type: "link" },
+              { id: "link-8", label_es: "Fungicidas", label_en: "Fungicides", url: "/store?category=fungicidas", type: "link" }
             ]
           },
           {
@@ -1721,10 +1728,10 @@ export const supabaseAPI = {
             title_es: "Legal",
             title_en: "Legal",
             links: [
-              { id: "link-9", label_es: "Política de Privacidad", label_en: "Privacy Policy", url: "/legal/privacy-policy" },
-              { id: "link-10", label_es: "Términos y Condiciones", label_en: "Terms and Conditions", url: "/legal/terms-conditions" },
-              { id: "link-11", label_es: "Política de Cookies", label_en: "Cookie Policy", url: "/legal/cookie-policy" },
-              { id: "link-12", label_es: "Aviso Legal", label_en: "Legal Notice", url: "/legal/legal-notice" }
+              { id: "link-9", label_es: "Política de Privacidad", label_en: "Privacy Policy", url: "/legal/privacy-policy", type: "link" },
+              { id: "link-10", label_es: "Términos y Condiciones", label_en: "Terms and Conditions", url: "/legal/terms-conditions", type: "link" },
+              { id: "link-11", label_es: "Política de Cookies", label_en: "Cookie Policy", url: "/legal/cookie-policy", type: "link" },
+              { id: "link-12", label_es: "Aviso Legal", label_en: "Legal Notice", url: "/legal/legal-notice", type: "link" }
             ]
           },
           {
@@ -1732,12 +1739,17 @@ export const supabaseAPI = {
             title_es: "Contacto",
             title_en: "Contact",
             links: [
-              { id: "link-13", label_es: "Contáctanos", label_en: "Contact Us", url: "/#contact" },
-              { id: "link-14", label_es: "Preguntas Frecuentes", label_en: "FAQ", url: "/faq" },
-              { id: "link-15", label_es: "Blog", label_en: "Blog", url: "/blog" }
+              { id: "link-13", label_es: "Contáctanos", label_en: "Contact Us", url: "/#contact", type: "link" },
+              { id: "link-14", label_es: "Preguntas Frecuentes", label_en: "FAQ", url: "/faq", type: "link" },
+              { id: "link-15", label_es: "Blog", label_en: "Blog", url: "/blog", type: "link" }
             ]
           }
         ],
+        contact_info: {
+          phone: "",
+          email: "",
+          location: ""
+        },
         social_media: {
           facebook: "https://facebook.com/atbionano",
           twitter: "https://twitter.com/atbionano",
@@ -1753,6 +1765,11 @@ export const supabaseAPI = {
 
     return {
       ...settings,
+      contact_info: settings.contact_info || {
+        phone: "",
+        email: "",
+        location: ""
+      },
       social_media: settings.social_media || {
         facebook: "",
         twitter: "",

@@ -17,17 +17,24 @@ import { Ecosystem } from "../components/Ecosystem";
 import { NewsSection } from "../components/NewsSection";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
+import { DatabaseManager } from "../data/DatabaseManager";
 
 export function Home() {
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<
     (Product & { translation: ProductTranslation })[]
   >([]);
+  const [contactInfo, setContactInfo] = useState({
+    phone: '',
+    email: '',
+    location: ''
+  });
   const { language } = useLanguage();
 
   useEffect(() => {
     loadPageContent();
     loadFeaturedProducts();
+    loadContactInfo();
   }, [language]);
 
   const loadPageContent = async () => {
@@ -63,6 +70,19 @@ export function Home() {
 
       setFeaturedProducts(productsWithTranslations);
     } catch (error) {
+    }
+  };
+
+  const loadContactInfo = async () => {
+    try {
+      const settings = await DatabaseManager.getFooterSettings();
+      setContactInfo({
+        phone: settings.contact_info?.phone || '',
+        email: settings.contact_info?.email || '',
+        location: settings.contact_info?.location || ''
+      });
+    } catch (error) {
+      console.error('Error loading contact info:', error);
     }
   };
 
@@ -133,56 +153,6 @@ export function Home() {
                   <div className="h-6 bg-white/30 rounded-lg mb-2 animate-pulse"></div>
                   <div className="h-8 bg-white/20 rounded-lg mb-3 animate-pulse"></div>
                   <div className="h-12 bg-white/15 rounded-lg animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Skeleton for Leadership */}
-        <div className="py-20 bg-white">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-12">
-              <div className="h-6 bg-[#1C5D15]/20 rounded-full w-1/4 mx-auto mb-4 animate-pulse"></div>
-              <div className="h-12 bg-[#1C5D15]/20 rounded-lg w-1/2 mx-auto mb-4 animate-pulse"></div>
-              <div className="h-8 bg-[#629960]/20 rounded-lg w-3/4 mx-auto animate-pulse"></div>
-            </div>
-            <div className="grid md:grid-cols-3 gap-10">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="text-center">
-                  <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-[#19FF00]/30 mx-auto mb-4 animate-pulse"></div>
-                  <div className="h-6 bg-[#1C5D15]/20 rounded-lg mb-2 animate-pulse"></div>
-                  <div className="h-4 bg-[#629960]/20 rounded-lg animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        {/* Skeleton for Ecosystem */}
-        <div className="py-20 bg-[#629960]/10">
-          <div className="max-w-6xl mx-auto px-6">
-            {/* Título del esqueleto principal */}
-            <div className="h-12 bg-[#1C5D15]/20 rounded-lg w-1/3 mx-auto mb-12 animate-pulse"></div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {" "}
-              {/* Ajustado a 3 columnas para que coincida con tu imagen */}
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-xl p-8 flex flex-col items-center shadow-lg border-2 border-[#629960]/20 min-h-[380px] justify-center"
-                >
-                  {/* Círculo Interno: flex-shrink-0 evita que se aplaste */}
-                  <div className="w-32 h-32 rounded-full border-4 border-[#629960]/30 mb-6 animate-pulse bg-[#629960]/10 flex-shrink-0"></div>
-
-                  {/* Contenedor de texto con altura fija para simular el espacio de 2 líneas */}
-                  <div className="w-full flex flex-col items-center">
-                    <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-full mb-3 animate-pulse"></div>
-                    <div className="h-7 bg-[#1C5D15]/20 rounded-lg w-2/3 mb-4 animate-pulse"></div>{" "}
-                    {/* Segunda línea de título */}
-                    {/* Subtítulo o categoría */}
-                    <div className="h-5 bg-[#629960]/20 rounded-lg w-1/2 animate-pulse"></div>
-                  </div>
                 </div>
               ))}
             </div>

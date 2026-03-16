@@ -103,7 +103,13 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
             {language === "es" ? "Todos los productos" : "All products"}
           </DropdownMenuItem>
           {categories.map((cat) => (
-            <DropdownMenuItem key={cat.id} onClick={() => navigate(`/store?category=${cat.id}`)}>
+            <DropdownMenuItem key={cat.id} onClick={() => {
+              navigate(`/store?category=${cat.id}`);
+              // Forzar scroll al inicio
+              setTimeout(() => {
+                window.scrollTo(0, 0);
+              }, 100);
+            }}>
               {cat.name}
             </DropdownMenuItem>
           ))}

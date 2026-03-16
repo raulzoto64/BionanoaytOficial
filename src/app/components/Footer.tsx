@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ExternalLink } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ExternalLink, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "../contexts/LanguageContext";
 import { DatabaseManager } from "../data/DatabaseManager";
-import { FooterSettings, FooterColumn, FooterLink } from "../data/supabase";
+import { FooterSettings } from "../data/supabase";
+import { supabaseAPI, Category} from "../data/supabase";
 
 interface ContactInfo {
   phone: string;
@@ -22,6 +23,9 @@ export function Footer({ contactInfo }: FooterProps) {
   const { t, language } = useLanguage();
   const [footerSettings, setFooterSettings] = useState<FooterSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -31,16 +35,36 @@ export function Footer({ contactInfo }: FooterProps) {
 
   useEffect(() => {
     loadFooterSettings();
+    loadCategories();
+    loadSiteSettings();
   }, []);
+
+  const loadSiteSettings = async () => {
+    try {
+      const settings = await supabaseAPI.getSiteSettings();
+      setSiteSettings(settings);
+    } catch (error) {
+      console.error('Error loading site settings:', error);
+    }
+  };
 
   const loadFooterSettings = async () => {
     try {
       const settings = await DatabaseManager.getFooterSettings();
       setFooterSettings(settings);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error loading footer settings:', error);
-    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await supabaseAPI.getCategories();
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 
@@ -66,7 +90,7 @@ export function Footer({ contactInfo }: FooterProps) {
               {column.links.map((link) => (
                 <li key={link.id}>
                   <a
-                    href={link.url}
+                    href={link.type === 'category_dropdown' ? `/store?category=${link.category_id}` : link.url}
                     className="text-white/80 hover:text-[#19FF00] transition-colors flex items-center gap-1"
                     target={link.url.startsWith('http') ? '_blank' : '_self'}
                     rel={link.url.startsWith('http') ? 'noopener noreferrer' : ''}
@@ -195,7 +219,9 @@ export function Footer({ contactInfo }: FooterProps) {
                 </div>
                 <div>
                   <h4 className="mb-1">{t('footer.phone')}</h4>
-                  <p className="text-white/80">{contactInfo.phone}</p>
+                  <p className="text-white/80">
+                    {siteSettings?.site_phone || contactInfo.phone}
+                  </p>
                 </div>
               </div>
 
@@ -205,7 +231,9 @@ export function Footer({ contactInfo }: FooterProps) {
                 </div>
                 <div>
                   <h4 className="mb-1">{t('footer.email')}</h4>
-                  <p className="text-white/80">{contactInfo.email}</p>
+                  <p className="text-white/80">
+                    {siteSettings?.site_email || contactInfo.email}
+                  </p>
                 </div>
               </div>
 
@@ -215,7 +243,9 @@ export function Footer({ contactInfo }: FooterProps) {
                 </div>
                 <div>
                   <h4 className="mb-1">{t('footer.address')}</h4>
-                  <p className="text-white/80">{contactInfo.location}</p>
+                  <p className="text-white/80">
+                    {siteSettings?.site_address || contactInfo.location}
+                  </p>
                 </div>
               </div>
             </div>

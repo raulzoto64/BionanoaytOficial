@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from 'sonner';
 import { DatabaseManager } from '../../data/DatabaseManager';
 import { FooterSettings, FooterColumn, FooterLink } from '../../data/supabase';
+import { supabaseAPI, Category } from '../../data/supabase';
 import { Plus, Trash2, Edit, ExternalLink } from 'lucide-react';
 
 export function AdminFooterSettings() {
@@ -15,20 +16,26 @@ export function AdminFooterSettings() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingColumn, setEditingColumn] = useState<FooterColumn | null>(null);
   const [editingLink, setEditingLink] = useState<{ columnId: string; link: FooterLink } | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     copyright_text_es: '',
-    copyright_text_en: '',
-    social_media: {
-      facebook: '',
-      twitter: '',
-      instagram: '',
-      linkedin: ''
-    }
+    copyright_text_en: ''
   });
 
   useEffect(() => {
     loadFooterSettings();
+    loadCategories();
+    loadSiteSettings();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await supabaseAPI.getCategories();
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const loadFooterSettings = async () => {
     setIsLoading(true);
@@ -37,14 +44,22 @@ export function AdminFooterSettings() {
       setFooterSettings(settings);
       setFormData({
         copyright_text_es: settings.copyright_text_es,
-        copyright_text_en: settings.copyright_text_en,
-        social_media: settings.social_media
+        copyright_text_en: settings.copyright_text_en
       });
     } catch (error) {
       console.error('Error loading footer settings:', error);
       toast.error('Error al cargar configuración del footer');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadSiteSettings = async () => {
+    try {
+      const settings = await supabaseAPI.getSiteSettings();
+      // No necesitamos guardar la configuración general aquí, solo cargarla para que esté disponible
+    } catch (error) {
+      console.error('Error al cargar configuración general:', error);
     }
   };
 
@@ -116,7 +131,32 @@ export function AdminFooterSettings() {
       id: `link-${Date.now()}`,
       label_es: '',
       label_en: '',
-      url: ''
+      url: '',
+      type: 'link'
+    };
+    
+    const updatedSettings = {
+      ...footerSettings!,
+      columns: footerSettings!.columns.map(col => 
+        col.id === columnId 
+          ? { ...col, links: [...col.links, newLink] }
+          : col
+      )
+    };
+    
+    setFooterSettings(updatedSettings);
+    setEditingLink({ columnId, link: newLink });
+    setIsDialogOpen(true);
+  };
+
+  const handleAddCategoryDropdown = (columnId: string) => {
+    const newLink: FooterLink = {
+      id: `link-${Date.now()}`,
+      label_es: 'Productos',
+      label_en: 'Products',
+      url: '',
+      type: 'category_dropdown',
+      category_id: ''
     };
     
     const updatedSettings = {
@@ -217,56 +257,6 @@ export function AdminFooterSettings() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="facebook">Facebook</Label>
-                <Input
-                  id="facebook"
-                  value={formData.social_media.facebook || ''}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    social_media: { ...formData.social_media, facebook: e.target.value } 
-                  })}
-                  placeholder="https://facebook.com/tuempresa"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="twitter">Twitter</Label>
-                <Input
-                  id="twitter"
-                  value={formData.social_media.twitter || ''}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    social_media: { ...formData.social_media, twitter: e.target.value } 
-                  })}
-                  placeholder="https://twitter.com/tuempresa"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="instagram">Instagram</Label>
-                <Input
-                  id="instagram"
-                  value={formData.social_media.instagram || ''}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    social_media: { ...formData.social_media, instagram: e.target.value } 
-                  })}
-                  placeholder="https://instagram.com/tuempresa"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="linkedin">LinkedIn</Label>
-                <Input
-                  id="linkedin"
-                  value={formData.social_media.linkedin || ''}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    social_media: { ...formData.social_media, linkedin: e.target.value } 
-                  })}
-                  placeholder="https://linkedin.com/company/tuempresa"
-                />
-              </div>
-            </div>
 
             <Button type="submit" className="bg-[#1C5D15] hover:bg-[#1C5D15]/90 text-white">
               Guardar Configuración
@@ -330,7 +320,7 @@ export function AdminFooterSettings() {
                       className="flex items-center gap-1"
                     >
                       <Plus className="w-4 h-4" />
-                      Agregar Enlace
+                      Nuevo Enlace
                     </Button>
                   </div>
                   
@@ -344,6 +334,9 @@ export function AdminFooterSettings() {
                             <ExternalLink className="w-3 h-3" />
                             {link.url}
                           </p>
+                          {link.type === 'category_dropdown' && (
+                            <p className="text-xs text-blue-600 font-medium">Tipo: Dropdown de Categorías</p>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -449,19 +442,57 @@ export function AdminFooterSettings() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="link_url">URL</Label>
-                <Input
-                  id="link_url"
-                  value={editingLink.link.url}
+                <Label htmlFor="link_type">Tipo de Enlace</Label>
+                <select
+                  id="link_type"
+                  value={editingLink.link.type}
                   onChange={(e) => setEditingLink({ 
                     ...editingLink, 
-                    link: { ...editingLink.link, url: e.target.value } 
+                    link: { ...editingLink.link, type: e.target.value as 'link' | 'category_dropdown' } 
                   })}
-                  placeholder="/ruta/destino"
-                />
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1C5D15]"
+                >
+                  <option value="link">Enlace Estático</option>
+                  <option value="category_dropdown">Dropdown de Categorías</option>
+                </select>
               </div>
+              
+              {editingLink.link.type === 'category_dropdown' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="link_category">Categoría</Label>
+                  <select
+                    id="link_category"
+                    value={editingLink.link.category_id || ''}
+                    onChange={(e) => setEditingLink({ 
+                      ...editingLink, 
+                      link: { ...editingLink.link, category_id: e.target.value } 
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1C5D15]"
+                  >
+                    <option value="">Seleccionar categoría</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.slug}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="link_url">URL</Label>
+                  <Input
+                    id="link_url"
+                    value={editingLink.link.url}
+                    onChange={(e) => setEditingLink({ 
+                      ...editingLink, 
+                      link: { ...editingLink.link, url: e.target.value } 
+                    })}
+                    placeholder="/ruta/destino"
+                  />
+                </div>
+              )}
               
               <DialogFooter>
                 <Button
