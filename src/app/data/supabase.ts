@@ -304,19 +304,87 @@ export const supabaseAPI = {
   // ==========================================
   // CACHÉ DE DATOS (Para navegación instantánea)
   // ==========================================
-  _cache: {} as Record<string, { data: any, timestamp: number }>,
-  _cacheTTL: 5 * 60 * 1000, // 5 minutos
+  _cache: {} as Record<string, { data: any; timestamp: number }>,
+  _cacheTTL: 10 * 60 * 1000, // 10 minutos para considerar datos "frescos"
+  _persistPrefix: "bionano_cache_",
 
-  _getFromCache: (key: string) => {
+  _getFromCache: (key: string, persist: boolean = true) => {
+    // 1. Intentar desde memoria (más rápido)
     const cached = supabaseAPI._cache[key];
-    if (cached && (Date.now() - cached.timestamp < supabaseAPI._cacheTTL)) {
+    if (cached && Date.now() - cached.timestamp < supabaseAPI._cacheTTL) {
       return cached.data;
+    }
+
+    // 2. Intentar desde localStorage si se permite persistencia
+    if (persist && typeof window !== "undefined") {
+      try {
+        const persisted = localStorage.getItem(supabaseAPI._persistPrefix + key);
+        if (persisted) {
+          const parsed = JSON.parse(persisted);
+          // Actualizar caché en memoria para la próxima vez
+          supabaseAPI._cache[key] = parsed;
+          return parsed.data;
+        }
+      } catch (e) {
+        console.warn("Error leyendo caché persistente:", e);
+      }
     }
     return null;
   },
 
-  _saveToCache: (key: string, data: any) => {
-    supabaseAPI._cache[key] = { data, timestamp: Date.now() };
+  _saveToCache: (key: string, data: any, persist: boolean = true) => {
+    const cacheEntry = { data, timestamp: Date.now() };
+    supabaseAPI._cache[key] = cacheEntry;
+
+    if (persist && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          supabaseAPI._persistPrefix + key,
+          JSON.stringify(cacheEntry),
+        );
+      } catch (e) {
+        console.warn("Error guardando caché persistente:", e);
+      }
+    }
+  },
+
+  _invalidateCache: (key: string) => {
+    delete supabaseAPI._cache[key];
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(supabaseAPI._persistPrefix + key);
+    }
+  },
+
+  /**
+   * Helper genérico para peticiones con caché y revalidación en segundo plano (SWR)
+   */
+  _fetchWithCache: async <T>(
+    key: string,
+    fetchFn: () => Promise<T>,
+    persist: boolean = true,
+  ): Promise<T> => {
+    const cachedData = supabaseAPI._getFromCache(key, persist);
+
+    // Si hay datos en caché, devolverlos inmediatamente y revalidar en segundo plano
+    if (cachedData) {
+      // Revalidación asíncrona (no bloqueante)
+      fetchFn()
+        .then((freshData) => {
+          supabaseAPI._saveToCache(key, freshData, persist);
+          // Disparar evento para que los componentes se enteren si los datos cambiaron significativamente
+          window.dispatchEvent(
+            new CustomEvent("cache-updated", { detail: { key, data: freshData } }),
+          );
+        })
+        .catch((err) => console.warn(`Revalidación fallida para ${key}:`, err));
+
+      return cachedData as T;
+    }
+
+    // Si no hay caché, esperar a la petición inicial
+    const data = await fetchFn();
+    supabaseAPI._saveToCache(key, data, persist);
+    return data;
   },
 
   // ==========================================
@@ -349,10 +417,11 @@ export const supabaseAPI = {
   },
 
   getUsers: async (): Promise<User[]> => {
-    const { data: users, error } = await supabase.from("users").select("*");
-
-    if (error) throw new Error(error.message);
-    return users;
+    return supabaseAPI._fetchWithCache("users", async () => {
+      const { data: users, error } = await supabase.from("users").select("*");
+      if (error) throw new Error(error.message);
+      return users || [];
+    }, false); // No persistir usuarios en localStorage por seguridad
   },
 
   updateUser: async (id: string, data: Partial<User>): Promise<User> => {
@@ -481,12 +550,13 @@ export const supabaseAPI = {
   // ==========================================
 
   getTranslations: async (): Promise<Translation[]> => {
-    const { data: translations, error } = await supabase
-      .from("translations")
-      .select("*");
-
-    if (error) throw new Error(error.message);
-    return translations;
+    return supabaseAPI._fetchWithCache("translations", async () => {
+      const { data: translations, error } = await supabase
+        .from("translations")
+        .select("*");
+      if (error) throw new Error(error.message);
+      return translations || [];
+    });
   },
 
   updateTranslation: async (
@@ -528,60 +598,62 @@ export const supabaseAPI = {
   // ==========================================
 
   getSiteSettings: async (): Promise<SiteSettings> => {
-    const { data: settings, error } = await supabase
-      .from("site_settings")
-      .select("*")
-      .single();
+    return supabaseAPI._fetchWithCache("site-settings", async () => {
+      const { data: settings, error } = await supabase
+        .from("site_settings")
+        .select("*")
+        .single();
 
-    if (error) {
-      // Devolver configuración predeterminada si no existe o hay error
+      if (error) {
+        // Devolver configuración predeterminada si no existe o hay error
+        return {
+          id: "settings-001",
+          site_name: "BionanoAyt",
+          site_email: "contacto@bionanoayt.com",
+          site_phone: "+51 999 123 456",
+          site_address: "Av. El Sol 123, Lima, Perú",
+          social_media: {
+            facebook: "",
+            twitter: "",
+            instagram: "",
+            linkedin: "",
+          },
+          seo: {
+            default_title: "BionanoAyt - Soluciones Sostenibles",
+            default_description: "BionanoAyt ofrece soluciones sostenibles para el cuidado del medio ambiente y la salud humana.",
+            default_keywords: "bionanoayt, sostenibilidad, medio ambiente, salud",
+          },
+          colors: {
+            primary: "#1C5D15",
+            secondary: "#629960",
+            accent: "#19FF00",
+            background: "#F7F9CE",
+          },
+        };
+      }
+
+      // Asegurar que las propiedades anidadas existan
       return {
-        id: "settings-001",
-        site_name: "BionanoAyt",
-        site_email: "contacto@bionanoayt.com",
-        site_phone: "+51 999 123 456",
-        site_address: "Av. El Sol 123, Lima, Perú",
-        social_media: {
+        ...settings,
+        social_media: settings.social_media || {
           facebook: "",
           twitter: "",
           instagram: "",
           linkedin: "",
         },
-        seo: {
+        seo: settings.seo || {
           default_title: "BionanoAyt - Soluciones Sostenibles",
           default_description: "BionanoAyt ofrece soluciones sostenibles para el cuidado del medio ambiente y la salud humana.",
           default_keywords: "bionanoayt, sostenibilidad, medio ambiente, salud",
         },
-        colors: {
+        colors: settings.colors || {
           primary: "#1C5D15",
           secondary: "#629960",
           accent: "#19FF00",
           background: "#F7F9CE",
         },
       };
-    }
-
-    // Asegurar que las propiedades anidadas existan
-    return {
-      ...settings,
-      social_media: settings.social_media || {
-        facebook: "",
-        twitter: "",
-        instagram: "",
-        linkedin: "",
-      },
-      seo: settings.seo || {
-        default_title: "BionanoAyt - Soluciones Sostenibles",
-        default_description: "BionanoAyt ofrece soluciones sostenibles para el cuidado del medio ambiente y la salud humana.",
-        default_keywords: "bionanoayt, sostenibilidad, medio ambiente, salud",
-      },
-      colors: settings.colors || {
-        primary: "#1C5D15",
-        secondary: "#629960",
-        accent: "#19FF00",
-        background: "#F7F9CE",
-      },
-    };
+    });
   },
 
   updateSiteSettings: async (
@@ -621,17 +693,15 @@ export const supabaseAPI = {
   // ==========================================
 
   getProducts: async (): Promise<Product[]> => {
-    const { data: products, error } = await supabase
-      .from("products")
-      .select("*")
-      // Eliminamos el .eq('status', 'active') para que traiga TODO
-      .order("created_at", { ascending: false }); // Opcional: para ver los más nuevos primero
+    return supabaseAPI._fetchWithCache("products", async () => {
+      const { data: products, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return products || [];
+      if (error) throw new Error(error.message);
+      return products || [];
+    });
   },
 
   getFeaturedProducts: async (): Promise<Product[]> => {
@@ -660,19 +730,16 @@ export const supabaseAPI = {
 
   getProductById: async (id: string): Promise<Product | null> => {
     const cacheKey = `product-${id}`;
-    const cached = supabaseAPI._getFromCache(cacheKey);
-    if (cached) return cached;
+    return supabaseAPI._fetchWithCache(cacheKey, async () => {
+      const { data: product, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-    const { data: product, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error && error.code !== "PGRST116") throw new Error(error.message);
-    
-    if (product) supabaseAPI._saveToCache(cacheKey, product);
-    return product || null;
+      if (error && error.code !== "PGRST116") throw new Error(error.message);
+      return product || null;
+    });
   },
 
   getProductBySlug: async (slug: string): Promise<Product | null> => {
@@ -732,6 +799,8 @@ export const supabaseAPI = {
       .single();
 
     if (error) throw new Error(error.message);
+    supabaseAPI._invalidateCache("products");
+    supabaseAPI._invalidateCache(`product-${id}`);
     return product;
   },
 
@@ -768,6 +837,8 @@ export const supabaseAPI = {
       .single();
 
     if (error) throw new Error(error.message);
+    supabaseAPI._invalidateCache("products");
+    supabaseAPI._invalidateCache(`product-${product.id}`);
     return product;
   },
 
@@ -1237,13 +1308,11 @@ export const supabaseAPI = {
   },
 
   getAllPages: async (): Promise<Page[]> => {
-    const { data: pages, error } = await supabase.from("pages").select("*");
-    
-    if (error) {
-      return [];
-    }
-    
-    return pages || [];
+    return supabaseAPI._fetchWithCache("pages", async () => {
+      const { data: pages, error } = await supabase.from("pages").select("*");
+      if (error) throw new Error(error.message);
+      return pages || [];
+    });
   },
 
   getPageContent: async (
@@ -1251,109 +1320,102 @@ export const supabaseAPI = {
     language: "es" | "en",
   ): Promise<PageContent | null> => {
     const cacheKey = `page-content-${pageId}-${language}`;
-    const cached = supabaseAPI._getFromCache(cacheKey);
-    if (cached) return cached;
-
-    const { data: content, error } = await supabase
-      .from("page_contents")
-      .select("*")
-      .eq("page_id", pageId)
-      .eq("language", language)
-      .single();
-
-    if (error || !content) {
-      if (error && error.code !== "PGRST116" && error.code !== "406") {
-        }
-      return null;
-    }
-
-    // Si el idioma es inglés, usar las imágenes del contenido en español
-    if (language === "en") {
-      const { data: contentES, error: errorES } = await supabase
+    return supabaseAPI._fetchWithCache(cacheKey, async () => {
+      const { data: content, error } = await supabase
         .from("page_contents")
         .select("*")
         .eq("page_id", pageId)
-        .eq("language", "es")
+        .eq("language", language)
         .single();
 
-      if (!errorES && contentES) {
-        // Sincronizar imágenes entre secciones
-        content.sections = content.sections.map((sectionEN: Section) => {
-          const sectionES = contentES.sections.find((sec: Section) => sec.id === sectionEN.id);
-          if (sectionES) {
-            // Copiar campos de imagen de la sección en español a la sección en inglés
-            const updatedSection = { ...sectionEN };
-            
-            // Campos de imagen comunes en diferentes tipos de secciones
-            if (sectionEN.content.backgroundImage) {
-              updatedSection.content.backgroundImage = sectionES.content.backgroundImage || sectionEN.content.backgroundImage;
-            }
-            if (sectionEN.content.productImage) {
-              updatedSection.content.productImage = sectionES.content.productImage || sectionEN.content.productImage;
-            }
-            if (sectionEN.content.members) {
-              updatedSection.content.members = sectionEN.content.members.map((memberEN: any, idx: number) => {
-                const memberES = sectionES.content.members?.[idx];
-                if (memberES && memberES.image) {
-                  return { ...memberEN, image: memberES.image };
-                }
-                return memberEN;
-              });
-            }
-            if (sectionEN.content.products) {
-              updatedSection.content.products = sectionEN.content.products.map((productEN: any, idx: number) => {
-                const productES = sectionES.content.products?.[idx];
-                if (productES && productES.image) {
-                  return { ...productEN, image: productES.image };
-                }
-                return productEN;
-              });
-            }
-            if (sectionEN.content.partners) {
-              updatedSection.content.partners = sectionEN.content.partners.map((partnerEN: any, idx: number) => {
-                const partnerES = sectionES.content.partners?.[idx];
-                if (partnerES && partnerES.image) {
-                  return { ...partnerEN, image: partnerES.image };
-                }
-                return partnerEN;
-              });
-            }
-            if (sectionEN.content.allies) {
-              updatedSection.content.allies = sectionEN.content.allies.map((allyEN: any, idx: number) => {
-                const allyES = sectionES.content.allies?.[idx];
-                if (allyES && allyES.image) {
-                  return { ...allyEN, image: allyES.image };
-                }
-                return allyEN;
-              });
-            }
-            if (sectionEN.content.items) {
-              updatedSection.content.items = sectionEN.content.items.map((itemEN: any, idx: number) => {
-                const itemES = sectionES.content.items?.[idx];
-                if (itemES && itemES.image) {
-                  return { ...itemEN, image: itemES.image };
-                }
-                return itemEN;
-              });
-            }
-            if (sectionEN.content.features) {
-              updatedSection.content.features = sectionEN.content.features.map((featureEN: any, idx: number) => {
-                const featureES = sectionES.content.features?.[idx];
-                if (featureES && featureES.image) {
-                  return { ...featureEN, image: featureES.image };
-                }
-                return featureEN;
-              });
-            }
-
-            return updatedSection;
-          }
-          return sectionEN;
-        });
+      if (error || !content) {
+        return null;
       }
-    }
-    
-    return content;
+
+      // Si el idioma es inglés, usar las imágenes del contenido en español
+      if (language === "en") {
+        const { data: contentES, error: errorES } = await supabase
+          .from("page_contents")
+          .select("*")
+          .eq("page_id", pageId)
+          .eq("language", "es")
+          .single();
+
+        if (!errorES && contentES) {
+          content.sections = content.sections.map((sectionEN: Section) => {
+            const sectionES = contentES.sections.find((sec: Section) => sec.id === sectionEN.id);
+            if (sectionES) {
+              const updatedSection = { ...sectionEN };
+              
+              if (sectionEN.content.backgroundImage) {
+                updatedSection.content.backgroundImage = sectionES.content.backgroundImage || sectionEN.content.backgroundImage;
+              }
+              if (sectionEN.content.productImage) {
+                updatedSection.content.productImage = sectionES.content.productImage || sectionEN.content.productImage;
+              }
+              if (sectionEN.content.members) {
+                updatedSection.content.members = sectionEN.content.members.map((memberEN: any, idx: number) => {
+                  const memberES = sectionES.content.members?.[idx];
+                  if (memberES && memberES.image) {
+                    return { ...memberEN, image: memberES.image };
+                  }
+                  return memberEN;
+                });
+              }
+              if (sectionEN.content.products) {
+                updatedSection.content.products = sectionEN.content.products.map((productEN: any, idx: number) => {
+                  const productES = sectionES.content.products?.[idx];
+                  if (productES && productES.image) {
+                    return { ...productEN, image: productES.image };
+                  }
+                  return productEN;
+                });
+              }
+              if (sectionEN.content.partners) {
+                updatedSection.content.partners = sectionEN.content.partners.map((partnerEN: any, idx: number) => {
+                  const partnerES = sectionES.content.partners?.[idx];
+                  if (partnerES && partnerES.image) {
+                    return { ...partnerEN, image: partnerES.image };
+                  }
+                  return partnerEN;
+                });
+              }
+              if (sectionEN.content.allies) {
+                updatedSection.content.allies = sectionEN.content.allies.map((allyEN: any, idx: number) => {
+                  const allyES = sectionES.content.allies?.[idx];
+                  if (allyES && allyES.image) {
+                    return { ...allyEN, image: allyES.image };
+                  }
+                  return allyEN;
+                });
+              }
+              if (sectionEN.content.items) {
+                updatedSection.content.items = sectionEN.content.items.map((itemEN: any, idx: number) => {
+                  const itemES = sectionES.content.items?.[idx];
+                  if (itemES && itemES.image) {
+                    return { ...itemEN, image: itemES.image };
+                  }
+                  return itemEN;
+                });
+              }
+              if (sectionEN.content.features) {
+                updatedSection.content.features = sectionEN.content.features.map((featureEN: any, idx: number) => {
+                  const featureES = sectionES.content.features?.[idx];
+                  if (featureES && featureES.image) {
+                    return { ...featureEN, image: featureES.image };
+                  }
+                  return featureEN;
+                });
+              }
+
+              return updatedSection;
+            }
+            return sectionEN;
+          });
+        }
+      }
+      return content;
+    });
   },
 
   // ==========================================

@@ -17,31 +17,27 @@ import { Ecosystem } from "../components/Ecosystem";
 import { NewsSection } from "../components/NewsSection";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
-import { DatabaseManager } from "../data/DatabaseManager";
+import { useDatabase } from "../hooks/useDatabase";
 
 export function Home() {
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<
     (Product & { translation: ProductTranslation })[]
   >([]);
-  const [contactInfo, setContactInfo] = useState({
-    phone: '',
-    email: '',
-    location: ''
-  });
   const { language } = useLanguage();
+  const { updateTrigger } = useDatabase();
 
   useEffect(() => {
     loadPageContent();
     loadFeaturedProducts();
-    loadContactInfo();
-  }, [language]);
+  }, [language, updateTrigger]);
 
   const loadPageContent = async () => {
     try {
       const content = await supabaseAPI.getPageContent("page-home", language);
       setPageContent(content);
     } catch (error) {
+      console.error("Error loading home page content:", error);
     }
   };
 
@@ -73,35 +69,108 @@ export function Home() {
     }
   };
 
-  const loadContactInfo = async () => {
-    try {
-      const settings = await DatabaseManager.getFooterSettings();
-      setContactInfo({
-        phone: settings.contact_info?.phone || '',
-        email: settings.contact_info?.email || '',
-        location: settings.contact_info?.location || ''
-      });
-    } catch (error) {
-      console.error('Error loading contact info:', error);
-    }
+
+  const defaultHero = {
+    title: "BionanoAyT",
+    subtitle: language === 'es' ? "Innovación bionanotecnológica para un mundo mejor" : "Bionanotechnology innovation for a better world",
+    backgroundImage: "https://sb-jzmdfoptxmqywihyhoty.supabase.co/storage/v1/object/public/site_assets/hero-bg.jpg",
+    ctaText: language === 'es' ? "Saber más" : "Learn more",
+    ctaLink: "#purpose"
   };
 
-  if (!pageContent) {
-    return (
-      <div className="min-h-screen bg-[#F7F9CE]">
-        {/* Skeleton for Hero */}
-        <div className="relative h-screen overflow-hidden">
-          <div className="absolute inset-0 bg-[#1C5D15]/10 animate-pulse"></div>
-          <div className="relative z-10 h-full flex items-center justify-center">
-            <div className="w-3/4 max-w-4xl mx-auto px-6">
-              <div className="h-12 bg-[#1C5D15]/20 rounded-lg mb-6 animate-pulse"></div>
-              <div className="h-24 bg-[#1C5D15]/15 rounded-lg mb-8 animate-pulse"></div>
-              <div className="h-10 bg-[#19FF00]/30 rounded-lg w-1/4 animate-pulse"></div>
-            </div>
-          </div>
-        </div>
+  // Get Hero section if available
+  const heroSection = pageContent?.sections.find(s => s.type === "hero");
+  const heroContent = (heroSection?.content || defaultHero) as any;
+  const seoData = heroContent?.seo || {};
 
-        {/* Skeleton for Purpose */}
+  return (
+    <>
+      <SEO
+        title={seoData.metaTitle || "BionanoAyT"}
+        description={seoData.metaDescription || ""}
+        keywords={seoData.metaKeywords}
+      />
+
+      <div id="hero">
+        <Hero content={heroContent} />
+      </div>
+
+      {pageContent ? (
+        pageContent.sections.map((section: Section) => {
+          if (!section.visible || section.type === "hero") return null;
+
+          switch (section.type) {
+            case "trust":
+              return (
+                <div key={section.id} id="trust">
+                  <TrustBar partners={section.content.partners} />
+                </div>
+              );
+            case "features":
+              return (
+                <div key={section.id} id="purpose">
+                  <Purpose purposes={section.content.items} />
+                </div>
+              );
+            case "featured":
+              return (
+                <div key={section.id} id="featured">
+                  <FeaturedProduct content={section.content} />
+                </div>
+              );
+            case "products":
+              return (
+                <div key={section.id} id="products">
+                  <Products
+                    products={featuredProducts}
+                    title={section.content.title}
+                    subtitle={section.content.subtitle}
+                  />
+                </div>
+              );
+            case "timeline":
+              return (
+                <div key={section.id} id="timeline">
+                  <Timeline milestones={section.content.milestones} />
+                </div>
+              );
+            case "team":
+              return (
+                <div key={section.id} id="team">
+                  <Leadership
+                    members={section.content.members}
+                    title={section.content.title}
+                    subtitle={section.content.subtitle}
+                  />
+                </div>
+              );
+            case "ecosystem":
+              const hasDedicatedNews = pageContent.sections.some(s => s.type === 'news');
+              return (
+                <div key={section.id} id="ecosystem">
+                  <div id="allies">
+                    <Ecosystem 
+                      title={section.content.title} 
+                      subtitle={section.content.subtitle} 
+                    />
+                  </div>
+                  {!hasDedicatedNews && <NewsSection />}
+                </div>
+              );
+            case "news":
+              return (
+                <div key={section.id} id="news">
+                  <NewsSection 
+                    title={section.content.title} 
+                    subtitle={section.content.subtitle} 
+                  />
+                </div>
+              );
+            default:
+              return null;
+          }
+        })
+      ) : (
         <div className="py-20 bg-white">
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid md:grid-cols-3 gap-10">
@@ -115,188 +184,7 @@ export function Home() {
             </div>
           </div>
         </div>
-
-        {/* Skeleton for Products */}
-        <div className="py-20 bg-[#629960]/10">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <div className="h-8 bg-[#1C5D15]/20 rounded-full w-1/4 mx-auto mb-4 animate-pulse"></div>
-              <div className="h-16 bg-[#1C5D15]/15 rounded-lg w-3/4 mx-auto mb-6 animate-pulse"></div>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl overflow-hidden shadow-lg border-2 border-[#629960]/20"
-                >
-                  <div className="h-56 bg-[#1C5D15]/10 animate-pulse"></div>
-                  <div className="p-6">
-                    <div className="h-4 bg-[#629960]/20 rounded-lg mb-2 animate-pulse"></div>
-                    <div className="h-8 bg-[#1C5D15]/20 rounded-lg mb-3 animate-pulse"></div>
-                    <div className="h-12 bg-[#629960]/15 rounded-lg mb-6 animate-pulse"></div>
-                    <div className="h-8 bg-[#1C5D15]/20 rounded-lg w-1/2 animate-pulse"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Skeleton for Timeline */}
-        <div className="py-20 bg-[#1C5D15] text-white">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="h-12 bg-white/20 rounded-lg w-1/3 mx-auto mb-16 animate-pulse"></div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-[#629960]/30 rounded-xl p-6">
-                  <div className="w-16 h-16 bg-[#19FF00]/30 rounded-full mx-auto mb-4 animate-pulse"></div>
-                  <div className="h-6 bg-white/30 rounded-lg mb-2 animate-pulse"></div>
-                  <div className="h-8 bg-white/20 rounded-lg mb-3 animate-pulse"></div>
-                  <div className="h-12 bg-white/15 rounded-lg animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Skeleton for Footer */}
-        <div className="py-20 bg-[#1C5D15] text-white">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-12">
-              <div>
-                <div className="h-8 bg-white/20 rounded-lg mb-6 animate-pulse"></div>
-                <div className="space-y-4">
-                  <div className="h-10 bg-white/10 rounded-lg animate-pulse"></div>
-                  <div className="h-10 bg-white/10 rounded-lg animate-pulse"></div>
-                  <div className="h-24 bg-white/10 rounded-lg animate-pulse"></div>
-                  <div className="h-10 bg-[#19FF00]/30 rounded-lg animate-pulse"></div>
-                </div>
-              </div>
-              <div>
-                <div className="h-8 bg-white/20 rounded-lg mb-6 animate-pulse"></div>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[#19FF00]/20 rounded-lg animate-pulse"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-white/20 rounded-lg mb-1 animate-pulse"></div>
-                      <div className="h-6 bg-white/15 rounded-lg animate-pulse"></div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[#19FF00]/20 rounded-lg animate-pulse"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-white/20 rounded-lg mb-1 animate-pulse"></div>
-                      <div className="h-6 bg-white/15 rounded-lg animate-pulse"></div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[#19FF00]/20 rounded-lg animate-pulse"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-white/20 rounded-lg mb-1 animate-pulse"></div>
-                      <div className="h-6 bg-white/15 rounded-lg animate-pulse"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Get SEO data from hero section or use defaults
-  const seoData =
-    pageContent.sections.find((sec) => sec.type === "hero")?.content?.seo || {};
-
-  return (
-    <>
-      <SEO
-        title={seoData.metaTitle}
-        description={seoData.metaDescription}
-        keywords={seoData.metaKeywords}
-      />
-
-      {pageContent.sections.map((section: Section) => {
-        if (!section.visible) return null;
-
-        switch (section.type) {
-          case "hero":
-            return (
-              <div key={section.id} id="hero">
-                <Hero content={section.content} />
-              </div>
-            );
-          case "trust":
-            return (
-              <div key={section.id} id="trust">
-                <TrustBar partners={section.content.partners} />
-              </div>
-            );
-          case "features":
-            return (
-              <div key={section.id} id="purpose">
-                <Purpose purposes={section.content.items} />
-              </div>
-            );
-          case "featured":
-            return (
-              <div key={section.id} id="featured">
-                <FeaturedProduct content={section.content} />
-              </div>
-            );
-          case "products":
-            return (
-              <div key={section.id} id="products">
-                <Products
-                  products={featuredProducts}
-                  title={section.content.title}
-                  subtitle={section.content.subtitle}
-                />
-              </div>
-            );
-          case "timeline":
-            return (
-              <div key={section.id} id="timeline">
-                <Timeline milestones={section.content.milestones} />
-              </div>
-            );
-          case "team":
-            return (
-              <div key={section.id} id="team">
-                <Leadership
-                  members={section.content.members}
-                  title={section.content.title}
-                  subtitle={section.content.subtitle}
-                />
-              </div>
-            );
-          case "ecosystem":
-            const hasDedicatedNews = pageContent.sections.some(s => s.type === 'news');
-            return (
-              <div key={section.id} id="ecosystem">
-                <div id="allies">
-                  <Ecosystem 
-                    title={section.content.title} 
-                    subtitle={section.content.subtitle} 
-                  />
-                </div>
-                {!hasDedicatedNews && <NewsSection />}
-              </div>
-            );
-          case "news":
-            return (
-              <div key={section.id} id="news">
-                <NewsSection 
-                  title={section.content.title} 
-                  subtitle={section.content.subtitle} 
-                />
-              </div>
-            );
-          default:
-            return null;
-        }
-      })}
+      )}
     </>
   );
 }

@@ -5,14 +5,19 @@ import { supabaseAPI } from '../data/supabase';
 export function useDatabase() {
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
-  // Escuchar cambios en la base de datos
+  // Escuchar cambios en la base de datos o en la caché revalidada
   useEffect(() => {
-    const handleDatabaseUpdate = () => {
+    const handleUpdate = () => {
       setUpdateTrigger(prev => prev + 1);
     };
 
-    window.addEventListener('database-updated', handleDatabaseUpdate);
-    return () => window.removeEventListener('database-updated', handleDatabaseUpdate);
+    window.addEventListener('database-updated', handleUpdate);
+    window.addEventListener('cache-updated', handleUpdate);
+    
+    return () => {
+      window.removeEventListener('database-updated', handleUpdate);
+      window.removeEventListener('cache-updated', handleUpdate);
+    };
   }, []);
 
   // Función para forzar una recarga
@@ -93,42 +98,42 @@ export async function saveToStorage(key: string, value: any): Promise<void> {
   try {
     // Mapeamos claves a métodos de supabaseAPI para guardar
     const savers: Record<string, (value: any) => Promise<void>> = {
-      'users': async (users) => {
+      'users': async () => {
         // Implementar lógica para guardar usuarios en Supabase
         console.warn('Save users not implemented');
       },
-      'products': async (products) => {
+      'products': async () => {
         // Implementar lógica para guardar productos en Supabase
         console.warn('Save products not implemented');
       },
-      'productTranslations': async (translations) => {
+      'productTranslations': async () => {
         // Implementar lógica para guardar traducciones de productos
         console.warn('Save product translations not implemented');
       },
-      'prices': async (prices) => {
+      'prices': async () => {
         // Implementar lógica para guardar precios
         console.warn('Save prices not implemented');
       },
-      'categories': async (categories) => {
+      'categories': async () => {
         // Implementar lógica para guardar categorías
         console.warn('Save categories not implemented');
       },
-      'categoryTranslations': async (translations) => {
+      'categoryTranslations': async () => {
         // Implementar lógica para guardar traducciones de categorías
         console.warn('Save category translations not implemented');
       },
-      'pages': async (pages) => {
+      'pages': async () => {
         // Implementar lógica para guardar páginas
         console.warn('Save pages not implemented');
       },
-      'pageContents': async (contents) => {
+      'pageContents': async () => {
         // Implementar lógica para guardar contenido de páginas
         console.warn('Save page contents not implemented');
       },
       'siteSettings': async (settings) => {
         await supabaseAPI.updateSiteSettings(settings);
       },
-      'translations': async (translations) => {
+      'translations': async () => {
         // Implementar lógica para guardar traducciones generales
         console.warn('Save translations not implemented');
       },
@@ -151,6 +156,6 @@ export function resetDatabase(): void {
 }
 
 // Función para inicializar datos por defecto (no implementada para Supabase)
-export function initializeDatabase(key: string, defaultValue: any): void {
+export function initializeDatabase(): void {
   console.warn('Initialize database is not available with Supabase');
 }

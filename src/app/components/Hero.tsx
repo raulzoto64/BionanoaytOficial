@@ -7,6 +7,16 @@ interface HeroProps {
 export function Hero({ content }: HeroProps) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Preload/Discovery Image - invisible but helps browser prioritize */}
+      <img 
+        src={content.backgroundImage} 
+        alt="" 
+        className="hidden" 
+        loading="eager"
+        // @ts-ignore
+        fetchpriority="high"
+      />
+      
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"

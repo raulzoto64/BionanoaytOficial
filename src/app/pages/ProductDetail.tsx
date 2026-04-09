@@ -64,7 +64,7 @@ export function ProductDetail() {
   }, [quantity, product, selectedPackagingType]); // Recalcular precio cuando cambie la cantidad o la embase
 
   const loadProduct = async () => {
-    setLoading(true);
+    if (!product) setLoading(true);
     try {
       const productData = await supabaseAPI.getProductBySlug(slug!);
       if (!productData) {

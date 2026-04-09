@@ -4,6 +4,8 @@ import { Toaster } from "./ui/sonner";
 import { LanguageProvider } from "../contexts/LanguageContext";
 import { Footer } from "./Footer";
 import { ScrollToTop } from "./ScrollToTop";
+import { useEffect } from "react";
+import { BackgroundPreload } from "../data/BackgroundPreload";
 
 // Default contact information in case page content doesn't provide it
 const defaultContactInfo = {
@@ -13,6 +15,10 @@ const defaultContactInfo = {
 };
 
 export function Layout() {
+  useEffect(() => {
+    BackgroundPreload.start();
+  }, []);
+
   return (
     <LanguageProvider>
       <ScrollToTop />

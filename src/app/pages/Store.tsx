@@ -59,7 +59,7 @@ export function Store() {
   }, [language, updateTrigger]); // Re-cargar cuando cambie el idioma o la base de datos
 
   const loadData = async () => {
-    setLoading(true);
+    if (products.length === 0) setLoading(true);
     try {
       
       // Cargar productos
@@ -120,16 +120,6 @@ export function Store() {
     navigate(`/products/${slug}`);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-xl text-[#629960]">
-          {language === 'es' ? 'Cargando productos...' : 'Loading products...'}
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -175,50 +165,62 @@ export function Store() {
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {filteredProducts.map((item) => (
-            <div
-              key={item.product.id}
-              className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-[#19FF00] cursor-pointer"
-              onClick={() => handleProductClick(item.product.slug)}
-            >
-              <div className="h-64 overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960]">
-                <img
-                  src={item.product.image}
-                  alt={item.translation.name}
-                  className="w-full h-full object-cover opacity-80"
-                />
-              </div>
-              <div className="p-6">
-                <StarRating rating={5} />
-                <h3 className="text-xl mb-2 text-[#1C5D15] line-clamp-2">
-                  {item.translation.name}
-                </h3>
-                <p className="text-sm text-[#629960] mb-4 line-clamp-2">
-                  {item.translation.short_description}
-                </p>
-                <div className="mb-4">
-                  <span className="text-sm text-[#629960]">
-                    {item.category?.name || ''}
-                  </span>
-                </div>
-                <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]">
-                  {language === 'es' ? 'Ver detalles' : 'View details'}
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-xl text-[#629960]">
-              {language === 'es'
-                ? 'No se encontraron productos con los filtros seleccionados'
-                : 'No products found with the selected filters'}
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center">
+            <div className="w-12 h-12 border-4 border-t-[#19FF00] border-[#1C5D15]/20 rounded-full animate-spin mb-4"></div>
+            <p className="text-[#629960]">
+              {language === 'es' ? 'Cargando productos...' : 'Loading products...'}
             </p>
           </div>
+        ) : (
+          <>
+            {/* Products Grid */}
+            <div className="grid md:grid-cols-3 gap-8">
+              {filteredProducts.map((item) => (
+                <div
+                  key={item.product.id}
+                  className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-[#19FF00] cursor-pointer"
+                  onClick={() => handleProductClick(item.product.slug)}
+                >
+                  <div className="h-64 overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960]">
+                    <img
+                      src={item.product.image}
+                      alt={item.translation.name}
+                      className="w-full h-full object-cover opacity-80"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <StarRating rating={5} />
+                    <h3 className="text-xl mb-2 text-[#1C5D15] line-clamp-2">
+                      {item.translation.name}
+                    </h3>
+                    <p className="text-sm text-[#629960] mb-4 line-clamp-2">
+                      {item.translation.short_description}
+                    </p>
+                    <div className="mb-4">
+                      <span className="text-sm text-[#629960]">
+                        {item.category?.name || ''}
+                      </span>
+                    </div>
+                    <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]">
+                      {language === 'es' ? 'Ver detalles' : 'View details'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-xl text-[#629960]">
+                  {language === 'es'
+                    ? 'No se encontraron productos con los filtros seleccionados'
+                    : 'No products found with the selected filters'}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
