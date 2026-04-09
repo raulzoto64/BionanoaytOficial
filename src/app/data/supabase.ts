@@ -530,6 +530,16 @@ export const supabaseAPI = {
   if (error) {
     throw new Error(error.message);
   }
+
+  // Invalidar caché para asegurar que la próxima carga obtenga datos frescos
+  supabaseAPI._invalidateCache(`page-content-${pageId}-${language}`);
+  
+  // Si estamos en el navegador, disparar eventos para notificar a los componentes
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('database-updated', { detail: { key: `page-content-${pageId}-${language}` } }));
+    window.dispatchEvent(new CustomEvent('cache-updated', { detail: { key: `page-content-${pageId}-${language}`, data: content } }));
+  }
+
   return content;
 },
 

@@ -40,10 +40,11 @@ export function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
-            className="min-[1000px]:hidden p-2"
+            className="min-[1000px]:hidden w-10 h-10 flex items-center justify-center rounded-full border border-white/20 bg-white/5 transition-all duration-300 hover:bg-[#19FF00] hover:text-[#1C5D15] hover:border-[#19FF00] hover:scale-110 active:scale-90 cursor-pointer"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5 transition-transform duration-300 rotate-90" /> : <Menu className="w-5 h-5 transition-transform duration-300" />}
           </button>
         </div>
 

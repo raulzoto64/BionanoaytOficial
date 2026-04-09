@@ -1,17 +1,27 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams, Link, useNavigate, useLocation } from 'react-router';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabaseAPI, BlogPost as BlogPostType, BlogPostTranslation } from '../data/supabase';
 import '../../styles/blog-content.css';
 
 export function BlogPost() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { language, t } = useLanguage();
   const [post, setPost] = useState<BlogPostType | null>(null);
   const [translation, setTranslation] = useState<BlogPostTranslation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState<string>('Sin categoría');
+
+  const handleBack = () => {
+    if (location.key !== 'default') {
+      navigate(-1);
+    } else {
+      navigate('/blog');
+    }
+  };
 
   useEffect(() => {
     const loadPost = async () => {
@@ -72,15 +82,15 @@ export function BlogPost() {
           <p className="text-[#629960] mb-8">
             {language === 'es' ? 'Lo sentimos, el artículo que buscas no existe o ha sido eliminado.' : 'Sorry, the article you are looking for does not exist or has been removed.'}
           </p>
-          <Link 
-            to="/blog"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1C5D15] text-white rounded-lg hover:bg-[#629960] transition-colors"
+          <button 
+            onClick={handleBack}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1C5D15] text-white rounded-lg hover:bg-[#629960] transition-colors border-none cursor-pointer"
           >
-            {language === 'es' ? 'Volver al blog' : 'Back to blog'}
+            {language === 'es' ? 'Volver' : 'Back'}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -90,15 +100,15 @@ export function BlogPost() {
     <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
-        <Link 
-          to="/blog"
-          className="inline-flex items-center gap-2 text-[#629960] hover:text-[#1C5D15] transition-colors mb-8"
+        <button 
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 text-[#629960] hover:text-[#1C5D15] transition-colors mb-8 bg-transparent border-none cursor-pointer p-0"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          {language === 'es' ? 'Volver al blog' : 'Back to blog'}
-        </Link>
+          {language === 'es' ? 'Volver' : 'Back'}
+        </button>
 
         {/* Article Header */}
         <article className="bg-white rounded-lg shadow-lg overflow-hidden">

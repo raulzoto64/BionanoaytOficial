@@ -55,7 +55,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
             {language === "es" ? "Propósito empresarial" : "Business purpose"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("featured")}>
-            {language === "es" ? "Producto estrella: Bionanoaxus (BNX)" : "Star product: Bionanoaxus (BNX)"}
+            {language === "es" ? "Producto estrella" : "Star product"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("products")}>
             {t("nav.products_catalog")}
@@ -65,9 +65,6 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("team")}>
             {language === "es" ? "Equipo de trabajo" : "Work team"}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => scrollToSection("ecosystem")}>
-            {language === "es" ? "Nuestro ecosistema" : "Our ecosystem"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("allies")}>
             {language === "es" ? "Empresas aliadas" : "Allied companies"}

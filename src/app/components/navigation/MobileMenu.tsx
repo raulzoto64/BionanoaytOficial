@@ -92,13 +92,15 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
           <ShoppingCart className="w-5 h-5" />
           {language === 'es' ? 'Carrito' : 'Cart'}
         </Link>
-        <Link 
-          to={isAuthenticated ? "/admin" : "/login"} 
-          className="hover:text-[#19FF00] transition-colors"
-          onClick={onClose}
-        >
-          {isAuthenticated ? t("admin") : t("login")}
-        </Link>
+        <div className="mt-4 pt-4 border-t border-[#629960]/30">
+          <Link 
+            to={isAuthenticated ? "/admin" : "/login"} 
+            className="flex items-center justify-center gap-2 w-full py-3 bg-[#19FF00] text-[#1C5D15] rounded-full font-bold uppercase tracking-wider text-xs transition-all duration-300 hover:bg-white hover:text-[#1C5D15] hover:shadow-lg hover:shadow-[#19FF00]/20 active:scale-95 shadow-md cursor-pointer"
+            onClick={onClose}
+          >
+            {isAuthenticated ? t("admin") : t("login")}
+          </Link>
+        </div>
       </div>
     </div>
   );

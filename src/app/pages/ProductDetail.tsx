@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, ShoppingCart, Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,6 +23,7 @@ import { useAuth } from '../hooks/useAuth';
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { language, t } = useLanguage();
   const { updateTrigger } = useDatabase();
   const { user, isAuthenticated, guestId: hookGuestId } = useAuth();
@@ -40,6 +41,20 @@ export function ProductDetail() {
   const [selectedPackagingType, setSelectedPackagingType] = useState<string>('');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 640);
+
+  const handleBack = () => {
+    if (location.key !== 'default') {
+      navigate(-1);
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        const element = document.getElementById("products");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 500);
+    }
+  };
 
   // Manejar cambio de tamaño de ventana
   useEffect(() => {
@@ -235,15 +250,7 @@ export function ProductDetail() {
           <Button
             variant="ghost"
             className="text-white hover:text-[#19FF00] hover:bg-transparent"
-            onClick={() => {
-              navigate("/");
-              setTimeout(() => {
-                const element = document.getElementById("products");
-                if (element) {
-                  element.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-              }, 500);
-            }}
+            onClick={handleBack}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {language === 'es' ? 'Volver' : 'Back'}

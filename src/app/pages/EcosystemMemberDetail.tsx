@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, Globe, Link as LinkIcon, Video, ExternalLink } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -11,6 +11,7 @@ import { SEO } from '../components/SEO';
 export function EcosystemMemberDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [member, setMember] = useState<EcosystemMember | null>(null);
   const [translation, setTranslation] = useState<EcosystemMemberTranslation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,20 @@ export function EcosystemMemberDetail() {
       loadMember();
     }
   }, [slug, language]);
+
+  const handleBack = () => {
+    if (location.key !== 'default') {
+      navigate(-1);
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        const element = document.getElementById("ecosystem");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 500);
+    }
+  };
 
   const loadMember = async () => {
     setLoading(true);
@@ -53,15 +68,7 @@ export function EcosystemMemberDetail() {
           <p className="text-[#629960] mb-6">El miembro del ecosistema que buscas no existe o no está disponible.</p>
           <Button 
             className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
-            onClick={() => {
-              navigate("/");
-              setTimeout(() => {
-                const element = document.getElementById("ecosystem");
-                if (element) {
-                  element.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-              }, 500);
-            }}
+            onClick={handleBack}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver al inicio
@@ -84,15 +91,7 @@ export function EcosystemMemberDetail() {
         <div className="bg-[#1C5D15] text-white py-8">
           <div className="max-w-6xl mx-auto px-6">
             <button 
-              onClick={() => {
-                navigate("/");
-                setTimeout(() => {
-                  const element = document.getElementById("ecosystem");
-                  if (element) {
-                    element.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }
-                }, 500);
-              }}
+              onClick={handleBack}
               className="flex items-center gap-2 text-white hover:text-[#19FF00] transition-colors mb-4"
             >
               <ArrowLeft className="w-5 h-5" />

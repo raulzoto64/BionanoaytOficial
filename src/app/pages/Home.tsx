@@ -96,8 +96,9 @@ export function Home() {
       </div>
 
       {pageContent ? (
-        pageContent.sections.map((section: Section) => {
-          if (!section.visible || section.type === "hero") return null;
+        <>
+        {pageContent.sections.map((section: Section) => {
+          if (!section.visible || section.type === "hero" || section.type === "ecosystem") return null;
 
           switch (section.type) {
             case "trust":
@@ -144,19 +145,7 @@ export function Home() {
                   />
                 </div>
               );
-            case "ecosystem":
-              const hasDedicatedNews = pageContent.sections.some(s => s.type === 'news');
-              return (
-                <div key={section.id} id="ecosystem">
-                  <div id="allies">
-                    <Ecosystem 
-                      title={section.content.title} 
-                      subtitle={section.content.subtitle} 
-                    />
-                  </div>
-                  {!hasDedicatedNews && <NewsSection />}
-                </div>
-              );
+
             case "news":
               return (
                 <div key={section.id} id="news">
@@ -169,7 +158,24 @@ export function Home() {
             default:
               return null;
           }
-        })
+        })}
+        {pageContent.sections
+          .filter((s) => s.visible && s.type === "ecosystem")
+          .map((section: Section) => {
+            const hasDedicatedNews = pageContent.sections.some(s => s.type === 'news');
+            return (
+              <div key={section.id} id="ecosystem">
+                <div id="allies">
+                  <Ecosystem 
+                    title={section.content.title} 
+                    subtitle={section.content.subtitle} 
+                  />
+                </div>
+                {!hasDedicatedNews && <NewsSection />}
+              </div>
+            );
+          })}
+        </>
       ) : (
         <div className="py-20 bg-white">
           <div className="max-w-6xl mx-auto px-6">

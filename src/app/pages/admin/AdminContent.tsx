@@ -134,64 +134,71 @@ export function AdminContent() {
   };
 
   const addSection = () => {
-  const newSection: Section = {
-    id: `sec-${Date.now()}`,
-    type: 'text',
-    order: sections.length + 1,
-    visible: true,
-    content: {
-      title: '',
-      text: '',
-      subtitle: '', // Agrega esto por si acaso
-      ctaText: '',
-      ctaLink: '',
-      backgroundImage: ''
-    },
+    const newSection: Section = {
+      id: `sec-${Date.now()}`,
+      type: 'text',
+      order: sections.length + 1,
+      visible: true,
+      content: {
+        title: '',
+        text: '',
+        subtitle: '',
+        ctaText: '',
+        ctaLink: '',
+        backgroundImage: ''
+      },
+    };
+    setSections(prev => [...prev, newSection]);
   };
-  setSections([...sections, newSection]);
-};
 
 
   const updateSection = (index: number, updates: Partial<Section>) => {
-    const newSections = [...sections];
-    newSections[index] = { ...newSections[index], ...updates };
-    setSections(newSections);
+    setSections(prev => {
+      const newSections = [...prev];
+      newSections[index] = { ...newSections[index], ...updates };
+      return newSections;
+    });
   };
 
   const updateSectionContent = (index: number, field: string, value: any) => {
-    const newSections = [...sections];
-    newSections[index] = {
-      ...newSections[index],
-      content: {
-        ...newSections[index].content,
-        [field]: value,
-      },
-    };
-    setSections(newSections);
+    setSections(prev => {
+      const newSections = [...prev];
+      newSections[index] = {
+        ...newSections[index],
+        content: {
+          ...newSections[index].content,
+          [field]: value,
+        },
+      };
+      return newSections;
+    });
   };
 
   const deleteSection = (index: number) => {
     if (!confirm('¿Estás seguro de eliminar esta sección?')) return;
-    const newSections = sections.filter((_, i) => i !== index);
-    setSections(newSections);
+    setSections(prev => prev.filter((_, i) => i !== index));
   };
 
   const moveSectionUp = (index: number) => {
     if (index === 0) return;
-    const newSections = [...sections];
-    [newSections[index - 1], newSections[index]] = [newSections[index], newSections[index - 1]];
-    newSections[index - 1].order = index;
-    newSections[index].order = index + 1;
-    setSections(newSections);
+    setSections(prev => {
+      const newSections = [...prev];
+      [newSections[index - 1], newSections[index]] = [newSections[index], newSections[index - 1]];
+      newSections[index - 1] = { ...newSections[index - 1], order: index };
+      newSections[index] = { ...newSections[index], order: index + 1 };
+      return newSections;
+    });
   };
 
   const moveSectionDown = (index: number) => {
     if (index === sections.length - 1) return;
-    const newSections = [...sections];
-    [newSections[index], newSections[index + 1]] = [newSections[index + 1], newSections[index]];
-    newSections[index].order = index + 1;
-    newSections[index + 1].order = index + 2;
-    setSections(newSections);
+    setSections(prev => {
+      const newSections = [...prev];
+      [newSections[index], newSections[index + 1]] = [newSections[index + 1], newSections[index]];
+      newSections[index] = { ...newSections[index], order: index + 1 };
+      newSections[index + 1] = { ...newSections[index + 1], order: index + 2 };
+      return newSections;
+    });
   };
 
   const toggleSectionExpanded = (sectionId: string) => {
@@ -204,50 +211,34 @@ export function AdminContent() {
     setExpandedSections(newExpanded);
   };
 
-  const handleSaveSection = async (section: Section) => {
+  const handleSaveSection = async () => {
     if (!editingPage) return;
 
     try {
-      // Separar contenido para español y inglés
-      const sectionES = {
-        ...section,
-        content: section.content // Contenido en español
-      };
+      // Usar el estado actual de todas las secciones como fuente de verdad
+      // para evitar perder cambios pendientes en otras secciones
+      const allSectionsES = sections.map(sec => ({
+        ...sec,
+        content: sec.content // Contenido en su idioma original (ES)
+      }));
 
-      const sectionEN = {
-        ...section,
-        content: (section as any).contentEN || {} // Contenido en inglés
-      };
+      const allSectionsEN = sections.map(sec => ({
+        ...sec,
+        content: (sec as any).contentEN || {} // Contenido traducido (EN)
+      }));
 
-      // Obtener contenido actual de la página
-      const contentES = await supabaseAPI.getPageContent(editingPage.id, 'es');
-      const contentEN = await supabaseAPI.getPageContent(editingPage.id, 'en');
-
-      // Actualizar la sección específica en español
-      const updatedSectionsES = contentES?.sections?.map(sec => 
-        sec.id === section.id ? sectionES : sec
-      ) || [sectionES];
-      if (!updatedSectionsES.some(sec => sec.id === section.id)) {
-        updatedSectionsES.push(sectionES);
-      }
-
-      // Actualizar la sección específica en inglés
-      const updatedSectionsEN = contentEN?.sections?.map(sec => 
-        sec.id === section.id ? sectionEN : sec
-      ) || [sectionEN];
-      if (!updatedSectionsEN.some(sec => sec.id === section.id)) {
-        updatedSectionsEN.push(sectionEN);
-      }
-
-      // Guardar cambios
+      // Guardar todo el contenido de la página para asegurar consistencia total
       await Promise.all([
-        supabaseAPI.updatePageContent(editingPage.id, 'es', updatedSectionsES),
-        supabaseAPI.updatePageContent(editingPage.id, 'en', updatedSectionsEN)
+        supabaseAPI.updatePageContent(editingPage.id, 'es', allSectionsES),
+        supabaseAPI.updatePageContent(editingPage.id, 'en', allSectionsEN)
       ]);
 
-      // Actualizar datos locales
-      loadPages();
+      toast.success('Cambios guardados exitosamente en la página');
+      
+      // Opcionalmente recargar para sincronizar con ID asignados por DB si fuera necesario
+      // loadPages(); 
     } catch (error) {
+      console.error('Error saving section:', error);
       throw error;
     }
   };
@@ -581,11 +572,12 @@ function SectionEditor({
                       value={(section as any).contentEN?.title || ''}
                       onChange={(e) => {
                         const currentContentEN = (section as any).contentEN || {};
-                        (section as any).contentEN = {
-                          ...currentContentEN,
-                          title: e.target.value
-                        };
-                        onUpdate(section);
+                        onUpdate({
+                          contentEN: {
+                            ...currentContentEN,
+                            title: e.target.value
+                          }
+                        } as any);
                       }}
                       className="mt-1"
                     />
@@ -613,11 +605,12 @@ function SectionEditor({
                         value={(section as any).contentEN?.subtitle || (section as any).contentEN?.text || ''}
                         onChange={(e) => {
                           const currentContentEN = (section as any).contentEN || {};
-                          (section as any).contentEN = {
-                            ...currentContentEN,
-                            [section.type === 'hero' ? 'subtitle' : 'text']: e.target.value
-                          };
-                          onUpdate(section);
+                          onUpdate({
+                            contentEN: {
+                              ...currentContentEN,
+                              [section.type === 'hero' ? 'subtitle' : 'text']: e.target.value
+                            }
+                          } as any);
                         }}
                         className="w-full mt-1 px-3 py-2 border rounded-lg"
                         rows={3}
@@ -645,11 +638,12 @@ function SectionEditor({
                           value={(section as any).contentEN?.ctaText || ''}
                           onChange={(e) => {
                             const currentContentEN = (section as any).contentEN || {};
-                            (section as any).contentEN = {
-                              ...currentContentEN,
-                              ctaText: e.target.value
-                            };
-                            onUpdate(section);
+                            onUpdate({
+                              contentEN: {
+                                ...currentContentEN,
+                                ctaText: e.target.value
+                              }
+                            } as any);
                           }}
                           className="mt-1"
                         />
@@ -738,6 +732,20 @@ function SectionEditor({
                                 className="mt-1"
                               />
                             </div>
+                            <div>
+                              <Label className="text-[#1C5D15]">LinkedIn URL</Label>
+                              <Input
+                                type="text"
+                                value={member.linkedin || ''}
+                                onChange={(e) => {
+                                  const newMembers = [...section.content.members];
+                                  newMembers[idx].linkedin = e.target.value;
+                                  onUpdateContent('members', newMembers);
+                                }}
+                                className="mt-1"
+                                placeholder="https://linkedin.com/in/..."
+                              />
+                            </div>
                           </div>
                           <div className="mt-4">
                             <Label className="text-[#1C5D15]">Imagen</Label>
@@ -774,7 +782,7 @@ function SectionEditor({
                       size="sm"
                       onClick={() => {
                         const newMembers = [...(section.content.members || [])];
-                        newMembers.push({ name: '', role: '', image: '' });
+                        newMembers.push({ name: '', role: '', image: '', linkedin: '' });
                         onUpdateContent('members', newMembers);
                       }}
                       className="mt-2 border-[#1C5D15] text-[#1C5D15]"
@@ -856,10 +864,28 @@ function SectionEditor({
 
                 {section.type === 'trust' && (
                   <div>
-                    <Label className="text-[#1C5D15]">Aliados</Label>
+                    <Label className="text-[#1C5D15]">Logos de Aliados</Label>
                     {section.content.partners && section.content.partners.length > 0 ? (
                       (section.content.partners as any[]).map((partner: any, idx: number) => (
-                        <div key={idx} className="border p-4 rounded-lg mb-4">
+                        <div key={idx} className="border p-4 rounded-lg mb-4 relative group/partner">
+                          <div className="absolute -right-2 -top-2 flex gap-1 opacity-0 group-hover/partner:opacity-100 transition-opacity z-10">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newPartnersES = section.content.partners.filter((_: any, i: number) => i !== idx);
+                                const currentContentEN = (section as any).contentEN || {};
+                                const newPartnersEN = (currentContentEN.partners || []).filter((_: any, i: number) => i !== idx);
+                                onUpdate({
+                                  content: { ...section.content, partners: newPartnersES },
+                                  contentEN: { ...currentContentEN, partners: newPartnersEN }
+                                } as any);
+                              }}
+                              className="h-8 w-8 p-0 bg-white text-red-500 hover:text-red-700 shadow-sm border rounded-full"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                           <div className="grid md:grid-cols-2 gap-4">
                             <div>
                               <Label className="text-[#1C5D15]">Nombre (Español)</Label>
@@ -868,7 +894,7 @@ function SectionEditor({
                                 value={partner.name || ''}
                                 onChange={(e) => {
                                   const newPartners = [...section.content.partners];
-                                  newPartners[idx].name = e.target.value;
+                                  newPartners[idx] = { ...newPartners[idx], name: e.target.value };
                                   onUpdateContent('partners', newPartners);
                                 }}
                                 className="mt-1"
@@ -880,18 +906,11 @@ function SectionEditor({
                                 type="text"
                                 value={(section as any).contentEN?.partners?.[idx]?.name || ''}
                                 onChange={(e) => {
-                                  const currentContentEN = (section as any).contentEN || {};
-                                  const currentPartnersEN = currentContentEN.partners || [];
-                                  if (!currentPartnersEN[idx]) {
-                                    currentPartnersEN[idx] = {};
-                                  }
-                                  currentPartnersEN[idx].name = e.target.value;
-                                  (section as any).contentEN = {
-                                    ...currentContentEN,
-                                    partners: currentPartnersEN
-                                  };
-                                  onUpdate(section);
-                                }}
+                                    const currentContentEN = (section as any).contentEN || {};
+                                    const currentPartnersEN = [...(currentContentEN.partners || [])];
+                                    currentPartnersEN[idx] = { ...(currentPartnersEN[idx] || {}), name: e.target.value };
+                                    onUpdate({ contentEN: { ...currentContentEN, partners: currentPartnersEN } } as any);
+                                  }}
                                 className="mt-1"
                               />
                             </div>
@@ -904,7 +923,7 @@ function SectionEditor({
                                 value={partner.placeholder || ''}
                                 onChange={(e) => {
                                   const newPartners = [...section.content.partners];
-                                  newPartners[idx].placeholder = e.target.value;
+                                  newPartners[idx] = { ...newPartners[idx], placeholder: e.target.value };
                                   onUpdateContent('partners', newPartners);
                                 }}
                                 className="mt-1"
@@ -916,18 +935,11 @@ function SectionEditor({
                                 type="text"
                                 value={(section as any).contentEN?.partners?.[idx]?.placeholder || ''}
                                 onChange={(e) => {
-                                  const currentContentEN = (section as any).contentEN || {};
-                                  const currentPartnersEN = currentContentEN.partners || [];
-                                  if (!currentPartnersEN[idx]) {
-                                    currentPartnersEN[idx] = {};
-                                  }
-                                  currentPartnersEN[idx].placeholder = e.target.value;
-                                  (section as any).contentEN = {
-                                    ...currentContentEN,
-                                    partners: currentPartnersEN
-                                  };
-                                  onUpdate(section);
-                                }}
+                                    const currentContentEN = (section as any).contentEN || {};
+                                    const currentPartnersEN = [...(currentContentEN.partners || [])];
+                                    currentPartnersEN[idx] = { ...(currentPartnersEN[idx] || {}), placeholder: e.target.value };
+                                    onUpdate({ contentEN: { ...currentContentEN, partners: currentPartnersEN } } as any);
+                                  }}
                                 className="mt-1"
                               />
                             </div>
@@ -938,7 +950,7 @@ function SectionEditor({
                               currentImage={partner.image}
                               onImageUpload={(url) => {
                                 const newPartners = [...section.content.partners];
-                                newPartners[idx].image = url;
+                                newPartners[idx] = { ...newPartners[idx], image: url };
                                 onUpdateContent('partners', newPartners);
                               }}
                               type="avatar"
@@ -951,12 +963,150 @@ function SectionEditor({
                               value={partner.link || ''}
                               onChange={(e) => {
                                 const newPartners = [...section.content.partners];
-                                newPartners[idx].link = e.target.value;
+                                newPartners[idx] = { ...newPartners[idx], link: e.target.value };
                                 onUpdateContent('partners', newPartners);
                               }}
                               placeholder="https://ejemplo.com"
                               className="mt-1"
                             />
+                          </div>
+
+                          <div className="grid md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                              <Label className="text-[#1C5D15]">Descripción (Español)</Label>
+                              <textarea
+                                value={partner.description || ''}
+                                onChange={(e) => {
+                                  const newPartners = [...section.content.partners];
+                                  newPartners[idx] = { ...newPartners[idx], description: e.target.value };
+                                  onUpdateContent('partners', newPartners);
+                                }}
+                                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                                rows={3}
+                                placeholder="Breve descripción de la organización..."
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[#1C5D15]">Descripción (English)</Label>
+                              <textarea
+                                value={(section as any).contentEN?.partners?.[idx]?.description || ''}
+                                onChange={(e) => {
+                                    const currentContentEN = (section as any).contentEN || {};
+                                    const currentPartnersEN = [...(currentContentEN.partners || [])];
+                                    currentPartnersEN[idx] = { ...(currentPartnersEN[idx] || {}), description: e.target.value };
+                                    onUpdate({ contentEN: { ...currentContentEN, partners: currentPartnersEN } } as any);
+                                  }}
+                                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                                rows={3}
+                                placeholder="Short organization description..."
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-4">
+                            <Label className="text-[#1C5D15] mb-2 block">Detalles Importantes (Bloques de Traducción)</Label>
+                            <div className="space-y-4 border-l-2 border-[#19FF00]/30 pl-4 py-2">
+                              {(() => {
+                                const esDetails = partner.details || [];
+                                const enDetails = (section as any).contentEN?.partners?.[idx]?.details || [];
+                                const maxLen = Math.max(esDetails.length, enDetails.length);
+                                
+                                return Array.from({ length: maxLen }).map((_, dIdx) => (
+                                  <div key={dIdx} className="bg-white/50 p-3 rounded-lg border border-[#1C5D15]/10 space-y-3 relative group">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        const updatedPartnersES = [...section.content.partners];
+                                        updatedPartnersES[idx] = {
+                                          ...updatedPartnersES[idx],
+                                          details: (updatedPartnersES[idx].details || []).filter((_: any, i: number) => i !== dIdx)
+                                        };
+
+                                        const currentContentEN = (section as any).contentEN || {};
+                                        const updatedPartnersEN = [...(currentContentEN.partners || [])];
+                                        if (updatedPartnersEN[idx]) {
+                                          updatedPartnersEN[idx] = {
+                                            ...updatedPartnersEN[idx],
+                                            details: (updatedPartnersEN[idx].details || []).filter((_: any, i: number) => i !== dIdx)
+                                          };
+                                        }
+
+                                        onUpdate({
+                                          content: { ...section.content, partners: updatedPartnersES },
+                                          contentEN: { ...currentContentEN, partners: updatedPartnersEN }
+                                        } as any);
+                                      }}
+                                      className="absolute -right-2 -top-2 text-red-500 hover:text-red-700 h-8 w-8 p-0 bg-white shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity rounded-full z-20"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                    
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                      <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase font-bold text-[#629960]">Detalle (Español)</Label>
+                                        <Input
+                                          value={esDetails[dIdx] || ''}
+                                          onChange={(e) => {
+                                            const newPartners = [...section.content.partners];
+                                            const newDetails = [...(newPartners[idx].details || [])];
+                                            newDetails[dIdx] = e.target.value;
+                                            newPartners[idx] = { ...newPartners[idx], details: newDetails };
+                                            onUpdateContent('partners', newPartners);
+                                          }}
+                                          className="text-sm h-9 border-[#1C5D15]/20 focus:border-[#19FF00]"
+                                          placeholder="Ej: Aliado estratégico"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase font-bold text-[#629960]">Detail (English)</Label>
+                                        <Input
+                                          value={enDetails[dIdx] || ''}
+                                          onChange={(e) => {
+                                            const currentContentEN = (section as any).contentEN || {};
+                                            const currentPartnersEN = [...(currentContentEN.partners || [])];
+                                            if (!currentPartnersEN[idx]) currentPartnersEN[idx] = {};
+                                            const newDetailsEN = [...(currentPartnersEN[idx].details || [])];
+                                            newDetailsEN[dIdx] = e.target.value;
+                                            currentPartnersEN[idx] = { ...currentPartnersEN[idx], details: newDetailsEN };
+                                            onUpdate({ contentEN: { ...currentContentEN, partners: currentPartnersEN } } as any);
+                                          }}
+                                          className="text-sm h-9 border-[#1C5D15]/20 focus:border-[#19FF00]"
+                                          placeholder="Ex: Strategic partner"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ));
+                              })()}
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const updatedPartnersES = [...section.content.partners];
+                                  const currentDetailsES = [...(updatedPartnersES[idx].details || [])];
+                                  currentDetailsES.push("");
+                                  updatedPartnersES[idx] = { ...updatedPartnersES[idx], details: currentDetailsES };
+
+                                  const currentContentEN = (section as any).contentEN || {};
+                                  const updatedPartnersEN = [...(currentContentEN.partners || [])];
+                                  if (!updatedPartnersEN[idx]) updatedPartnersEN[idx] = { details: [] };
+                                  const currentDetailsEN = [...(updatedPartnersEN[idx].details || [])];
+                                  currentDetailsEN.push("");
+                                  updatedPartnersEN[idx] = { ...updatedPartnersEN[idx], details: currentDetailsEN };
+
+                                  onUpdate({
+                                    content: { ...section.content, partners: updatedPartnersES },
+                                    contentEN: { ...currentContentEN, partners: updatedPartnersEN }
+                                  } as any);
+                                }}
+                                className="mt-2 w-full py-6 border-dashed border-2 border-[#1C5D15]/20 text-[#1C5D15] hover:bg-[#19FF00]/5 hover:border-[#19FF00] transition-all"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Añadir Nuevo Bloque de Detalle (ES / EN)
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))
@@ -965,6 +1115,26 @@ function SectionEditor({
                         No hay aliados definidos
                       </div>
                     )}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const newPartner = { name: "", image: "", link: "", details: [], description: "" };
+                        const updatedPartnersES = [...(section.content.partners || []), newPartner];
+                        
+                        const currentContentEN = (section as any).contentEN || {};
+                        const updatedPartnersEN = [...(currentContentEN.partners || []), { ...newPartner }];
+                        
+                        onUpdate({
+                          content: { ...section.content, partners: updatedPartnersES },
+                           contentEN: { ...currentContentEN, partners: updatedPartnersEN }
+                        } as any);
+                      }}
+                      className="w-full mt-4 py-8 border-dashed border-2 border-[#1C5D15]/30 text-[#1C5D15] hover:bg-[#1C5D15]/5 hover:border-[#1C5D15] transition-all"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Añadir Nuevo Aliado / Logo
+                    </Button>
+
                   </div>
                 )}
 
@@ -987,11 +1157,12 @@ function SectionEditor({
                           value={(section as any).contentEN?.productName || ''}
                           onChange={(e) => {
                             const currentContentEN = (section as any).contentEN || {};
-                            (section as any).contentEN = {
-                              ...currentContentEN,
-                              productName: e.target.value
-                            };
-                            onUpdate(section);
+                            onUpdate({
+                              contentEN: {
+                                ...currentContentEN,
+                                productName: e.target.value
+                              }
+                            } as any);
                           }}
                           className="mt-1"
                         />
@@ -1013,11 +1184,12 @@ function SectionEditor({
                           value={(section as any).contentEN?.productDescription || ''}
                           onChange={(e) => {
                             const currentContentEN = (section as any).contentEN || {};
-                            (section as any).contentEN = {
-                              ...currentContentEN,
-                              productDescription: e.target.value
-                            };
-                            onUpdate(section);
+                            onUpdate({
+                              contentEN: {
+                                ...currentContentEN,
+                                productDescription: e.target.value
+                              }
+                            } as any);
                           }}
                           className="w-full mt-1 px-3 py-2 border rounded-lg"
                           rows={3}

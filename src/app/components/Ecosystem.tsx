@@ -23,6 +23,13 @@ export function Ecosystem({ title, subtitle }: EcosystemProps) {
   const [translations, setTranslations] = useState<Record<string, EcosystemMemberTranslation>>({});
   const [loading, setLoading] = useState(true);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     loadMembers();
@@ -76,24 +83,24 @@ export function Ecosystem({ title, subtitle }: EcosystemProps) {
   return (
     <section className="py-10 md:py-14 bg-[#629960]/5 overflow-hidden">
       <div className="max-w-6xl mx-auto px-5 lg:px-6">
-        <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-10 lg:gap-16 items-center">
           
           {/* Lado Izquierdo: Texto */}
-          <div className="relative z-10">
+          <div className="relative z-10 flex flex-col items-center text-center md:items-start md:text-left">
             <div className="inline-block px-4 py-1.5 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4 font-bold text-sm tracking-wide shadow-sm">
               {language === 'es' ? 'Ecosistema' : 'Ecosystem'}
             </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1C5D15] tracking-tight">
               {title || (language === 'es' ? 'Nuestro Ecosistema' : 'Our Ecosystem')}
             </h2>
-            <p className="text-lg md:text-xl mb-8 text-[#629960] leading-relaxed max-w-lg">
+            <p className="text-lg md:text-xl mb-6 text-[#629960] leading-relaxed max-w-lg mx-auto md:mx-0">
               {subtitle || (language === 'es' 
                 ? 'Conectamos innovadores, empresarios y profesionales para construir un ecosistema sostenible y tecnológico.' 
                 : 'We connect innovators, entrepreneurs, and professionals to build a sustainable and technological ecosystem.')
               }
             </p>
             
-            <div className="space-y-5 mb-8">
+            <div className="space-y-4 md:space-y-5 mb-0 md:mb-8 w-full">
               {[
                 { 
                   label: language === 'es' ? 'Red de Innovadores' : 'Network of Innovators', 
@@ -106,21 +113,21 @@ export function Ecosystem({ title, subtitle }: EcosystemProps) {
                   iconPath: "M13 10V3L4 14h7v7l9-11h-7z" 
                 }
               ].map((item, idx) => (
-                <div key={idx} className="flex items-start gap-4">
-                  <div className="mt-1 bg-[#19FF00]/20 p-2.5 rounded-xl shrink-0">
-                    <svg className="w-5 h-5 text-[#1C5D15]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div key={idx} className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4">
+                  <div className="mt-0 md:mt-1 bg-[#19FF00]/20 p-2 md:p-2.5 rounded-xl shrink-0">
+                    <svg className="w-5 h-5 md:w-5 md:h-5 text-[#1C5D15]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={item.iconPath} />
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-[#1C5D15] font-bold text-lg">{item.label}</h4>
+                    <h4 className="text-[#1C5D15] font-bold text-base md:text-lg">{item.label}</h4>
                     <p className="text-[#629960] text-sm md:text-base">{item.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <Button size="lg" className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12" asChild>
+            <Button size="lg" className="hidden md:inline-flex bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12" asChild>
               <Link to="/ecosystem">
                 {language === 'es' ? 'Conocer Más' : 'Learn More'}
               </Link>
@@ -128,21 +135,22 @@ export function Ecosystem({ title, subtitle }: EcosystemProps) {
           </div>
 
           {/* Lado Derecho: Carrusel Compacto */}
-          <div className="relative mt-0 md:mt-0 flex justify-center"> 
+          <div className="relative mt-2 md:mt-0 flex justify-center overflow-hidden md:overflow-visible"> 
             <Carousel 
-              orientation="vertical" 
+              key={isMobile ? 'mobile-carousel' : 'desktop-carousel'}
+              orientation={isMobile ? "horizontal" : "vertical"} 
               opts={{ loop: true, align: "start", slidesToScroll: 1 }}
               setApi={setCarouselApi}
-              pauseOnHover={false}
-              className="h-[420px] md:h-[480px] w-full max-w-[450px] mb-5"
+              pauseOnHover={true}
+              className={isMobile ? "w-full mt-2" : "h-[420px] md:h-[480px] w-full max-w-[450px] mb-5"}
             >
-              <CarouselContent className="-mt-4 mb-5 h-[480px] md:h-[500px]"> 
+              <CarouselContent className={isMobile ? "py-4" : "mb-5 h-[480px] md:h-[500px]"}> 
                 {members.map((member) => {
                   const translation = translations[member.id];
                   const initials = translation?.name ? translation.name.split(' ').map((n) => n.charAt(0)).join('').slice(0, 2) : 'EM';
                   
                   return (
-                    <CarouselItem key={member.id} className="pt-4 basis-1/2 md:basis-[48%]">
+                    <CarouselItem key={member.id} className={isMobile ? "basis-[85%] sm:basis-1/2 focus:outline-none" : "basis-1/2 md:basis-[48%]"}>
                       <Link 
                         to={member.slug ? `/ecosystem/${member.slug}` : '#'}
                         className="block h-full group"
@@ -179,6 +187,15 @@ export function Ecosystem({ title, subtitle }: EcosystemProps) {
             </Carousel>
           </div>
 
+        </div>
+
+        {/* Botón visible solo en móviles, debajo del carrusel */}
+        <div className="mt-6 flex justify-center md:hidden">
+          <Button size="lg" className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12" asChild>
+            <Link to="/ecosystem">
+              {language === 'es' ? 'Conocer Más' : 'Learn More'}
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

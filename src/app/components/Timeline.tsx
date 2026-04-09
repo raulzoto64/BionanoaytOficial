@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useState, useRef, useEffect } from "react";
 import {
   Lightbulb,
@@ -10,8 +9,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "./ui/carousel";
 
 // Sub-componente para detectar si el texto se corta y mostrar tooltip
@@ -144,9 +141,6 @@ export function Timeline({ milestones }: TimelineProps) {
                   );
                 })}
             </CarouselContent>
-            {/* Arrows for Desktop only commonly, or adjust styles for mobile */}
-            <CarouselPrevious className="hidden md:flex bg-[#19FF00] border-0 text-[#1C5D15] hover:bg-[#19FF00]/80 h-12 w-12" />
-            <CarouselNext className="hidden md:flex bg-[#19FF00] border-0 text-[#1C5D15] hover:bg-[#19FF00]/80 h-12 w-12" />
           </Carousel>
         </div>
       </div>

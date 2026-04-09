@@ -46,10 +46,10 @@ export function LoginButton() {
     <>
       <Button
         size="sm"
-        className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90"
+        className="bg-[#19FF00] text-[#1C5D15] rounded-full px-6 transition-all duration-300 hover:bg-white hover:text-[#1C5D15] hover:shadow-lg hover:shadow-[#19FF00]/20 active:scale-95 hover:-translate-y-0.5 font-bold tracking-wide uppercase text-[11px] h-9 cursor-pointer"
         onClick={handleAction}
       >
-        <User className="w-4 h-4 mr-2" />
+        <User className="w-3.5 h-3.5 mr-2" />
         {isAdmin ? t('adminPanel') : (isAuthenticated ? "Cerrar Sesión" : t('login'))}
       </Button>
 

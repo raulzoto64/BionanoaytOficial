@@ -1,6 +1,5 @@
 import Slider from "react-slick";
 import { TimelineCard } from "./TimelineCard";
-import { NextArrow, PrevArrow } from "./TimelineArrows";
 
 interface Milestone {
   year: string;
@@ -21,8 +20,7 @@ export function TimelineSlider({ milestones }: TimelineSliderProps) {
     slidesToShow: 3,
     slidesToScroll: 1,
     initialSlide: 0,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
+    arrows: false,
     autoplay: true,
     autoplaySpeed: 3000,
     swipe: true,
