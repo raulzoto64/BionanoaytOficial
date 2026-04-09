@@ -160,12 +160,12 @@ export function Footer({ contactInfo }: FooterProps) {
 
   return (
     <footer className="bg-[#1C5D15] text-white py-16">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-5 lg:px-6">
         {/* Footer Columns */}
         {renderFooterColumns()}
 
         {/* Contact Form and Info */}
-        <div className="grid md:grid-cols-2 gap-12 mb-12">
+        <div id="contact" className="grid md:grid-cols-2 gap-12 mb-12">
           {/* Contact Form */}
           <div>
             <h3 className="text-3xl mb-6">{t('footer.contact')}</h3>
@@ -259,7 +259,7 @@ export function Footer({ contactInfo }: FooterProps) {
         <div className="pt-8 border-t border-white/20 text-center text-white/60">
           <p>
             {isLoading || !footerSettings 
-              ? `© ${getCurrentYear()} Bionanoaxus. All rights reserved.`
+              ? `© ${getCurrentYear()} BionanoAyT. All rights reserved.`
               : (language === 'es' 
                   ? footerSettings.copyright_text_es.replace('{{year}}', getCurrentYear().toString())
                   : footerSettings.copyright_text_en.replace('{{year}}', getCurrentYear().toString())

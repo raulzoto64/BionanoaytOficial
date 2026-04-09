@@ -121,6 +121,9 @@ export function Cart() {
         setSubtotal(total);
         return currentItems;
       });
+
+      // Sincronizar header
+      window.dispatchEvent(new CustomEvent('cart-updated'));
     } catch (error) {
       toast.error("Error al actualizar cantidad");
     }
@@ -134,6 +137,10 @@ export function Cart() {
       if (itemToRemove) {
         setSubtotal((prev) => prev - itemToRemove.totalPrice);
       }
+      
+      // Sincronizar header
+      window.dispatchEvent(new CustomEvent('cart-updated'));
+      
       toast.success("Producto eliminado");
     } catch (error) {
       toast.error("Error al eliminar el producto");

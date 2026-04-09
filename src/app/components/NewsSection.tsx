@@ -22,7 +22,12 @@ interface PostWithTranslation {
   type: 'article' | 'news';
 }
 
-export function NewsSection() {
+interface NewsSectionProps {
+  title?: string;
+  subtitle?: string;
+}
+
+export function NewsSection({ title, subtitle }: NewsSectionProps) {
   const { language } = useLanguage();
   const [featuredPosts, setFeaturedPosts] = useState<PostWithTranslation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +88,7 @@ export function NewsSection() {
   if (loading) {
     return (
       <section className="py-20 bg-gradient-to-b from-[#629960]/10 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <div className="text-center mb-12">
             <div className="h-10 bg-[#1C5D15]/20 rounded-lg w-1/3 mx-auto mb-4 animate-pulse"></div>
             <div className="h-6 bg-[#629960]/20 rounded-lg w-2/3 mx-auto animate-pulse"></div>
@@ -109,18 +114,18 @@ export function NewsSection() {
   if (featuredPosts.length === 0) return null;
 
   return (
-    <section className="py-20 bg-gradient-to-b from-[#629960]/10 to-white">
-      <div className="max-w-9xl mx-auto px-6 sm:px-8 lg:px-12">
+    <section id="news" className="py-20 bg-gradient-to-b from-[#629960]/10 to-white">
+      <div className="max-w-9xl mx-auto px-5 lg:px-12">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">
-            {language === 'es' ? 'Noticias Destacadas' : 'Featured News'}
-          </h2>
-          <p className="text-xl text-[#629960] max-w-3xl mx-auto">
-            {language === 'es' 
-              ? 'Artículos destacados sobre bioseguridad, nanotecnología y prácticas sostenibles' 
-              : 'Featured articles about biosecurity, nanotechnology, and sustainable practices'
-            }
-          </p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1C5D15] tracking-tight">
+              {title || (language === 'es' ? 'Noticias Destacadas' : 'Featured News')}
+            </h2>
+            <p className="text-lg md:text-xl text-[#629960] leading-relaxed max-w-2xl mx-auto">
+              {subtitle || (language === 'es'
+                ? 'Mantente al día con los últimos avances en bionanotecnología y sostenibilidad.'
+                : 'Stay up to date with the latest advances in bionanotechnology and sustainability.')
+              }
+            </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -136,7 +141,7 @@ export function NewsSection() {
         <div className="text-center mt-12">
           <Link
             to="/blog"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white font-bold rounded-full hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all duration-300 hover:shadow-lg uppercase text-sm tracking-wider"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white font-bold rounded-full hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg uppercase text-sm tracking-wider"
           >
             {language === 'es' ? 'Ver todas las noticias' : 'View all news'}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

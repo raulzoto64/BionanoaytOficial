@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Globe, Link as LinkIcon, Video, ExternalLink } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -10,6 +10,7 @@ import { SEO } from '../components/SEO';
 
 export function EcosystemMemberDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [member, setMember] = useState<EcosystemMember | null>(null);
   const [translation, setTranslation] = useState<EcosystemMemberTranslation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,12 +51,21 @@ export function EcosystemMemberDetail() {
         <div className="text-center">
           <h2 className="text-3xl text-[#1C5D15] mb-4">Miembro no encontrado</h2>
           <p className="text-[#629960] mb-6">El miembro del ecosistema que buscas no existe o no está disponible.</p>
-          <Link to="/">
-            <Button className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al inicio
-            </Button>
-          </Link>
+          <Button 
+            className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+            onClick={() => {
+              navigate("/");
+              setTimeout(() => {
+                const element = document.getElementById("ecosystem");
+                if (element) {
+                  element.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }, 500);
+            }}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver al inicio
+          </Button>
         </div>
       </div>
     );
@@ -73,10 +83,21 @@ export function EcosystemMemberDetail() {
         {/* Header */}
         <div className="bg-[#1C5D15] text-white py-8">
           <div className="max-w-6xl mx-auto px-6">
-            <Link to="/" className="flex items-center gap-2 text-white hover:text-[#19FF00] transition-colors mb-4">
+            <button 
+              onClick={() => {
+                navigate("/");
+                setTimeout(() => {
+                  const element = document.getElementById("ecosystem");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }, 500);
+              }}
+              className="flex items-center gap-2 text-white hover:text-[#19FF00] transition-colors mb-4"
+            >
               <ArrowLeft className="w-5 h-5" />
               <span>Volver al inicio</span>
-            </Link>
+            </button>
             <h1 className="text-4xl md:text-5xl mb-2">{translation?.name || 'Miembro'}</h1>
             <p className="text-[#19FF00] text-lg">{member.sector}</p>
             <Badge className={member.status === 'active' ? 'bg-[#19FF00] text-[#1C5D15]' : 'bg-gray-400 text-white'}>

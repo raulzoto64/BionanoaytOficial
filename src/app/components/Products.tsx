@@ -26,7 +26,7 @@ export function Products({ products, title, subtitle }: ProductsProps) {
   if (!products || products.length === 0) {
     return (
       <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-5 lg:px-6">
           <div className="text-center mb-16">
             <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4">
               {t('products.catalog')}
@@ -52,7 +52,7 @@ export function Products({ products, title, subtitle }: ProductsProps) {
   
   return (
     <section className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-5 lg:px-6">
         <div className="text-center mb-16">
           <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4">
             {t('products.catalog')}
@@ -110,12 +110,12 @@ export function Products({ products, title, subtitle }: ProductsProps) {
                 {/* CTA Button - NO MUESTRA PRECIO */}
                 <div className="mt-auto">
                   <Button 
-                    className="w-full bg-[#1C5D15] text-white hover:bg-[#1C5D15]/90 group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-colors"
+                    className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full font-bold group/btn"
                     asChild
                   >
-                    <span>
+                    <span className="flex items-center justify-center">
                       {t('btn.view_details_prices')}
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                     </span>
                   </Button>
                 </div>
@@ -128,8 +128,7 @@ export function Products({ products, title, subtitle }: ProductsProps) {
         <div className="text-center mt-12">
           <Button 
             size="lg"
-            variant="outline"
-            className="border-[#1C5D15] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white"
+            className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
             asChild
           >
             <Link to="/store">

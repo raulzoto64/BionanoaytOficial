@@ -33,7 +33,6 @@ function StarRating({ rating }: { rating: number }) {
 
 export function Store() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [products, setProducts] = useState<ProductWithDetails[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,26 +42,21 @@ export function Store() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle category from URL
-  useEffect(() => {
-    const categoryParam = searchParams.get("category");
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
+  const selectedCategory = searchParams.get("category") || "all";
+
+  const handleCategoryChange = (category: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (category === "all") {
+      newParams.delete("category");
+    } else {
+      newParams.set("category", category);
     }
-  }, [searchParams]);
+    setSearchParams(newParams, { replace: true });
+  };
 
   useEffect(() => {
     loadData();
   }, [language, updateTrigger]); // Re-cargar cuando cambie el idioma o la base de datos
-
-  // Update URL when selected category changes
-  useEffect(() => {
-    if (selectedCategory === "all") {
-      searchParams.delete("category");
-    } else {
-      searchParams.set("category", selectedCategory);
-    }
-    setSearchParams(searchParams, { replace: true });
-  }, [selectedCategory, searchParams, setSearchParams]);
 
   const loadData = async () => {
     setLoading(true);
@@ -169,7 +163,7 @@ export function Store() {
             <Filter className="w-5 h-5 text-[#629960]" />
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="px-4 py-2 border rounded-lg bg-white text-[#1C5D15]"
             >
               {categories.map((cat) => (

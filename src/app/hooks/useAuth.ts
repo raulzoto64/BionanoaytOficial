@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User } from '../data/supabase';
+import { User, supabaseAPI } from '../data/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useAuth = () => {
@@ -11,15 +11,43 @@ export const useAuth = () => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Purgar sesión zombie de demo si existe
+        if (parsedUser.id === 'user-demo-001') {
+          console.warn('Sesión demo detectada y purgada para compatibilidad con Supabase');
+          localStorage.removeItem('user');
+          setUser(null);
+        } else {
+          setUser(parsedUser);
+        }
       } catch (error) {
         localStorage.removeItem('user');
       }
     }
+    
+    // Sincronizar visitante con la BD si no está autenticado
+    const guestId = localStorage.getItem('guest_id');
+    if (guestId) {
+      supabaseAPI.upsertGuest(guestId);
+    }
+    
     setIsLoading(false);
   }, []);
 
-  const login = (userData: User) => {
+  const login = async (userData: User) => {
+    // Fusionar carrito si existe un Id de invitado
+    const guestId = localStorage.getItem('guest_id');
+    if (guestId && userData.id) {
+      try {
+        await supabaseAPI.mergeGuestCart(userData.id, guestId);
+        // Opcional: limpiar guest_id después de fusionar para empezar de cero
+        // localStorage.removeItem('guest_id'); 
+      } catch (error) {
+        console.error("Error al fusionar carritos:", error);
+      }
+    }
+    
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
   };

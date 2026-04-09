@@ -13,6 +13,13 @@ export function CartIndicator() {
 
   useEffect(() => {
     loadCartCount();
+    
+    const handleCartUpdate = () => {
+      loadCartCount();
+    };
+
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => window.removeEventListener('cart-updated', handleCartUpdate);
   }, [user, guestId, isAuthenticated, isGuest]);
 
   const loadCartCount = async () => {

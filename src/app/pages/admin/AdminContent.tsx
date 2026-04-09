@@ -14,7 +14,8 @@ import {
   Eye, 
   EyeOff,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -35,6 +36,7 @@ export function AdminContent() {
   const [editingPage, setEditingPage] = useState<Page | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -96,6 +98,7 @@ export function AdminContent() {
   const handleSave = async () => {
     if (!editingPage) return;
 
+    setIsSaving(true);
     try {
       // Separar secciones para español y inglés
       const sectionsES = sections.map(section => ({
@@ -120,6 +123,8 @@ export function AdminContent() {
       loadPages();
     } catch (error) {
       toast.error('Error al guardar el contenido');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -271,10 +276,15 @@ export function AdminContent() {
           <div className="flex gap-3">
             <Button
               onClick={handleSave}
+              disabled={isSaving}
               className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
             >
-              <Save className="w-4 h-4 mr-2" />
-              Guardar
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {isSaving ? 'Guardando...' : 'Guardar'}
             </Button>
             <Button onClick={handleCancel} variant="outline">
               <X className="w-4 h-4 mr-2" />
@@ -432,6 +442,8 @@ function SectionEditor({
     { value: 'custom', label: 'Personalizado' },
     { value: 'trust', label: 'Confianza' },
     { value: 'featured', label: 'Destacado' },
+    { value: 'ecosystem', label: 'Ecosistema' },
+    { value: 'news', label: 'Noticias Destacadas' },
   ];
 
   const handleSaveSection = async () => {
@@ -739,13 +751,37 @@ function SectionEditor({
                               type="avatar"
                             />
                           </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="mt-4"
+                            onClick={() => {
+                              const newMembers = section.content.members.filter((_: any, i: number) => i !== idx);
+                              onUpdateContent('members', newMembers);
+                            }}
+                          >
+                            Eliminar Miembro
+                          </Button>
                         </div>
                       ))
                     ) : (
-                      <div className="text-[#629960] text-sm">
+                      <div className="text-[#629960] text-sm mb-4">
                         No hay miembros del equipo definidos
                       </div>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newMembers = [...(section.content.members || [])];
+                        newMembers.push({ name: '', role: '', image: '' });
+                        onUpdateContent('members', newMembers);
+                      }}
+                      className="mt-2 border-[#1C5D15] text-[#1C5D15]"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Miembro
+                    </Button>
                   </div>
                 )}
 
@@ -906,6 +942,20 @@ function SectionEditor({
                                 onUpdateContent('partners', newPartners);
                               }}
                               type="avatar"
+                            />
+                          </div>
+                          <div className="mt-4">
+                            <Label className="text-[#1C5D15]">Enlace (URL)</Label>
+                            <Input
+                              type="text"
+                              value={partner.link || ''}
+                              onChange={(e) => {
+                                const newPartners = [...section.content.partners];
+                                newPartners[idx].link = e.target.value;
+                                onUpdateContent('partners', newPartners);
+                              }}
+                              placeholder="https://ejemplo.com"
+                              className="mt-1"
                             />
                           </div>
                         </div>
@@ -1428,7 +1478,18 @@ function SectionEditor({
                   <Label className="text-[#1C5D15]">Hitos de la Línea de Tiempo</Label>
                   {section.content.milestones && section.content.milestones.length > 0 ? (
                     (section.content.milestones as any[]).map((milestone: any, idx: number) => (
-                      <div key={idx} className="border p-4 rounded-lg mb-4">
+                      <div key={idx} className="border p-4 rounded-lg mb-4 relative">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newMilestones = section.content.milestones.filter((_: any, i: number) => i !== idx);
+                            onUpdateContent('milestones', newMilestones);
+                          }}
+                          className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-8 w-8"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
                             <Label className="text-[#1C5D15]">Fase (Español)</Label>
@@ -1504,11 +1565,24 @@ function SectionEditor({
                       </div>
                     ))
                   ) : (
-                    <div className="text-[#629960] text-sm">
+                    <div className="text-[#629960] text-sm mb-4">
                       No hay hitos definidos
                     </div>
                   )}
-                </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newMilestones = [...(section.content.milestones || [])];
+                        newMilestones.push({ phase: '', time: '' });
+                        onUpdateContent('milestones', newMilestones);
+                      }}
+                      className="mt-2 border-[#1C5D15] text-[#1C5D15]"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Hito
+                    </Button>
+                  </div>
 
                 {/* Campos de SEO */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -1570,6 +1644,68 @@ function SectionEditor({
                 <p>La sección de contacto no requiere contenido adicional.</p>
                 <p>Configura el tipo de sección y el orden en el formulario superior.</p>
                 <p>La información de contacto se carga automáticamente desde la configuración del footer.</p>
+              </div>
+            )}
+
+            {(section.type === 'ecosystem' || section.type === 'news') && (
+              <div className="space-y-4">
+                <p className="text-sm text-[#629960] italic">
+                  Esta sección muestra contenido dinámico (Aliados o Noticias). Puedes editar el título y subtítulo aquí.
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-[#1C5D15]">Título (Español)</Label>
+                    <Input
+                      type="text"
+                      value={section.content.title || ''}
+                      onChange={(e) => onUpdateContent('title', e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#1C5D15]">Título (English)</Label>
+                    <Input
+                      type="text"
+                      value={(section as any).contentEN?.title || ''}
+                      onChange={(e) => {
+                        const currentContentEN = (section as any).contentEN || {};
+                        (section as any).contentEN = {
+                          ...currentContentEN,
+                          title: e.target.value
+                        };
+                        onUpdate(section);
+                      }}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-[#1C5D15]">Subtítulo (Español)</Label>
+                    <textarea
+                      value={section.content.subtitle || ''}
+                      onChange={(e) => onUpdateContent('subtitle', e.target.value)}
+                      className="w-full mt-1 px-3 py-2 border rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[#1C5D15]">Subtítulo (English)</Label>
+                    <textarea
+                      value={(section as any).contentEN?.subtitle || ''}
+                      onChange={(e) => {
+                        const currentContentEN = (section as any).contentEN || {};
+                        (section as any).contentEN = {
+                          ...currentContentEN,
+                          subtitle: e.target.value
+                        };
+                        onUpdate(section);
+                      }}
+                      className="w-full mt-1 px-3 py-2 border rounded-lg"
+                      rows={2}
+                    />
+                  </div>
+                </div>
               </div>
             )}
 

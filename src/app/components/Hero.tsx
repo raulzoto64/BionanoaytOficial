@@ -18,7 +18,7 @@ export function Hero({ content }: HeroProps) {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-6 text-center text-white">
+      <div className="relative z-10 max-w-6xl mx-auto px-5 lg:px-6 text-center text-white">
         <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6 leading-tight">
           {content.title}
         </h1>
@@ -27,9 +27,14 @@ export function Hero({ content }: HeroProps) {
         </p>
         <Button 
           size="lg"
-          className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg shadow-lg"
+          className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90 active:scale-95 transition-transform duration-200 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg shadow-lg"
+          asChild
         >
-          {content.ctaText}
+          {content.ctaLink ? (
+            <a href={content.ctaLink} className="cursor-pointer">{content.ctaText}</a>
+          ) : (
+            <span className="cursor-pointer">{content.ctaText}</span>
+          )}
         </Button>
       </div>
     </section>

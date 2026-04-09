@@ -44,18 +44,18 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
   }, [language]);
 
   return (
-    <div className="hidden md:flex items-center gap-6">
+    <div className="hidden min-[1000px]:flex items-center gap-6">
       {/* Conócenos Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
           {t("nav.about")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-white">
+        <DropdownMenuContent className="bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenuItem onClick={() => scrollToSection("purpose")}>
             {language === "es" ? "Propósito empresarial" : "Business purpose"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("featured")}>
-            {language === "es" ? "Producto estrella: Bionanoaxus" : "Star product: Bionanoaxus"}
+            {language === "es" ? "Producto estrella: BionanoAyT" : "Star product: BionanoAyT"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("products")}>
             {t("nav.products_catalog")}
@@ -66,11 +66,14 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
           <DropdownMenuItem onClick={() => scrollToSection("team")}>
             {language === "es" ? "Equipo de trabajo" : "Work team"}
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => scrollToSection("ecosystem")}>
+            {language === "es" ? "Nuestro ecosistema" : "Our ecosystem"}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("allies")}>
             {language === "es" ? "Empresas aliadas" : "Allied companies"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => scrollToSection("ecosystem")}>
-            {language === "es" ? "Ecosistema colaborativo" : "Collaborative ecosystem"}
+          <DropdownMenuItem onClick={() => scrollToSection("news")}>
+            {language === "es" ? "Noticias" : "News"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("contact")}>
             {t("footer.contact")}
@@ -83,7 +86,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
         <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
           {t("nav.technology")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-white">
+        <DropdownMenuContent className="bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenuItem onClick={() => navigate("/technology")}>
             {language === "es" ? "Nuestra tecnología" : "Our technology"}
           </DropdownMenuItem>
@@ -98,7 +101,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
         <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
           {t("nav.products")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-white">
+        <DropdownMenuContent className="bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenuItem onClick={() => navigate("/store")}>
             {language === "es" ? "Todos los productos" : "All products"}
           </DropdownMenuItem>

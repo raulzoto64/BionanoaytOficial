@@ -272,13 +272,25 @@ export function Home() {
               </div>
             );
           case "ecosystem":
+            const hasDedicatedNews = pageContent.sections.some(s => s.type === 'news');
             return (
               <div key={section.id} id="ecosystem">
                 <div id="allies">
-                  <Ecosystem />
+                  <Ecosystem 
+                    title={section.content.title} 
+                    subtitle={section.content.subtitle} 
+                  />
                 </div>
-                {/* News Section */}
-                <NewsSection />
+                {!hasDedicatedNews && <NewsSection />}
+              </div>
+            );
+          case "news":
+            return (
+              <div key={section.id} id="news">
+                <NewsSection 
+                  title={section.content.title} 
+                  subtitle={section.content.subtitle} 
+                />
               </div>
             );
           default:

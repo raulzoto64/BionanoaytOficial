@@ -1,42 +1,35 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout";
-import { Home } from "./pages/Home";
-import { Store } from "./pages/Store";
-import { Login } from "./pages/Login";
-import { Technology } from "./pages/Technology";
-import { Process } from "./pages/Process";
-import { Cart } from "./pages/Cart";
-import { NotFound } from "./pages/NotFound";
-import { ProductDetail } from "./pages/ProductDetail";
-import { Blog } from "./pages/Blog";
-import { BlogPost } from "./pages/BlogPost";
-import { AdminLayout } from "./pages/AdminLayout";
-import { AdminDashboard } from "./pages/admin/AdminDashboard";
-import { AdminProducts } from "./pages/admin/AdminProducts";
-import { AdminPrices } from "./pages/admin/AdminPrices";
-import { AdminContent } from "./pages/admin/AdminContent";
-import { AdminCategories } from "./pages/admin/AdminCategories";
-import { AdminTranslations } from "./pages/admin/AdminTranslations";
-import { AdminSettings } from "./pages/admin/AdminSettings";
-import { AdminBlogPosts } from "./pages/admin/AdminBlogPosts";
-import { AdminBlogCategories } from "./pages/admin/AdminBlogCategories";
-import { AdminUsers } from "./pages/admin/AdminUsers";
-import { AdminEcosystem } from "./pages/admin/AdminEcosystem";
-import { AdminLegalPages } from "./pages/admin/AdminLegalPages";
-import { AdminFooterSettings } from "./pages/admin/AdminFooterSettings";
-import { EcosystemMemberDetail } from "./pages/EcosystemMemberDetail";
-import { EcosystemPage } from "./pages/Ecosystem";
-import { LegalPage } from "./pages/LegalPage";
 import { LanguageProvider } from "./contexts/LanguageContext";
 
-// Wrapper component for Login to include LanguageProvider
-function LoginWrapper() {
-  return (
-    <LanguageProvider>
-      <Login />
-    </LanguageProvider>
-  );
-}
+// Carga perezosa de páginas (Code Splitting)
+const Home = () => import("./pages/Home").then(m => ({ Component: m.Home }));
+const Store = () => import("./pages/Store").then(m => ({ Component: m.Store }));
+const Login = () => import("./pages/Login").then(m => ({ Component: m.Login }));
+const Technology = () => import("./pages/Technology").then(m => ({ Component: m.Technology }));
+const Process = () => import("./pages/Process").then(m => ({ Component: m.Process }));
+const Cart = () => import("./pages/Cart").then(m => ({ Component: m.Cart }));
+const NotFound = () => import("./pages/NotFound").then(m => ({ Component: m.NotFound }));
+const ProductDetail = () => import("./pages/ProductDetail").then(m => ({ Component: m.ProductDetail }));
+const Blog = () => import("./pages/Blog").then(m => ({ Component: m.Blog }));
+const BlogPost = () => import("./pages/BlogPost").then(m => ({ Component: m.BlogPost }));
+const AdminLayout = () => import("./pages/AdminLayout").then(m => ({ Component: m.AdminLayout }));
+const AdminDashboard = () => import("./pages/admin/AdminDashboard").then(m => ({ Component: m.AdminDashboard }));
+const AdminProducts = () => import("./pages/admin/AdminProducts").then(m => ({ Component: m.AdminProducts }));
+const AdminPrices = () => import("./pages/admin/AdminPrices").then(m => ({ Component: m.AdminPrices }));
+const AdminContent = () => import("./pages/admin/AdminContent").then(m => ({ Component: m.AdminContent }));
+const AdminCategories = () => import("./pages/admin/AdminCategories").then(m => ({ Component: m.AdminCategories }));
+const AdminTranslations = () => import("./pages/admin/AdminTranslations").then(m => ({ Component: m.AdminTranslations }));
+const AdminSettings = () => import("./pages/admin/AdminSettings").then(m => ({ Component: m.AdminSettings }));
+const AdminBlogPosts = () => import("./pages/admin/AdminBlogPosts").then(m => ({ Component: m.AdminBlogPosts }));
+const AdminBlogCategories = () => import("./pages/admin/AdminBlogCategories").then(m => ({ Component: m.AdminBlogCategories }));
+const AdminUsers = () => import("./pages/admin/AdminUsers").then(m => ({ Component: m.AdminUsers }));
+const AdminEcosystem = () => import("./pages/admin/AdminEcosystem").then(m => ({ Component: m.AdminEcosystem }));
+const AdminLegalPages = () => import("./pages/admin/AdminLegalPages").then(m => ({ Component: m.AdminLegalPages }));
+const AdminFooterSettings = () => import("./pages/admin/AdminFooterSettings").then(m => ({ Component: m.AdminFooterSettings }));
+const EcosystemMemberDetail = () => import("./pages/EcosystemMemberDetail").then(m => ({ Component: m.EcosystemMemberDetail }));
+const EcosystemPage = () => import("./pages/Ecosystem").then(m => ({ Component: m.EcosystemPage }));
+const LegalPage = () => import("./pages/LegalPage").then(m => ({ Component: m.LegalPage }));
 
 export const router = createBrowserRouter([
   {
@@ -45,113 +38,113 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Home />,
+        lazy: Home,
       },
       {
         path: "store",
-        element: <Store />,
+        lazy: Store,
       },
       {
         path: "products/:slug",
-        element: <ProductDetail />,
+        lazy: ProductDetail,
       },
       {
         path: "technology",
-        element: <Technology />,
+        lazy: Technology,
       },
       {
         path: "process",
-        element: <Process />,
+        lazy: Process,
       },
       {
         path: "blog",
-        element: <Blog />,
+        lazy: Blog,
       },
       {
         path: "blog/:slug",
-        element: <BlogPost />,
+        lazy: BlogPost,
       },
       {
         path: "cart",
-        element: <Cart />,
+        lazy: Cart,
       },
       {
         path: "ecosystem",
-        element: <EcosystemPage />,
+        lazy: EcosystemPage,
       },
       {
         path: "ecosystem/:slug",
-        element: <EcosystemMemberDetail />,
+        lazy: EcosystemMemberDetail,
       },
       {
         path: "legal/:slug",
-        element: <LegalPage />,
+        lazy: LegalPage,
       },
       {
         path: "*",
-        element: <NotFound />,
+        lazy: NotFound,
       },
     ],
   },
   {
     path: "login",
-    element: <LoginWrapper />,
+    lazy: Login,
   },
   {
     path: "admin",
-    element: <AdminLayout />,
+    lazy: AdminLayout,
     children: [
       {
         index: true,
-        element: <AdminDashboard />,
+        lazy: AdminDashboard,
       },
       {
         path: "products",
-        element: <AdminProducts />,
+        lazy: AdminProducts,
       },
       {
         path: "prices",
-        element: <AdminPrices />,
+        lazy: AdminPrices,
       },
       {
         path: "content",
-        element: <AdminContent />,
+        lazy: AdminContent,
       },
       {
         path: "categories",
-        element: <AdminCategories />,
+        lazy: AdminCategories,
       },
       {
         path: "translations",
-        element: <AdminTranslations />,
+        lazy: AdminTranslations,
       },
       {
         path: "settings",
-        element: <AdminSettings />,
+        lazy: AdminSettings,
       },
       {
         path: "blog/posts",
-        element: <AdminBlogPosts />,
+        lazy: AdminBlogPosts,
       },
       {
         path: "blog/categories",
-        element: <AdminBlogCategories />,
+        lazy: AdminBlogCategories,
       },
       {
         path: "users",
-        element: <AdminUsers />,
+        lazy: AdminUsers,
       },
       {
         path: "ecosystem",
-        element: <AdminEcosystem />,
+        lazy: AdminEcosystem,
       },
       {
         path: "legal",
-        element: <AdminLegalPages />,
+        lazy: AdminLegalPages,
       },
       {
         path: "footer",
-        element: <AdminFooterSettings />,
+        lazy: AdminFooterSettings,
       },
     ],
   },

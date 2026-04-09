@@ -26,7 +26,7 @@ export function Purpose({ purposes }: PurposeProps) {
 
   return (
     <section className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-5 lg:px-6">
         <div className="grid md:grid-cols-3 gap-10">
           {purposes.map((purpose) => {
             const IconComponent = getIconComponent(purpose.icon);

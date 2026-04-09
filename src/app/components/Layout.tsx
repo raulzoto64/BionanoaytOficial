@@ -3,20 +3,24 @@ import { Navigation } from "./Navigation";
 import { Toaster } from "./ui/sonner";
 import { LanguageProvider } from "../contexts/LanguageContext";
 import { Footer } from "./Footer";
+import { ScrollToTop } from "./ScrollToTop";
 
 // Default contact information in case page content doesn't provide it
 const defaultContactInfo = {
-  phone: "+1 (123) 456-7890",
-  email: "info@bionanoaxus.com",
-  location: "123 Biotech Avenue, Science City, ST 12345"
+  phone: "+57 (300) 123-4567",
+  email: "contacto@bionanoayt.com",
+  location: "Bogotá, Colombia"
 };
 
 export function Layout() {
   return (
     <LanguageProvider>
-      <div className="min-h-screen">
+      <ScrollToTop />
+      <div className="min-h-screen overflow-x-hidden max-w-[100vw] text-pretty">
         <Navigation />
-        <Outlet />
+        <div className="pt-20">
+          <Outlet />
+        </div>
         <Footer contactInfo={defaultContactInfo} />
         <Toaster />
       </div>

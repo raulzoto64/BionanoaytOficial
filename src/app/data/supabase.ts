@@ -96,7 +96,8 @@ export interface Section {
     | "custom"
     | "trust"
     | "featured"
-    | "ecosystem";
+    | "ecosystem"
+    | "news";
   order: number;
   visible: boolean;
   content: Record<string, any>;
@@ -240,9 +241,19 @@ export interface FooterSettings {
 // CART ITEMS
 // ==========================================
 
+export interface Guest {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  last_active: string;
+  user_agent?: string;
+  ip_address?: string;
+}
+
 export interface CartItem {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  guest_id?: string | null;
   product_id: string;
   quantity: number;
   packaging?: string; // Tipo de embase
@@ -253,7 +264,8 @@ export interface CartItem {
 // Interfaz para el resultado de getCartItems con datos de producto
 export interface CartItemWithProduct {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  guest_id?: string | null;
   product_id: string;
   quantity: number;
   packaging?: string; // Tipo de embase
@@ -289,6 +301,24 @@ export interface EcosystemMemberTranslation {
 
 // API para interactuar con Supabase
 export const supabaseAPI = {
+  // ==========================================
+  // CACHÉ DE DATOS (Para navegación instantánea)
+  // ==========================================
+  _cache: {} as Record<string, { data: any, timestamp: number }>,
+  _cacheTTL: 5 * 60 * 1000, // 5 minutos
+
+  _getFromCache: (key: string) => {
+    const cached = supabaseAPI._cache[key];
+    if (cached && (Date.now() - cached.timestamp < supabaseAPI._cacheTTL)) {
+      return cached.data;
+    }
+    return null;
+  },
+
+  _saveToCache: (key: string, data: any) => {
+    supabaseAPI._cache[key] = { data, timestamp: Date.now() };
+  },
+
   // ==========================================
   // USUARIOS
   // ==========================================
@@ -629,6 +659,10 @@ export const supabaseAPI = {
   },
 
   getProductById: async (id: string): Promise<Product | null> => {
+    const cacheKey = `product-${id}`;
+    const cached = supabaseAPI._getFromCache(cacheKey);
+    if (cached) return cached;
+
     const { data: product, error } = await supabase
       .from("products")
       .select("*")
@@ -636,7 +670,8 @@ export const supabaseAPI = {
       .single();
 
     if (error && error.code !== "PGRST116") throw new Error(error.message);
-
+    
+    if (product) supabaseAPI._saveToCache(cacheKey, product);
     return product || null;
   },
 
@@ -876,6 +911,10 @@ export const supabaseAPI = {
     categoryId: string,
     language: "es" | "en",
   ): Promise<CategoryTranslation | null> => {
+    const cacheKey = `cat-trans-${categoryId}-${language}`;
+    const cached = supabaseAPI._getFromCache(cacheKey);
+    if (cached) return cached;
+
     const { data: translations, error } = await supabase
       .from("category_translations")
       .select("*")
@@ -889,6 +928,7 @@ export const supabaseAPI = {
     const translation =
       translations && translations.length > 0 ? translations[0] : null;
 
+    if (translation) supabaseAPI._saveToCache(cacheKey, translation);
     return translation || null;
   },
 
@@ -897,6 +937,10 @@ export const supabaseAPI = {
   // ==========================================
 
   getBlogPosts: async (status?: "draft" | "published", type?: "article" | "news"): Promise<BlogPost[]> => {
+    const cacheKey = `blog-${status || 'all'}-${type || 'all'}`;
+    const cached = supabaseAPI._getFromCache(cacheKey);
+    if (cached) return cached;
+
     let query = supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
     
     if (status) {
@@ -910,6 +954,8 @@ export const supabaseAPI = {
     const { data: posts, error } = await query;
     
     if (error) throw new Error(error.message);
+    
+    supabaseAPI._saveToCache(cacheKey, posts);
     return posts || [];
   },
 
@@ -1204,6 +1250,10 @@ export const supabaseAPI = {
     pageId: string,
     language: "es" | "en",
   ): Promise<PageContent | null> => {
+    const cacheKey = `page-content-${pageId}-${language}`;
+    const cached = supabaseAPI._getFromCache(cacheKey);
+    if (cached) return cached;
+
     const { data: content, error } = await supabase
       .from("page_contents")
       .select("*")
@@ -1452,27 +1502,98 @@ export const supabaseAPI = {
   // CART OPERATIONS
   // ==========================================
 
+  // Auxiliar para validar UUIDs antes de enviar a Supabase
+  // Auxiliar para validar IDs (UUID estándar o IDs de prueba estilo user-001)
+  isValidUUID: (id: string | null): boolean => {
+    if (!id) return false;
+    // Regex flexible que acepta UUID estándar O IDs de prueba alfanuméricos con guiones
+    const flexibleIdRegex = /^[0-9a-f-]{8,36}$/i;
+    return flexibleIdRegex.test(id) || /^(user|guest|footer|prod|cat)-[0-9]+$/i.test(id);
+  },
+
+  // Sincronizar visitante con la base de datos
+  upsertGuest: async (guestId: string): Promise<void> => {
+    // Solo sincronizar si es un UUID válido
+    if (!supabaseAPI.isValidUUID(guestId)) return;
+    const { error } = await supabase
+      .from("guests")
+      .upsert({
+        id: guestId,
+        last_active: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+    if (error) {
+      console.warn('No se pudo sincronizar el visitante:', error.message);
+    }
+  },
+
+  // Fusionar carrito de invitado con el de usuario al iniciar sesión
+  mergeGuestCart: async (userId: string, guestId: string): Promise<void> => {
+    if (!supabaseAPI.isValidUUID(userId) || !supabaseAPI.isValidUUID(guestId)) return;
+
+    // 1. Obtener items del invitado
+    const { data: guestItems, error: fetchError } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq("guest_id", guestId);
+
+    if (fetchError || !guestItems || guestItems.length === 0) return;
+
+    // 2. Por cada item del invitado, intentar moverlo o fusionarlo
+    for (const item of guestItems) {
+      // Verificar si el usuario ya tiene ese producto con el mismo empaque
+      const { data: existingUserItem } = await supabase
+        .from("cart_items")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("product_id", item.product_id)
+        .eq("packaging", item.packaging)
+        .maybeSingle();
+
+      if (existingUserItem) {
+        // Fusionar cantidades y borrar el de invitado
+        await supabase
+          .from("cart_items")
+          .update({ quantity: existingUserItem.quantity + item.quantity })
+          .eq("id", existingUserItem.id);
+        
+        await supabase.from("cart_items").delete().eq("id", item.id);
+      } else {
+        // Migrar el item al usuario
+        await supabase
+          .from("cart_items")
+          .update({ user_id: userId, guest_id: null })
+          .eq("id", item.id);
+      }
+    }
+    
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
+  },
+
   // Agregar o actualizar un item en el carrito
   addToCart: async (userId: string | null, guestId: string | null, productId: string, quantity: number = 1, packaging?: string): Promise<CartItem> => {
     // Verificar si el item ya existe en el carrito con la misma embase
     let query = supabase.from("cart_items").select("*");
     
-    if (userId) {
+    if (userId && supabaseAPI.isValidUUID(userId)) {
       query = query.eq("user_id", userId);
-    } else if (guestId) {
+    } else if (guestId && supabaseAPI.isValidUUID(guestId)) {
       query = query.eq("guest_id", guestId);
     } else {
-      throw new Error("Se requiere userId o guestId");
+      console.warn("Se ignoró petición al carrito por ID inválido:", { userId, guestId });
+      throw new Error("Sesión inválida. Por favor recarga la página.");
     }
 
-    // Escapar el valor de packaging para evitar problemas con espacios
-    const packagingValue = packaging || 'Sin embase';
-    const escapedPackaging = packagingValue.replace(/'/g, "''");
-
+    // Valor de packaging para la consulta (limpio de espacios extra)
+    const packagingValue = (packaging || 'Sin embase').trim();
+    
+    // Usamos .maybeSingle() en lugar de .single() para evitar errores 406
+    // cuando la consulta no devuelve nada con carácteres especiales.
     const { data: existingItem, error: fetchError } = await query
       .eq("product_id", productId)
-      .eq("packaging", escapedPackaging)
-      .single();
+      .eq("packaging", packagingValue)
+      .maybeSingle();
 
     if (fetchError && fetchError.code !== "PGRST116") {
       throw new Error(fetchError.message);
@@ -1492,14 +1613,15 @@ export const supabaseAPI = {
         .single();
 
       if (updateError) throw new Error(updateError.message);
-
+      
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
       return updatedItem;
     } else {
       // Agregar nuevo item al carrito
       const insertData: any = {
         product_id: productId,
         quantity,
-        packaging: escapedPackaging
+        packaging: packagingValue
       };
 
       if (userId) {
@@ -1515,12 +1637,16 @@ export const supabaseAPI = {
         .single();
 
       if (insertError) throw new Error(insertError.message);
+      
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
       return newItem;
     }
   },
 
   // Obtener todos los items del carrito de un usuario o visitante
   getCartItems: async (userId: string): Promise<CartItemWithProduct[]> => {
+    if (!supabaseAPI.isValidUUID(userId)) return [];
+    
     const { data: cartItems, error: cartError } = await supabase
       .from("cart_items")
       .select("*")
@@ -1552,8 +1678,10 @@ export const supabaseAPI = {
     return sortedItems.filter(item => item.product !== null);
   },
 
-  // Obtener todos los items del carrito de un visitante (guest)
+  // Obtener items por ID de invitado
   getCartItemsByGuest: async (guestId: string): Promise<CartItemWithProduct[]> => {
+    if (!supabaseAPI.isValidUUID(guestId)) return [];
+    
     const { data: cartItems, error: cartError } = await supabase
       .from("cart_items")
       .select("*")
@@ -1599,6 +1727,7 @@ export const supabaseAPI = {
 
     if (updateError) throw new Error(updateError.message);
     
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
     return updatedItem;
   },
 
@@ -1607,6 +1736,7 @@ export const supabaseAPI = {
     const { error } = await supabase.from("cart_items").delete().eq("id", itemId);
 
     if (error) throw new Error(error.message);
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
   },
 
   // Vaciar el carrito de un usuario
@@ -1614,6 +1744,7 @@ export const supabaseAPI = {
     const { error } = await supabase.from("cart_items").delete().eq("user_id", userId);
 
     if (error) throw new Error(error.message);
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
   },
 
   // ==========================================
@@ -1756,8 +1887,8 @@ export const supabaseAPI = {
           instagram: "https://instagram.com/atbionano",
           linkedin: "https://linkedin.com/company/atbionano"
         },
-        copyright_text_es: "© {{year}} Bionanoaxus. Todos los derechos reservados.",
-        copyright_text_en: "© {{year}} Bionanoaxus. All rights reserved.",
+        copyright_text_es: "© {{year}} BionanoAyT. Todos los derechos reservados.",
+        copyright_text_en: "© {{year}} BionanoAyT. All rights reserved.",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

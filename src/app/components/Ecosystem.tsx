@@ -12,7 +12,12 @@ import {
   type CarouselApi 
 } from "../components/ui/carousel";
 
-export function Ecosystem() {
+interface EcosystemProps {
+  title?: string;
+  subtitle?: string;
+}
+
+export function Ecosystem({ title, subtitle }: EcosystemProps) {
   const { language } = useLanguage();
   const [members, setMembers] = useState<EcosystemMember[]>([]);
   const [translations, setTranslations] = useState<Record<string, EcosystemMemberTranslation>>({});
@@ -52,7 +57,7 @@ export function Ecosystem() {
   if (loading) {
     return (
       <section className="py-12 md:py-16 bg-[#629960]/5">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-5 lg:px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="h-8 bg-[#1C5D15]/10 rounded w-32 animate-pulse" />
@@ -70,7 +75,7 @@ export function Ecosystem() {
 
   return (
     <section className="py-10 md:py-14 bg-[#629960]/5 overflow-hidden">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-5 lg:px-6">
         <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
           
           {/* Lado Izquierdo: Texto */}
@@ -79,12 +84,12 @@ export function Ecosystem() {
               {language === 'es' ? 'Ecosistema' : 'Ecosystem'}
             </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1C5D15] tracking-tight">
-              {language === 'es' ? 'Nuestro Ecosistema' : 'Our Ecosystem'}
+              {title || (language === 'es' ? 'Nuestro Ecosistema' : 'Our Ecosystem')}
             </h2>
             <p className="text-lg md:text-xl mb-8 text-[#629960] leading-relaxed max-w-lg">
-              {language === 'es' 
+              {subtitle || (language === 'es' 
                 ? 'Conectamos innovadores, empresarios y profesionales para construir un ecosistema sostenible y tecnológico.' 
-                : 'We connect innovators, entrepreneurs, and professionals to build a sustainable and technological ecosystem.'
+                : 'We connect innovators, entrepreneurs, and professionals to build a sustainable and technological ecosystem.')
               }
             </p>
             
@@ -115,7 +120,7 @@ export function Ecosystem() {
               ))}
             </div>
 
-            <Button size="lg" className="bg-[#1C5D15] text-white hover:bg-[#1C5D15]/90 px-10 rounded-xl transition-all shadow-md hover:shadow-lg">
+            <Button size="lg" className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12" asChild>
               <Link to="/ecosystem">
                 {language === 'es' ? 'Conocer Más' : 'Learn More'}
               </Link>
@@ -128,6 +133,7 @@ export function Ecosystem() {
               orientation="vertical" 
               opts={{ loop: true, align: "start", slidesToScroll: 1 }}
               setApi={setCarouselApi}
+              pauseOnHover={false}
               className="h-[420px] md:h-[480px] w-full max-w-[450px] mb-5"
             >
               <CarouselContent className="-mt-4 mb-5 h-[480px] md:h-[500px]"> 

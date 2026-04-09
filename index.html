@@ -1,14 +1,54 @@
-
   <!DOCTYPE html>
-  <html lang="en">
+  <html lang="es">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Página de Consejos de Salud (Community)</title>
+      <title>BioNano A&T | Bionanotecnología Sostenible</title>
+      <style>
+        #initial-loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background-color: #f8fafc;
+          z-index: 9999;
+          transition: opacity 0.5s ease;
+        }
+        .loader-spinner {
+          width: 50px;
+          height: 50px;
+          border: 5px solid #62996020;
+          border-top: 5px solid #1C5D15;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 20px;
+        }
+        .loader-text {
+          color: #1C5D15;
+          font-family: sans-serif;
+          font-weight: bold;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          font-size: 14px;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
     </head>
-
     <body>
-      <div id="root"></div>
+      <div id="root">
+        <div id="initial-loader">
+          <div class="loader-spinner"></div>
+          <div class="loader-text">Cargando BioNano A&T...</div>
+        </div>
+      </div>
       <script type="module" src="/src/main.tsx"></script>
     </body>
   </html>

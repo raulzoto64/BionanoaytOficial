@@ -27,7 +27,7 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
 
   return (
     <section className="py-20 bg-[#629960]/10">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-5 lg:px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Product Image */}
           <div className="relative">
@@ -71,9 +71,14 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
 
             <Button 
               size="lg"
-              className="bg-[#1C5D15] text-white hover:bg-[#1C5D15]/90"
+              className="mt-4 bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
+              asChild
             >
-              {content.ctaText}
+              {content.ctaLink ? (
+                <a href={content.ctaLink}>{content.ctaText}</a>
+              ) : (
+                <span>{content.ctaText}</span>
+              )}
             </Button>
           </div>
         </div>

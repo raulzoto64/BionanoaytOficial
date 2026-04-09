@@ -243,7 +243,7 @@ export function AdminFooterSettings() {
                   id="copyright_es"
                   value={formData.copyright_text_es}
                   onChange={(e) => setFormData({ ...formData, copyright_text_es: e.target.value })}
-                  placeholder="© {{year}} Bionanoaxus. Todos los derechos reservados."
+                  placeholder="© {{year}} BionanoAyT. Todos los derechos reservados."
                 />
               </div>
               <div className="space-y-2">
@@ -252,7 +252,7 @@ export function AdminFooterSettings() {
                   id="copyright_en"
                   value={formData.copyright_text_en}
                   onChange={(e) => setFormData({ ...formData, copyright_text_en: e.target.value })}
-                  placeholder="© {{year}} Bionanoaxus. All rights reserved."
+                  placeholder="© {{year}} BionanoAyT. All rights reserved."
                 />
               </div>
             </div>

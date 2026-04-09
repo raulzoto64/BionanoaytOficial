@@ -18,7 +18,7 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
   }
 
   return (
-    <div className="md:hidden py-4 border-t border-[#629960]">
+    <div className="min-[1000px]:hidden py-4 border-t border-[#629960]">
       <div className="flex flex-col gap-4">
         <Link 
           to="/" 
@@ -44,6 +44,15 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
           }}
         >
           {language === 'es' ? 'Equipo de trabajo' : 'Work team'}
+        </button>
+        <button 
+          className="hover:text-[#19FF00] transition-colors text-left"
+          onClick={() => {
+            scrollToSection("ecosystem");
+            onClose();
+          }}
+        >
+          {language === 'es' ? 'Nuestro ecosistema' : 'Our ecosystem'}
         </button>
         <button 
           className="hover:text-[#19FF00] transition-colors text-left"

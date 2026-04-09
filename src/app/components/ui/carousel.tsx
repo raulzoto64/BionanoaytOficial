@@ -20,6 +20,7 @@ type CarouselProps = {
   plugins?: CarouselPlugin;
   orientation?: "horizontal" | "vertical";
   setApi?: (api: CarouselApi) => void;
+  pauseOnHover?: boolean;
 };
 
 type CarouselContextProps = {
@@ -46,6 +47,7 @@ function Carousel({
   opts,
   setApi,
   plugins,
+  pauseOnHover = true,
   className,
   children,
   ...props
@@ -68,12 +70,16 @@ function Carousel({
 
   // Pause autoplay on hover
   const handleMouseEnter = () => {
-    autoplayPlugin.current?.stop();
+    if (pauseOnHover) {
+      autoplayPlugin.current?.stop();
+    }
   };
 
   // Resume autoplay on mouse leave
   const handleMouseLeave = () => {
-    autoplayPlugin.current?.reset();
+    if (pauseOnHover) {
+      autoplayPlugin.current?.play();
+    }
   };
 
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
@@ -183,8 +189,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="carousel-item"
       className={cn(
         "min-w-0 shrink-0 grow-0",
-        // 'basis-1/2' asegura que se muestren 2 elementos por vista
-        orientation === "horizontal" ? "pl-4 basis-1/2" : "pt-4 basis-1/2",
+        orientation === "horizontal" ? "pl-4" : "pt-4",
         className,
       )}
       {...props}

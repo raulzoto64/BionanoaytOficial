@@ -25,7 +25,7 @@ export function ProductDetail() {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const { updateTrigger } = useDatabase();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, guestId: hookGuestId } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [translation, setTranslation] = useState<ProductTranslation | null>(null);
@@ -133,17 +133,7 @@ export function ProductDetail() {
 
     try {
       const userId = isAuthenticated && user ? user.id : null;
-      const guestId = !isAuthenticated ? localStorage.getItem('guest_id') : null;
-
-      console.log('handleAddToCart - Debug Info:', {
-        userId,
-        guestId,
-        isAuthenticated,
-        user,
-        product: product.id,
-        quantity,
-        selectedPackagingType
-      });
+      const guestId = !isAuthenticated ? hookGuestId : null;
 
       if (!userId && !guestId) {
         toast.error('No se pudo obtener la sesión de usuario');
@@ -245,7 +235,15 @@ export function ProductDetail() {
           <Button
             variant="ghost"
             className="text-white hover:text-[#19FF00] hover:bg-transparent"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              navigate("/");
+              setTimeout(() => {
+                const element = document.getElementById("products");
+                if (element) {
+                  element.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }, 500);
+            }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {language === 'es' ? 'Volver' : 'Back'}

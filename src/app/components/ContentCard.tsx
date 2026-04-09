@@ -49,12 +49,12 @@ export function ContentCard({ type, data }: ContentCardProps) {
     
     return (
       <article 
-        className="h-[450px] bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-[#629960]/10 flex flex-col group overflow-hidden w-[80%] sm:w-full mx-auto"
+        className="h-[450px] bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-[#629960]/10 hover:border-[#19FF00] flex flex-col group overflow-hidden w-full max-w-none mx-0"
       >
         {/* Image */}
         <div className="relative h-44 overflow-hidden shrink-0">
           <div className="absolute top-2 right-2 z-10">
-            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md shadow-sm ${
+            <span className={`px-3 py-1 text-xs font-bold uppercase rounded-md shadow-sm ${
               post.type === 'article' 
                 ? 'bg-[#1C5D15] text-white' 
                 : 'bg-[#19FF00] text-[#1C5D15]'
@@ -82,7 +82,7 @@ export function ContentCard({ type, data }: ContentCardProps) {
         {/* Content */}
         <div className="p-5 flex flex-col flex-1 min-h-0">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-bold text-[#19FF00] bg-[#1C5D15] px-2 py-0.5 rounded">
+            <span className="text-xs font-bold text-[#19FF00] bg-[#1C5D15] px-3 py-1 rounded shadow-sm">
               {post.category_name || (language === 'es' ? 'Sin categoría' : 'Uncategorized')}
             </span>
             <span className="text-[10px] text-[#629960] font-medium">
@@ -93,7 +93,7 @@ export function ContentCard({ type, data }: ContentCardProps) {
             </span>
           </div>
 
-          <h3 className="text-lg font-bold text-[#1C5D15] mb-2 line-clamp-2 group-hover:text-[#629960] transition-colors leading-tight">
+          <h3 className="text-lg font-bold text-[#1C5D15] mb-2 line-clamp-2 transition-colors leading-tight group-hover:text-[#1C5D15]/80">
             {post.translation.title}
           </h3>
 
@@ -125,7 +125,7 @@ export function ContentCard({ type, data }: ContentCardProps) {
     const initials = member.translation?.name ? member.translation.name.split(' ').map((n) => n.charAt(0)).join('').slice(0, 2) : 'EM';
     
     return (
-      <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-[#629960]/10 hover:border-[#19FF00] h-full flex flex-col">
+      <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-[#629960]/10 hover:border-[#19FF00] h-full flex flex-col">
         <div className="p-5 flex flex-col h-full">
           <Link 
             to={member.slug ? `/ecosystem/${member.slug}` : '#'}
@@ -150,9 +150,9 @@ export function ContentCard({ type, data }: ContentCardProps) {
               {member.translation?.description}
             </p>
             
-            <div className="flex items-center text-[#1C5D15] font-bold text-xs group-hover:text-[#629960] transition-colors pt-2 border-t border-gray-50 mt-auto">
+            <div className="flex items-center text-[#1C5D15] font-bold text-xs pt-2 border-t border-gray-50 mt-auto">
               {language === 'es' ? 'Ver detalles' : 'View details'}
-              <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+              <span className="ml-2 group-hover:translate-x-1 transition-transform group-hover:text-[#19FF00]">→</span>
             </div>
           </Link>
         </div>
