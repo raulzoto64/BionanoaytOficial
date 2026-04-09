@@ -37,7 +37,7 @@ export function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       if (isLogin) {
         // Login con BD simulada
@@ -48,12 +48,12 @@ export function Login() {
         }
 
         const user = await supabaseAPI.loginUser(formData.email, formData.password);
-        
+
         // Guardar sesión usando el hook (Ahora esperamos que termine la migración del carrito)
         await login(user);
-        
+
         toast.success(`¡Bienvenido ${user.name}!`);
-        
+
         // Redirigir según el rol
         setTimeout(() => {
           if (user.role === 'admin' || user.role === 'editor' || user.role === 'manager' || user.role === 'viewer') {
@@ -76,9 +76,9 @@ export function Login() {
           name: formData.name,
           role: 'customer',
         });
-        
+
         toast.success("¡Cuenta creada exitosamente!");
-        
+
         setTimeout(() => {
           setIsLogin(true);
           setFormData({ email: formData.email, password: "", name: "" });
@@ -86,14 +86,14 @@ export function Login() {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error inesperado al intentar procesar tu solicitud.";
-      
+
       // Mostrar modal de error detallado
       setErrorDialog({
         open: true,
         title: isLogin ? "Error al Iniciar Sesión" : "Error al Crear Cuenta",
         message: errorMessage
       });
-      
+
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -105,11 +105,14 @@ export function Login() {
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#19FF00] rounded-full mb-4">
-            <span className="text-[#1C5D15] font-bold text-3xl">A&T</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <img
+              src="/images/logo png (2).png"
+              alt="Bionano A&T"
+              className="h-24 md:h-28 w-auto object-contain"
+            />
           </div>
-          <h1 className="text-3xl text-white mb-2">A&T BioNano</h1>
-          <p className="text-[#F7F9CE]">
+          <p className="text-[#F7F9CE] font-medium">
             {isLogin ? "Accede a tu cuenta" : "Crea tu cuenta"}
           </p>
         </div>
@@ -119,21 +122,19 @@ export function Login() {
           <div className="flex gap-4 mb-6">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 rounded-lg transition-colors ${
-                isLogin 
-                  ? "bg-[#1C5D15] text-white" 
+              className={`flex-1 py-2 rounded-lg transition-colors ${isLogin
+                  ? "bg-[#1C5D15] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Iniciar Sesión
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 rounded-lg transition-colors ${
-                !isLogin 
-                  ? "bg-[#1C5D15] text-white" 
+              className={`flex-1 py-2 rounded-lg transition-colors ${!isLogin
+                  ? "bg-[#1C5D15] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Registrarse
             </button>
@@ -206,7 +207,7 @@ export function Login() {
               </div>
             )}
 
-            <Button 
+            <Button
               type="submit"
               className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] py-6 text-lg"
               disabled={isLoading}

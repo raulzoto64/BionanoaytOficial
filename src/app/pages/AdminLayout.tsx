@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { SEO } from '../components/SEO';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,7 @@ export function AdminLayout() {
 
   return (
     <LanguageProvider>
+      <SEO title="Panel de Administración | Bionano A&T" />
       <ProtectedRoute>
         <div className="min-h-screen flex bg-[#F7F9CE]">
           <AdminSidebar />

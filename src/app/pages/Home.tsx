@@ -71,7 +71,7 @@ export function Home() {
 
 
   const defaultHero = {
-    title: "BionanoAyT",
+    title: "Bionanoaxus (BNX)",
     subtitle: language === 'es' ? "Innovación bionanotecnológica para un mundo mejor" : "Bionanotechnology innovation for a better world",
     backgroundImage: "https://sb-jzmdfoptxmqywihyhoty.supabase.co/storage/v1/object/public/site_assets/hero-bg.jpg",
     ctaText: language === 'es' ? "Saber más" : "Learn more",

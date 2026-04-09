@@ -91,7 +91,7 @@ export function Process() {
                     </p>
                     {section.content.ctaText && (
                       <button 
-                        className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90 px-8 py-6 text-lg shadow-lg rounded-lg transition-colors"
+                        className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-8 py-3 text-base shadow-xl hover:shadow-[#19FF00]/20 rounded-full font-bold uppercase tracking-wider h-12"
                       >
                         {section.content.ctaText}
                       </button>

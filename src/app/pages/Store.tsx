@@ -203,7 +203,7 @@ export function Store() {
                         {item.category?.name || ''}
                       </span>
                     </div>
-                    <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]">
+                    <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] rounded-full hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg font-bold uppercase tracking-wider h-11">
                       {language === 'es' ? 'Ver detalles' : 'View details'}
                     </Button>
                   </div>

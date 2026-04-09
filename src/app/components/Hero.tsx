@@ -37,7 +37,7 @@ export function Hero({ content }: HeroProps) {
         </p>
         <Button 
           size="lg"
-          className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90 active:scale-95 transition-transform duration-200 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg shadow-lg"
+          className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-8 py-4 text-base shadow-xl hover:shadow-[#19FF00]/20 rounded-full uppercase font-bold tracking-wider h-12"
           asChild
         >
           {content.ctaLink ? (

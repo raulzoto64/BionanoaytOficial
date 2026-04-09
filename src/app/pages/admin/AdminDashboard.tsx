@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, DollarSign, FileText, TrendingUp } from 'lucide-react';
 import { Card } from '../../components/ui/card';
-import { supabaseAPI, Product } from '../../data/supabase';
+import { supabaseAPI } from '../../data/supabase';
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -67,7 +67,7 @@ export function AdminDashboard() {
               <Package className="w-5 h-5 text-[#1C5D15]" />
             </div>
             <div className="flex-1">
-              <p className="text-[#1C5D15]">Producto actualizado: <strong>BionanoAyT</strong></p>
+              <p className="text-[#1C5D15]">Producto actualizado: <strong>Bionanoaxus (BNX)</strong></p>
               <p className="text-sm text-[#629960]">Hace 2 horas</p>
             </div>
           </div>

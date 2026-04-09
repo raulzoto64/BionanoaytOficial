@@ -42,7 +42,7 @@ export function Leadership({ members, title, subtitle }: LeadershipProps) {
                   />
                   {/* Green Overlay on Hover */}
                   <div className="absolute inset-0 bg-[#19FF00]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="text-[#1C5D15] font-bold text-sm tracking-widest uppercase">BioNano A&T</span>
+                    <span className="text-[#1C5D15] font-bold text-sm tracking-widest uppercase">Bionano A&T</span>
                   </div>
                 </div>
               </div>

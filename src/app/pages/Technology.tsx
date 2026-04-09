@@ -144,7 +144,7 @@ export function Technology() {
           </p>
           <a 
             href="/#contact"
-            className="inline-block px-8 py-4 bg-[#19FF00] text-[#1C5D15] rounded-lg hover:bg-[#19FF00]/90 transition-colors"
+            className="inline-block px-8 py-3 bg-[#19FF00] text-[#1C5D15] rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-xl hover:shadow-[#19FF00]/20 font-bold uppercase tracking-wider text-base"
           >
             Contactar a nuestro equipo
           </a>

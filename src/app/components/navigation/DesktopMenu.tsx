@@ -55,7 +55,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
             {language === "es" ? "Propósito empresarial" : "Business purpose"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("featured")}>
-            {language === "es" ? "Producto estrella: BionanoAyT" : "Star product: BionanoAyT"}
+            {language === "es" ? "Producto estrella: Bionanoaxus (BNX)" : "Star product: Bionanoaxus (BNX)"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("products")}>
             {t("nav.products_catalog")}
@@ -132,7 +132,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
       {/* Contenedor de Carrito y Login con mayor separación */}
       <div className="flex items-center gap-4 ml-2">
         <CartIndicator />
-        
+
         {/* Usamos ml-6 para dar una separación clara hacia la derecha */}
         <div className="ml-6">
           <LoginButton />

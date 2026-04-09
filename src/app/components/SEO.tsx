@@ -9,9 +9,9 @@ interface SEOProps {
 }
 
 export function SEO({ 
-  title = 'A&T BioNano - Innovación en Bionanotecnología', 
-  description = 'Desarrollamos soluciones antimicrobianas y fungicidas sostenibles con nanotecnología avanzada', 
-  keywords = 'bionanotecnología, antimicrobianos, fungicidas, nanotecnología, sostenibilidad',
+  title = 'Bionano A&T - Innovación en Bionanotecnología', 
+  description = 'Bionanoaxus (BNX): Desarrollamos soluciones antimicrobianas y fungicidas sostenibles con nanotecnología avanzada', 
+  keywords = 'bionanotecnología, Bionanoaxus, BNX, antimicrobianos, fungicidas, nanotecnología, sostenibilidad',
   canonicalUrl 
 }: SEOProps) {
   const { language } = useLanguage();
@@ -64,7 +64,7 @@ export function SEO({
     updateOGTag('og:type', 'website');
     updateOGTag('og:url', url);
     updateOGTag('og:locale', language);
-    updateOGTag('og:site_name', 'A&T BioNano');
+    updateOGTag('og:site_name', 'Bionano A&T');
 
     // Update Twitter Card tags
     const updateTwitterTag = (name: string, content: string) => {

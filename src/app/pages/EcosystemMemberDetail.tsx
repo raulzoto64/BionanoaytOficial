@@ -14,7 +14,7 @@ export function EcosystemMemberDetail() {
   const [member, setMember] = useState<EcosystemMember | null>(null);
   const [translation, setTranslation] = useState<EcosystemMemberTranslation | null>(null);
   const [loading, setLoading] = useState(true);
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (slug) {
@@ -75,7 +75,7 @@ export function EcosystemMemberDetail() {
     <>
       <SEO
         title={translation?.name || 'Miembro del ecosistema'}
-        description={translation?.description || `Conoce a ${translation?.name} en el ecosistema de A&T BioNano`}
+        description={translation?.description || `Conoce a ${translation?.name} en el ecosistema de Bionano A&T`}
         keywords={`${translation?.name}, ${member.sector}`}
       />
       
@@ -200,7 +200,7 @@ export function EcosystemMemberDetail() {
               <Card className="p-8">
                 <h2 className="text-3xl text-[#1C5D15] mb-6">Sobre {translation?.name}</h2>
                 <p className="text-lg text-[#629960] leading-relaxed">
-                  {translation?.description || `Descubre más sobre ${translation?.name} y su papel en el ecosistema de A&T BioNano.`}
+                  {translation?.description || `Descubre más sobre ${translation?.name} y su papel en el ecosistema de Bionano A&T.`}
                 </p>
               </Card>
 
