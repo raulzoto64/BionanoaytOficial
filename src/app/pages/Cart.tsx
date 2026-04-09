@@ -5,6 +5,16 @@ import { Button } from "../components/ui/button";
 import { supabaseAPI, CartItemWithProduct } from "../data/supabase";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 // Interface para cart items con información de precio
 interface CartItemWithPrice extends CartItemWithProduct {
@@ -22,6 +32,8 @@ export function Cart() {
   // Iniciamos en true para que el Skeleton sea lo primero en renderizarse
   const [loading, setLoading] = useState(true);
   const [subtotal, setSubtotal] = useState(0);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     // Cargar carrito tanto para usuarios autenticados como para visitantes
@@ -45,7 +57,6 @@ export function Cart() {
 
       // Si no hay items, mostrar carrito vacío
       if (!items || items.length === 0) {
-        
         setCartItems([]);
         setSubtotal(0);
         return;
@@ -101,8 +112,8 @@ export function Cart() {
         updatedItem.packaging,
       );
 
-      setCartItems((items) =>
-        items.map((i) =>
+      setCartItems((items) => {
+        const mapped = items.map((i) =>
           i.id === itemId
             ? {
                 ...i,
@@ -112,14 +123,13 @@ export function Cart() {
                 currency: priceInfo?.currency || "COP",
               }
             : i,
-        ),
-      );
-
-      // Recalcular subtotal directamente desde el nuevo estado para mayor precisión
-      setCartItems((currentItems) => {
-        const total = currentItems.reduce((sum, i) => sum + i.totalPrice, 0);
+        );
+        
+        // Recalcular subtotal directamente desde el nuevo estado para mayor precisión
+        const total = mapped.reduce((sum, current) => sum + current.totalPrice, 0);
         setSubtotal(total);
-        return currentItems;
+        
+        return mapped;
       });
 
       // Sincronizar header
@@ -130,10 +140,17 @@ export function Cart() {
   };
 
   const removeItem = async (itemId: string) => {
+    setItemToDelete(itemId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmRemoveItem = async () => {
+    if (!itemToDelete) return;
+    
     try {
-      await supabaseAPI.removeFromCart(itemId);
-      const itemToRemove = cartItems.find((i) => i.id === itemId);
-      setCartItems((items) => items.filter((i) => i.id !== itemId));
+      await supabaseAPI.removeFromCart(itemToDelete);
+      const itemToRemove = cartItems.find((i) => i.id === itemToDelete);
+      setCartItems((items) => items.filter((i) => i.id !== itemToDelete));
       if (itemToRemove) {
         setSubtotal((prev) => prev - itemToRemove.totalPrice);
       }
@@ -144,6 +161,9 @@ export function Cart() {
       toast.success("Producto eliminado");
     } catch (error) {
       toast.error("Error al eliminar el producto");
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -415,6 +435,26 @@ export function Cart() {
         </h1>
         {renderCart()}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#1C5D15]">¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas quitar este producto de tu carrito? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmRemoveItem}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

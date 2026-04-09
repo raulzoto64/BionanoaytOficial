@@ -1532,43 +1532,59 @@ export const supabaseAPI = {
   mergeGuestCart: async (userId: string, guestId: string): Promise<void> => {
     if (!supabaseAPI.isValidUUID(userId) || !supabaseAPI.isValidUUID(guestId)) return;
 
-    // 1. Obtener items del invitado
-    const { data: guestItems, error: fetchError } = await supabase
-      .from("cart_items")
-      .select("*")
-      .eq("guest_id", guestId);
-
-    if (fetchError || !guestItems || guestItems.length === 0) return;
-
-    // 2. Por cada item del invitado, intentar moverlo o fusionarlo
-    for (const item of guestItems) {
-      // Verificar si el usuario ya tiene ese producto con el mismo empaque
-      const { data: existingUserItem } = await supabase
+    try {
+      // 1. Obtener items del invitado
+      const { data: guestItems, error: fetchError } = await supabase
         .from("cart_items")
         .select("*")
-        .eq("user_id", userId)
-        .eq("product_id", item.product_id)
-        .eq("packaging", item.packaging)
-        .maybeSingle();
+        .eq("guest_id", guestId);
 
-      if (existingUserItem) {
-        // Fusionar cantidades y borrar el de invitado
-        await supabase
-          .from("cart_items")
-          .update({ quantity: existingUserItem.quantity + item.quantity })
-          .eq("id", existingUserItem.id);
-        
-        await supabase.from("cart_items").delete().eq("id", item.id);
-      } else {
-        // Migrar el item al usuario
-        await supabase
-          .from("cart_items")
-          .update({ user_id: userId, guest_id: null })
-          .eq("id", item.id);
+      if (fetchError) {
+        console.error("Error fetching guest items:", fetchError);
+        return;
       }
+      
+      if (!guestItems || guestItems.length === 0) return;
+
+      // 2. Por cada item del invitado, intentar moverlo o fusionarlo
+      for (const item of guestItems) {
+        // Verificar si el usuario ya tiene ese producto con el mismo empaque
+        const { data: existingUserItem, error: existError } = await supabase
+          .from("cart_items")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("product_id", item.product_id)
+          .eq("packaging", item.packaging || 'Sin embase')
+          .maybeSingle();
+
+        if (existingUserItem) {
+          // Fusionar cantidades y borrar el de invitado
+          await supabase
+            .from("cart_items")
+            .update({ quantity: existingUserItem.quantity + item.quantity })
+            .eq("id", existingUserItem.id);
+          
+          await supabase.from("cart_items").delete().eq("id", item.id);
+        } else {
+          // Migrar el item al usuario manteniendo el guest_id como null para satisfacer chk_user_or_guest_id
+          const { error: updateError } = await supabase
+            .from("cart_items")
+            .update({ user_id: userId, guest_id: null })
+            .eq("id", item.id);
+            
+          if (updateError) {
+            console.error("Error updating cart item to user ID:", updateError);
+          }
+        }
+      }
+      
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+        window.dispatchEvent(new CustomEvent('database-updated')); // Asegurar sync
+      }
+    } catch (err) {
+      console.error("Critical error in mergeGuestCart:", err);
     }
-    
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
   },
 
   // Agregar o actualizar un item en el carrito
@@ -1725,7 +1741,9 @@ export const supabaseAPI = {
       .select()
       .single();
 
-    if (updateError) throw new Error(updateError.message);
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
     
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
     return updatedItem;

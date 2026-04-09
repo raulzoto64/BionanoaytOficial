@@ -6,8 +6,16 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { supabaseAPI } from "../data/supabase";
-import { Card } from "../components/ui/card";
 import { useAuth } from "../hooks/useAuth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 export function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,6 +28,11 @@ export function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [errorDialog, setErrorDialog] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: ""
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +49,8 @@ export function Login() {
 
         const user = await supabaseAPI.loginUser(formData.email, formData.password);
         
-        // Guardar sesión usando el hook
-        login(user);
+        // Guardar sesión usando el hook (Ahora esperamos que termine la migración del carrito)
+        await login(user);
         
         toast.success(`¡Bienvenido ${user.name}!`);
         
@@ -57,7 +70,7 @@ export function Login() {
           return;
         }
 
-        const newUser = await supabaseAPI.registerUser({
+        await supabaseAPI.registerUser({
           email: formData.email,
           password: formData.password,
           name: formData.name,
@@ -72,7 +85,15 @@ export function Login() {
         }, 1500);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error";
+      const errorMessage = error instanceof Error ? error.message : "Ha ocurrido un error inesperado al intentar procesar tu solicitud.";
+      
+      // Mostrar modal de error detallado
+      setErrorDialog({
+        open: true,
+        title: isLogin ? "Error al Iniciar Sesión" : "Error al Crear Cuenta",
+        message: errorMessage
+      });
+      
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -205,17 +226,26 @@ export function Login() {
           </div>
         </div>
 
-        {/* Back to Home */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => navigate("/")}
-            className="text-[#F7F9CE] hover:text-white transition-colors"
-          >
-            ← Volver al inicio
-          </button>
-        </div>
-
       </div>
+
+      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ ...errorDialog, open })}>
+        <AlertDialogContent className="bg-white border-2 border-red-500/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-700 font-bold flex items-center gap-2">
+              <span className="p-1 bg-red-100 rounded-full">⚠️</span>
+              {errorDialog.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-700 text-base py-4">
+              {errorDialog.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction className="bg-[#1C5D15] hover:bg-[#629960] text-white">
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

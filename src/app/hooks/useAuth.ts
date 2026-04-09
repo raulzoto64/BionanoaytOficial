@@ -41,15 +41,19 @@ export const useAuth = () => {
     if (guestId && userData.id) {
       try {
         await supabaseAPI.mergeGuestCart(userData.id, guestId);
-        // Opcional: limpiar guest_id después de fusionar para empezar de cero
-        // localStorage.removeItem('guest_id'); 
+        // Limpiar guest_id de forma segura tras fusionar con éxito (purga del local)
+        localStorage.removeItem('guest_id'); 
       } catch (error) {
-        console.error("Error al fusionar carritos:", error);
+        console.error("Error al fusionar carritos durante el login:", error);
+        // Podríamos decidir si lanzar el error o no. 
+        // Por ahora lo lanzamos para que la página de Login pueda informar al usuario si algo falló.
+        throw error;
       }
     }
     
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+    return userData; // Devolver los datos del usuario para confirmar éxito
   };
 
   const logout = () => {

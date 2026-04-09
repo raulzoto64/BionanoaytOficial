@@ -25,15 +25,16 @@ export function AddToCartButton({ productId, packaging, onSuccess }: AddToCartBu
 
     try {
       const userId = isAuthenticated ? user!.id : null;
-      const guestId = isGuest ? getGuestId() : null;
+      const guestIdParam = isGuest ? getGuestId() : null;
 
-      if (!userId && !guestId) {
+      if (!userId && !guestIdParam) {
         toast.error('No se pudo obtener la sesión de usuario');
         setIsLoading(false);
         return;
       }
 
-      await supabaseAPI.addToCart(userId, guestId, productId, 1, packaging);
+      await supabaseAPI.addToCart(userId, guestIdParam, productId, 1, packaging);
+      
       setIsAdded(true);
 
       if (onSuccess) {

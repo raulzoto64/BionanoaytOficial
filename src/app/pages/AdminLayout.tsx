@@ -1,16 +1,31 @@
-import { Outlet } from 'react-router';
+import { Outlet, useNavigate } from 'react-router';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 import { Bell, User, LogOut } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import { useState } from 'react';
 
 export function AdminLayout() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
+    setLogoutConfirmOpen(false);
+    navigate("/");
   };
 
   return (
@@ -39,7 +54,7 @@ export function AdminLayout() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={handleLogout}
+                    onClick={() => setLogoutConfirmOpen(true)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <LogOut className="w-5 h-5" />
@@ -54,6 +69,26 @@ export function AdminLayout() {
             </main>
           </div>
         </div>
+
+        <AlertDialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
+          <AlertDialogContent className="bg-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-[#1C5D15]">¿Cerrar sesión?</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Estás seguro de que deseas cerrar tu sesión administrativa?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-gray-200">Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Cerrar Sesión
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </ProtectedRoute>
     </LanguageProvider>
   );

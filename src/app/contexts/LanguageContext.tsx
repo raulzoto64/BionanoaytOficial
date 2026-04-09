@@ -234,7 +234,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    console.error('useLanguage called outside of LanguageProvider. Returning fallback to prevent complete page unmount.');
+    return {
+      language: 'es' as Language,
+      setLanguage: () => {},
+      t: (key: string) => defaultTranslations.es[key] || key,
+      isLoading: false
+    };
   }
   return context;
 }

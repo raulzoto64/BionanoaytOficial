@@ -8,6 +8,16 @@ import { Label } from '../../components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
 import { supabaseAPI, type User } from '../../data/supabase';
 import { Role } from '../../data/roles';
 import { RolePermissionsCard } from '../../components/admin/RolePermissionsCard';
@@ -17,6 +27,8 @@ export function AdminUsers() {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userIdToDelete, setUserIdToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -107,14 +119,22 @@ export function AdminUsers() {
       return;
     }
     
-    if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-      try {
-        await supabaseAPI.deleteUser(userId);
-        toast.success('Usuario eliminado exitosamente');
-        loadUsers();
-      } catch (error) {
-        toast.error('Error al eliminar usuario');
-      }
+    setUserIdToDelete(userId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userIdToDelete) return;
+
+    try {
+      await supabaseAPI.deleteUser(userIdToDelete);
+      toast.success('Usuario eliminado exitosamente');
+      loadUsers();
+    } catch (error) {
+      toast.error('Error al eliminar usuario');
+    } finally {
+      setDeleteDialogOpen(false);
+      setUserIdToDelete(null);
     }
   };
 
@@ -274,6 +294,26 @@ export function AdminUsers() {
           ))}
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#1C5D15]">¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer y revocará todo el acceso al sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -16,6 +16,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+import {
   Category,
   CategoryTranslation,
   supabaseAPI,
@@ -35,6 +45,8 @@ export function AdminCategories() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryIdToDelete, setCategoryIdToDelete] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     slug: "",
@@ -186,15 +198,23 @@ export function AdminCategories() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar esta categoría?")) return;
+  const handleDelete = (id: string) => {
+    setCategoryIdToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!categoryIdToDelete) return;
 
     try {
-      await supabaseAPI.deleteCategory(id);
+      await supabaseAPI.deleteCategory(categoryIdToDelete);
       toast.success("Categoría eliminada exitosamente");
-      loadCategories();
+      await loadCategories();
     } catch (error) {
       toast.error("Error al eliminar la categoría");
+    } finally {
+      setDeleteDialogOpen(false);
+      setCategoryIdToDelete(null);
     }
   };
 
@@ -415,6 +435,26 @@ export function AdminCategories() {
           ))
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#1C5D15]">¿Eliminar categoría?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer y podría afectar a los productos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
