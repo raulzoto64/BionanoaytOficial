@@ -132,7 +132,12 @@ export function Home() {
             case "timeline":
               return (
                 <div key={section.id} id="timeline">
-                  <Timeline milestones={section.content.milestones} />
+                  <Timeline 
+                    milestones={section.content.milestones}
+                    title={section.content.title}
+                    subtitle={section.content.subtitle}
+                    description={section.content.description}
+                  />
                 </div>
               );
             case "team":

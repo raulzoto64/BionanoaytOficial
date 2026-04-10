@@ -72,9 +72,12 @@ interface Milestone {
 
 interface TimelineProps {
   milestones: Milestone[];
+  title?: string;
+  subtitle?: string;
+  description?: string;
 }
 
-export function Timeline({ milestones }: TimelineProps) {
+export function Timeline({ milestones, title, subtitle, description }: TimelineProps) {
   const { t } = useLanguage();
 
   const getIconComponent = (iconName: string) => {
@@ -93,9 +96,20 @@ export function Timeline({ milestones }: TimelineProps) {
   return (
     <section className="py-20 bg-[#1C5D15] text-white pb-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-5 lg:px-6">
-        <h2 className="text-4xl md:text-5xl text-center mb-16 font-bold">
-          {t("timeline.title")}
-        </h2>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            !!! {title || t("timeline.title")}
+          </h2>
+          {subtitle && (
+            <h3 className="text-xl text-white/90 mb-4">{subtitle}</h3>
+          )}
+          {description && (
+            <div 
+              className="text-lg text-white/80 max-w-3xl mx-auto prose prose-invert"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          )}
+        </div>
 
         <div className="px-5 md:px-16 w-full max-w-full">
           <Carousel

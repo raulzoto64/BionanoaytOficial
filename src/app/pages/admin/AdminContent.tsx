@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -41,6 +42,7 @@ export function AdminContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const ecosystemRefs = useRef<Record<string, { save: () => Promise<void> }>>({});
+  const navigate = useNavigate();
   useEffect(() => {
     loadPages();
   }, []);
@@ -71,30 +73,7 @@ export function AdminContent() {
   };
 
   const handleEditPage = (page: PageWithContent) => {
-    setEditingPage(page);
-    
-    // Cargar secciones en español y english para edición simultánea
-    const sectionsES = page.contentES?.sections || [];
-    const sectionsEN = page.contentEN?.sections || [];
-    
-    // Combina las secciones de ambos idiomas, manteniendo el orden
-    const combinedSections = sectionsES.map(sectionES => {
-      const sectionEN = sectionsEN.find(sec => sec.id === sectionES.id);
-      return {
-        ...sectionES,
-        contentEN: sectionEN?.content || {}
-      };
-    });
-    
-    // Agrega secciones que solo existan en inglés
-    const englishOnlySections = sectionsEN.filter(sectionEN => 
-      !sectionsES.some(sectionES => sectionES.id === sectionEN.id)
-    ).map(sectionEN => ({
-      ...sectionEN,
-      contentEN: sectionEN.content
-    }));
-    
-    setSections([...combinedSections, ...englishOnlySections]);
+    navigate(`/admin/visual-editor/${page.id}`);
   };
 
   const handleSave = async () => {
