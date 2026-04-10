@@ -10,11 +10,7 @@ import {
   Tablet, 
   Smartphone, 
   Globe, 
-  Eye, 
-  RotateCcw,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,7 +21,7 @@ import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { SEO } from '../../components/SEO';
 
 // Helper component for Iframe Preview (defined outside to prevent re-mounting on every render)
-const PreviewFrame = ({ children, language }: { children: React.ReactNode, language: string }) => {
+const PreviewFrame = ({ children }: { children: React.ReactNode }) => {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [stylesLoaded, setStylesLoaded] = useState(false);
@@ -119,10 +115,40 @@ export function AdminVisualEditor() {
       };
 
       setPage(targetPage as any);
-      setSectionsES(targetPage.contentES?.sections || []);
-      setSectionsEN(targetPage.contentEN?.sections || []);
+      let sES = targetPage.contentES?.sections || [];
+      let sEN = targetPage.contentEN?.sections || [];
+
+      // Si es el Home y no tiene sección de noticias en BD, se la inyectamos para que pueda ser visible y editable.
+      if (page.id === 'page-home' || page.slug === 'home' || page.slug === 'page-home') {
+        const insertNewsSection = (sectionsArr: any[]) => {
+          if (sectionsArr.find((s: any) => s.type === 'news')) return sectionsArr;
+          
+          const newsBlock = {
+            id: 'news-home-auto',
+            type: 'news' as any,
+            order: 90,
+            visible: true,
+            content: { title: '', subtitle: '', ctaText: '', ctaLink: '' }
+          };
+          
+          const finalArr = [...sectionsArr];
+          const contactIdx = finalArr.findIndex((s: any) => s.type === 'contact');
+          if (contactIdx >= 0) {
+             finalArr.splice(contactIdx, 0, newsBlock);
+          } else {
+             finalArr.push(newsBlock);
+          }
+          return finalArr;
+        };
+
+        sES = insertNewsSection(sES);
+        sEN = insertNewsSection(sEN);
+      }
+
+      setSectionsES(sES);
+      setSectionsEN(sEN);
       
-      if (targetPage.contentES?.sections?.length > 0) {
+      if (targetPage.contentES?.sections && targetPage.contentES.sections.length > 0) {
         setActiveSectionId(targetPage.contentES.sections[0].id);
       }
 
@@ -351,13 +377,12 @@ export function AdminVisualEditor() {
 
               {/* Real Content Wrapper */}
               <div className={`h-full overflow-y-auto custom-scrollbar-content ${deviceView !== 'desktop' ? 'bg-white' : ''}`}>
-                 <PreviewFrame language={activeLanguage}>
+                 <PreviewFrame>
                    <div className="min-h-screen">
                      <VisualEditorPreview 
                        sections={activeSections} 
                        activeSectionId={activeSectionId}
                        onSectionClick={setActiveSectionId}
-                       language={activeLanguage}
                        availableProducts={allProducts}
                      />
                    </div>

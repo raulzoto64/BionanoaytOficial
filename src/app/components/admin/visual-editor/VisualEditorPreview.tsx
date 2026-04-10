@@ -1,4 +1,3 @@
-import React from 'react';
 import { Section } from '../../../data/supabase';
 import { EditableBlock } from './EditableBlock';
 
@@ -17,12 +16,11 @@ interface VisualEditorPreviewProps {
   sections: Section[];
   activeSectionId: string | null;
   onSectionClick: (id: string) => void;
-  language: 'es' | 'en';
   availableProducts?: any[];
 }
 
-export function VisualEditorPreview({ sections, activeSectionId, onSectionClick, language, availableProducts = [] }: VisualEditorPreviewProps) {
-  
+export function VisualEditorPreview({ sections, activeSectionId, onSectionClick, availableProducts = [] }: VisualEditorPreviewProps) {
+
   const renderSectionComponent = (section: Section) => {
     switch (section.type) {
       case 'hero':
@@ -39,7 +37,7 @@ export function VisualEditorPreview({ sections, activeSectionId, onSectionClick,
 
       case 'products':
         const selectedIds = section.content.selectedProductIds || [];
-        const filteredProducts = selectedIds.length > 0 
+        const filteredProducts = selectedIds.length > 0
           ? availableProducts.filter(p => selectedIds.includes(p.id))
           : availableProducts.filter(p => p.featured);
 
@@ -53,8 +51,8 @@ export function VisualEditorPreview({ sections, activeSectionId, onSectionClick,
 
       case 'timeline':
         return (
-          <Timeline 
-            milestones={section.content.milestones || []} 
+          <Timeline
+            milestones={section.content.milestones || []}
             title={section.content.title}
             subtitle={section.content.subtitle}
             description={section.content.description}
@@ -84,6 +82,9 @@ export function VisualEditorPreview({ sections, activeSectionId, onSectionClick,
           <NewsSection
             title={section.content.title}
             subtitle={section.content.subtitle}
+            ctaText={section.content.ctaText}
+            ctaLink={section.content.ctaLink}
+            isEditor={true}
           />
         );
 

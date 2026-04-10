@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 interface EditableBlockProps {
   sectionId: string;
@@ -14,8 +14,8 @@ export function EditableBlock({ sectionId, activeSectionId, onClick, children, l
   return (
     <div
       className={`relative group cursor-pointer transition-all duration-200 border-2 ${isActive
-          ? 'border-[#19FF00] z-10 shadow-[0_0_0_4px_rgba(25,255,0,0.1)]'
-          : 'border-transparent hover:border-[#1C5D15]/50'
+        ? 'border-[#19FF00] z-10 shadow-[0_0_0_4px_rgba(25,255,0,0.1)]'
+        : 'border-transparent hover:border-[#1C5D15]/50'
         }`}
       onClick={(e) => {
         e.stopPropagation();

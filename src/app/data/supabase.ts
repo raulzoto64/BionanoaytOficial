@@ -83,6 +83,11 @@ export interface PageContent {
   sections: Section[];
 }
 
+export type PageWithContent = Page & {
+  contentES?: PageContent;
+  contentEN?: PageContent;
+};
+
 export interface Section {
   id: string;
   type:

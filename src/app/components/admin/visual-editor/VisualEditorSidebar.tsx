@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Section } from '../../../data/supabase';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
@@ -12,11 +12,10 @@ interface VisualEditorSidebarProps {
   sectionES: Section;
   sectionEN: Section;
   onUpdateSection: (sectionId: string, content: any, lang: 'es' | 'en' | 'both') => void;
-  onUpdateSeo?: (sectionId: string, seo: any) => void;
   availableProducts?: any[];
 }
 
-export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onUpdateSeo, availableProducts = [] }: VisualEditorSidebarProps) {
+export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, availableProducts = [] }: VisualEditorSidebarProps) {
   const [fieldLangs, setFieldLangs] = useState<Record<string, 'es' | 'en'>>({});
 
   if (!sectionES || !sectionEN) {
@@ -34,7 +33,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
   };
 
   const getFieldLang = (fieldKey: string) => fieldLangs[fieldKey] || 'es';
-  
+
   const setFieldLang = (fieldKey: string, lang: 'es' | 'en') => {
     setFieldLangs(prev => ({ ...prev, [fieldKey]: lang }));
   };
@@ -47,17 +46,15 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
         <div className="flex items-center bg-gray-100 rounded-md p-0.5 border border-gray-200 shadow-sm">
           <button
             onClick={() => setFieldLang(fieldKey, 'es')}
-            className={`px-2 py-0.5 text-[9px] font-black rounded-sm transition-all ${
-              current === 'es' ? 'bg-[#1C5D15] text-white shadow-sm scale-110' : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`px-2 py-0.5 text-[9px] font-black rounded-sm transition-all ${current === 'es' ? 'bg-[#1C5D15] text-white shadow-sm scale-110' : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             ES
           </button>
           <button
             onClick={() => setFieldLang(fieldKey, 'en')}
-            className={`px-2 py-0.5 text-[9px] font-black rounded-sm transition-all ${
-              current === 'en' ? 'bg-[#1C5D15] text-white shadow-sm scale-110' : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`px-2 py-0.5 text-[9px] font-black rounded-sm transition-all ${current === 'en' ? 'bg-[#1C5D15] text-white shadow-sm scale-110' : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             EN
           </button>
@@ -82,8 +79,8 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
           <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
             <div>
               <LanguageToggle fieldKey="hero-title" label="Título Principal" />
-              <Input 
-                value={(getFieldLang('hero-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ''} 
+              <Input
+                value={(getFieldLang('hero-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ''}
                 onChange={(e) => handleContentChange('title', e.target.value, getFieldLang('hero-title'))}
                 placeholder="Innovando en Biotecnología..."
                 className="focus:ring-[#19FF00]/30"
@@ -91,8 +88,8 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
             </div>
             <div>
               <LanguageToggle fieldKey="hero-subtitle" label="Subtítulo" />
-              <RichTextEditor 
-                value={(getFieldLang('hero-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ''} 
+              <RichTextEditor
+                value={(getFieldLang('hero-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ''}
                 onChange={(val) => handleContentChange('subtitle', val, getFieldLang('hero-subtitle'))}
                 minHeight="100px"
               />
@@ -102,8 +99,8 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
           <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
             <div>
               <Label className="text-[#1C5D15] font-bold text-xs uppercase mb-2 block">Imágenes (Global)</Label>
-              <ImageUpload 
-                currentImage={sectionES.content.backgroundImage} 
+              <ImageUpload
+                currentImage={sectionES.content.backgroundImage}
                 onImageUpload={(url) => handleContentChange('backgroundImage', url, 'both')}
                 type="banner"
               />
@@ -114,14 +111,14 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
             <div className="grid gap-4">
               <div className="space-y-3">
                 <LanguageToggle fieldKey="hero-cta" label="Botón Primario" />
-                <Input 
+                <Input
                   placeholder="Texto"
-                  value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ''} 
+                  value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ''}
                   onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('hero-cta'))}
                 />
-                <Input 
+                <Input
                   placeholder="Enlace URL"
-                  value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ''} 
+                  value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ''}
                   onChange={(e) => handleContentChange('ctaLink', e.target.value, getFieldLang('hero-cta'))}
                 />
               </div>
@@ -130,14 +127,14 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
 
               <div className="space-y-3">
                 <LanguageToggle fieldKey="hero-cta2" label="Botón Secundario" />
-                <Input 
+                <Input
                   placeholder="Texto"
-                  value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ''} 
+                  value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ''}
                   onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('hero-cta2'))}
                 />
-                <Input 
+                <Input
                   placeholder="Enlace URL"
-                  value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaLink : sectionEN.content.secondaryCtaLink) || ''} 
+                  value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaLink : sectionEN.content.secondaryCtaLink) || ''}
                   onChange={(e) => handleContentChange('secondaryCtaLink', e.target.value, getFieldLang('hero-cta2'))}
                 />
               </div>
@@ -195,9 +192,9 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
-                  
+
                   <LanguageToggle fieldKey={fKey} label={`Hito #${idx + 1}`} />
-                  
+
                   {ms.year !== undefined ? (
                     <div className="grid gap-2">
                       <Input
@@ -314,11 +311,11 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
             <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">
               {sectionES.type === "trust" ? "Aliados Sincronizados" : "Características Sincronizadas"}
             </Label>
-            {(sectionES.content.items || sectionES.content.partners || []).map((item: any, idx: number) => {
+            {(sectionES.content.items || sectionES.content.partners || []).map((_: any, idx: number) => {
               const arrayKey = sectionES.type === "trust" ? "partners" : "items";
               const currentListES = sectionES.content[arrayKey] || [];
               const fKey = `${arrayKey}-${idx}`;
-              
+
               return (
                 <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
                   <Button
@@ -351,7 +348,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                       }}
                       className="text-xs h-9"
                     />
-                    
+
                     <RichTextEditor
                       placeholder="Descripción"
                       value={(getFieldLang(fKey) === 'es' ? sectionES.content[arrayKey][idx].description : sectionEN.content[arrayKey][idx].description) || ""}
@@ -455,8 +452,8 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                     )}
 
                     <div className="pt-2">
-                       <Label className="text-[9px] uppercase font-bold text-gray-400 mb-1 block">Imagen (Global)</Label>
-                       <ImageUpload
+                      <Label className="text-[9px] uppercase font-bold text-gray-400 mb-1 block">Imagen (Global)</Label>
+                      <ImageUpload
                         currentImage={sectionES.content[arrayKey][idx].image}
                         onImageUpload={(url) => {
                           const newListES = [...sectionES.content[arrayKey]];
@@ -481,7 +478,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                 const arrayKey = sectionES.type === "trust" ? "partners" : "items";
                 const currentES = sectionES.content[arrayKey] || [];
                 const currentEN = sectionEN.content[arrayKey] || [];
-                const newItem = sectionES.type === "trust" 
+                const newItem = sectionES.type === "trust"
                   ? { name: "", image: "", link: "", description: "", placeholder: "", details: [] }
                   : { title: "", description: "", icon: "Users" };
                 handleContentChange(arrayKey, [...currentES, { ...newItem }], 'es');
@@ -545,7 +542,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
           <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2">Características Clave</h4>
             <div className="space-y-4">
-              {(sectionES.content.features || []).map((feat: any, idx: number) => {
+              {(sectionES.content.features || []).map((_: any, idx: number) => {
                 const fKey = `feat-item-${idx}`;
                 return (
                   <div key={idx} className="p-3 border rounded-lg bg-gray-50/50 relative group space-y-3">
@@ -566,42 +563,42 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                     <LanguageToggle fieldKey={fKey} label={`Característica #${idx + 1}`} />
 
                     <div className="grid gap-2">
-                       <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
-                            <select 
-                              className="w-full text-[10px] h-8 border rounded-md bg-white"
-                              value={sectionES.content.features[idx].icon || 'Shield'}
-                              onChange={(e) => {
-                                const newListES = [...sectionES.content.features];
-                                const newListEN = [...sectionEN.content.features];
-                                newListES[idx].icon = e.target.value;
-                                newListEN[idx].icon = e.target.value;
-                                handleContentChange("features", newListES, 'es');
-                                handleContentChange("features", newListEN, 'en');
-                              }}
-                            >
-                              <option value="Shield">Escudo (Shield)</option>
-                              <option value="Leaf">Hoja (Leaf)</option>
-                              <option value="Droplets">Gotas (Droplets)</option>
-                            </select>
-                          </div>
-                          <div>
-                            <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Título</Label>
-                            <Input
-                              value={(getFieldLang(fKey) === 'es' ? sectionES.content.features[idx].title : sectionEN.content.features[idx].title) || ""}
-                              onChange={(e) => {
-                                const lang = getFieldLang(fKey);
-                                const target = lang === 'es' ? sectionES : sectionEN;
-                                const newList = [...target.content.features];
-                                newList[idx].title = e.target.value;
-                                handleContentChange("features", newList, lang);
-                              }}
-                              className="h-8 text-[10px]"
-                            />
-                          </div>
-                       </div>
-                       <RichTextEditor
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                          <select
+                            className="w-full text-[10px] h-8 border rounded-md bg-white"
+                            value={sectionES.content.features[idx].icon || 'Shield'}
+                            onChange={(e) => {
+                              const newListES = [...sectionES.content.features];
+                              const newListEN = [...sectionEN.content.features];
+                              newListES[idx].icon = e.target.value;
+                              newListEN[idx].icon = e.target.value;
+                              handleContentChange("features", newListES, 'es');
+                              handleContentChange("features", newListEN, 'en');
+                            }}
+                          >
+                            <option value="Shield">Escudo (Shield)</option>
+                            <option value="Leaf">Hoja (Leaf)</option>
+                            <option value="Droplets">Gotas (Droplets)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Título</Label>
+                          <Input
+                            value={(getFieldLang(fKey) === 'es' ? sectionES.content.features[idx].title : sectionEN.content.features[idx].title) || ""}
+                            onChange={(e) => {
+                              const lang = getFieldLang(fKey);
+                              const target = lang === 'es' ? sectionES : sectionEN;
+                              const newList = [...target.content.features];
+                              newList[idx].title = e.target.value;
+                              handleContentChange("features", newList, lang);
+                            }}
+                            className="h-8 text-[10px]"
+                          />
+                        </div>
+                      </div>
+                      <RichTextEditor
                         value={(getFieldLang(fKey) === 'es' ? sectionES.content.features[idx].description : sectionEN.content.features[idx].description) || ""}
                         onChange={(val) => {
                           const lang = getFieldLang(fKey);
@@ -667,7 +664,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
 
           <div className="space-y-4">
             <Label className="text-[#1C5D15] font-bold px-1">EQUIPO (SINCRONIZADO)</Label>
-            {(sectionES.content.members || []).map((member: any, idx: number) => {
+            {(sectionES.content.members || []).map((_: any, idx: number) => {
               const fKey = `member-${idx}`;
               return (
                 <div key={idx} className="p-4 border rounded-xl bg-white relative group space-y-4 shadow-sm">
@@ -684,7 +681,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>
-                  
+
                   <LanguageToggle fieldKey={fKey} label={`Miembro #${idx + 1}`} />
 
                   <div className="grid gap-3">
@@ -770,6 +767,28 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
             </div>
           </div>
 
+          {sectionES.type === "news" && (
+            <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+              <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2">Botón de Acción (CTA)</h4>
+              <div>
+                <LanguageToggle fieldKey="news-cta" label="Texto del Botón" />
+                <Input
+                  value={(getFieldLang('news-cta') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
+                  onChange={(e) => handleContentChange("ctaText", e.target.value, getFieldLang('news-cta'))}
+                  placeholder="Ej: Ver todas las noticias"
+                />
+              </div>
+              <div>
+                <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1.5 block">Enlace del Botón (Global)</Label>
+                <Input
+                  value={sectionES.content.ctaLink || ""}
+                  onChange={(e) => handleContentChange("ctaLink", e.target.value, 'both')}
+                  placeholder="Ej: /blog"
+                />
+              </div>
+            </div>
+          )}
+
           {sectionES.type === "products" && (
             <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b pb-2 mb-2">
@@ -778,13 +797,13 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                   {(sectionES.content.selectedProductIds || []).length} / 3
                 </span>
               </div>
-              
+
               <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                 {availableProducts.filter(p => p.featured).map((prod) => {
                   const isSelected = (sectionES.content.selectedProductIds || []).includes(prod.id);
                   return (
-                    <div 
-                      key={prod.id} 
+                    <div
+                      key={prod.id}
                       onClick={() => {
                         const current = sectionES.content.selectedProductIds || [];
                         let newList;
@@ -792,16 +811,15 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                           newList = current.filter((id: string) => id !== prod.id);
                         } else {
                           if (current.length >= 3) {
-                             toast.error('Solo puedes seleccionar un máximo de 3 productos');
-                             return;
+                            toast.error('Solo puedes seleccionar un máximo de 3 productos');
+                            return;
                           }
                           newList = [...current, prod.id];
                         }
                         handleContentChange("selectedProductIds", newList, 'both');
                       }}
-                      className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer ${
-                        isSelected ? 'bg-[#1C5D15]/5 border-[#1C5D15] shadow-sm' : 'hover:bg-gray-50 border-gray-100'
-                      }`}
+                      className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer ${isSelected ? 'bg-[#1C5D15]/5 border-[#1C5D15] shadow-sm' : 'hover:bg-gray-50 border-gray-100'
+                        }`}
                     >
                       <div className="w-10 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
                         <img src={prod.image} className="w-full h-full object-cover" />
@@ -817,13 +835,13 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
                   );
                 })}
               </div>
-              
+
               {(sectionES.content.selectedProductIds || []).length === 0 && (
                 <div className="p-3 bg-amber-50 rounded-lg flex gap-2 items-start">
-                   <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                   <p className="text-[10px] text-amber-700 leading-tight">
-                     Si no seleccionas productos aquí, se mostrarán automáticamente los productos marcados como "Destacados" en el inventario.
-                   </p>
+                  <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-700 leading-tight">
+                    Si no seleccionas productos aquí, se mostrarán automáticamente los productos marcados como "Destacados" en el inventario.
+                  </p>
                 </div>
               )}
             </div>
@@ -833,18 +851,18 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
 
       {sectionES.type === "custom" && (
         <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
-           <LanguageToggle fieldKey="custom-json" label="JSON Content (Low Level)" />
-           <textarea 
-              value={JSON.stringify(getFieldLang('custom-json') === 'es' ? sectionES.content : sectionEN.content, null, 2)} 
-              onChange={(e) => {
-                try {
-                  const val = JSON.parse(e.target.value);
-                  handleContentChange('CONTENT_ROOT', val, getFieldLang('custom-json'));
-                } catch(e) {}
-              }}
-              className="w-full mt-1 font-mono px-3 py-2 border rounded-lg text-xs"
-              rows={15}
-            />
+          <LanguageToggle fieldKey="custom-json" label="JSON Content (Low Level)" />
+          <textarea
+            value={JSON.stringify(getFieldLang('custom-json') === 'es' ? sectionES.content : sectionEN.content, null, 2)}
+            onChange={(e) => {
+              try {
+                const val = JSON.parse(e.target.value);
+                handleContentChange('CONTENT_ROOT', val, getFieldLang('custom-json'));
+              } catch (e) { }
+            }}
+            className="w-full mt-1 font-mono px-3 py-2 border rounded-lg text-xs"
+            rows={15}
+          />
         </div>
       )}
 
@@ -854,23 +872,23 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, onU
           <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <div>
               <LanguageToggle fieldKey="seo-title" label="Título Meta" />
-              <Input 
-                value={(getFieldLang('seo-title') === 'es' ? sectionES.content.seo.metaTitle : sectionEN.content.seo.metaTitle) || ''} 
+              <Input
+                value={(getFieldLang('seo-title') === 'es' ? sectionES.content.seo.metaTitle : sectionEN.content.seo.metaTitle) || ''}
                 onChange={(e) => {
                   const lang = getFieldLang('seo-title');
                   const target = lang === 'es' ? sectionES : sectionEN;
-                  handleContentChange('seo', {...target.content.seo, metaTitle: e.target.value}, lang);
+                  handleContentChange('seo', { ...target.content.seo, metaTitle: e.target.value }, lang);
                 }}
               />
             </div>
             <div>
               <LanguageToggle fieldKey="seo-desc" label="Descripción Meta" />
-              <textarea 
-                value={(getFieldLang('seo-desc') === 'es' ? sectionES.content.seo.metaDescription : sectionEN.content.seo.metaDescription) || ''} 
+              <textarea
+                value={(getFieldLang('seo-desc') === 'es' ? sectionES.content.seo.metaDescription : sectionEN.content.seo.metaDescription) || ''}
                 onChange={(e) => {
                   const lang = getFieldLang('seo-desc');
                   const target = lang === 'es' ? sectionES : sectionEN;
-                  handleContentChange('seo', {...target.content.seo, metaDescription: e.target.value}, lang);
+                  handleContentChange('seo', { ...target.content.seo, metaDescription: e.target.value }, lang);
                 }}
                 className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                 rows={3}

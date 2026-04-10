@@ -32,9 +32,10 @@ export function Hero({ content }: HeroProps) {
         <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6 leading-tight">
           {content.title}
         </h1>
-        <p className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-95">
-          {content.subtitle}
-        </p>
+        <div 
+          className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-95 [&_p]:m-0"
+          dangerouslySetInnerHTML={{ __html: content.subtitle || '' }}
+        />
         <Button 
           size="lg"
           className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-8 py-4 text-base shadow-xl hover:shadow-[#19FF00]/20 rounded-full uppercase font-bold tracking-wider h-12"
