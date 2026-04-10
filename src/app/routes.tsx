@@ -135,10 +135,6 @@ export const router = createBrowserRouter([
         lazy: AdminUsers,
       },
       {
-        path: "ecosystem",
-        lazy: AdminEcosystem,
-      },
-      {
         path: "legal",
         lazy: AdminLegalPages,
       },

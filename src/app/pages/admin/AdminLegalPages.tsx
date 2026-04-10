@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { DatabaseManager } from '../../data/DatabaseManager';
 import { LegalPage } from '../../data/supabase';
 import { Plus, Trash2, Edit } from 'lucide-react';
+import { RichTextEditor } from '../../components/admin/RichTextEditor';
 
 export function AdminLegalPages() {
   const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
@@ -103,7 +104,7 @@ export function AdminLegalPages() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1C5D15]"></div>
         </div>
@@ -112,7 +113,7 @@ export function AdminLegalPages() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#1C5D15]">Páginas Legales</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -179,27 +180,23 @@ export function AdminLegalPages() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="content_es">Contenido (ES)</Label>
-                  <Textarea
-                    id="content_es"
+                  <RichTextEditor
                     value={formData.content_es}
-                    onChange={(e) => setFormData({ ...formData, content_es: e.target.value })}
-                    placeholder="Contenido en español (puede incluir HTML)"
-                    rows={8}
-                    required
+                    onChange={(val) => setFormData({ ...formData, content_es: val })}
+                    placeholder="Escribe el contenido en español..."
+                    minHeight="280px"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="content_en">Contenido (EN)</Label>
-                  <Textarea
-                    id="content_en"
+                  <RichTextEditor
                     value={formData.content_en}
-                    onChange={(e) => setFormData({ ...formData, content_en: e.target.value })}
-                    placeholder="Content in English (can include HTML)"
-                    rows={8}
-                    required
+                    onChange={(val) => setFormData({ ...formData, content_en: val })}
+                    placeholder="Write content in English..."
+                    minHeight="280px"
                   />
                 </div>
               </div>

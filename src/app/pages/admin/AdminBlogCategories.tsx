@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Edit } from 'lucide-react';
+import { Trash2, Plus, Edit, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+import { useNavigate } from 'react-router';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
@@ -28,6 +29,7 @@ import { BlogCategory, BlogCategoryTranslation, supabaseAPI } from '../../data/s
 import { toast } from 'sonner';
 
 export function AdminBlogCategories() {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [categoriesNames, setCategoriesNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -173,10 +175,17 @@ export function AdminBlogCategories() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Categorías</h2>
+          <button
+            onClick={() => navigate('/admin/blog/posts')}
+            className="flex items-center gap-2 text-[#629960] hover:text-[#1C5D15] text-sm mb-3 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver a Artículos
+          </button>
+          <h2 className="text-3xl text-[#1C5D15] mb-2 font-bold">Gestión de Categorías</h2>
           <p className="text-[#629960]">Administra las categorías del blog</p>
         </div>
         <Button className="bg-[#1C5D15] text-white hover:bg-[#629960]" onClick={handleNewCategory}>

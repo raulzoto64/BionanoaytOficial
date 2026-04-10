@@ -9,8 +9,7 @@ import { SelectTrigger } from '../../components/ui/select';
 import { SelectValue } from '../../components/ui/select';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { RichTextEditor } from './RichTextEditor';
 import { ImageUpload } from '../../components/ImageUpload';
 
 export type SectionType = 'text' | 'image' | 'video' | 'quote' | 'gallery';
@@ -42,52 +41,38 @@ export function BlogContentSection({
   canMoveDown = false,
 }: BlogContentSectionProps) {
   const [localTitle, setLocalTitle] = useState(section.title || '');
-  const [localContent, setLocalContent] = useState(section.content);
   const [localType, setLocalType] = useState(section.type);
   const [localHeadingLevel, setLocalHeadingLevel] = useState(section.headingLevel || 2);
 
   const handleHeadingLevelChange = (value: string) => {
     const level = parseInt(value) as 1 | 2 | 3 | 4;
     setLocalHeadingLevel(level);
-    onUpdate({
-      ...section,
-      headingLevel: level,
-    });
+    onUpdate({ ...section, headingLevel: level });
   };
 
   const handleContentChange = (content: string) => {
-    setLocalContent(content);
-    onUpdate({
-      ...section,
-      content,
-    });
+    onUpdate({ ...section, content });
   };
 
   const handleTypeChange = (type: SectionType) => {
     setLocalType(type);
-    onUpdate({
-      ...section,
-      type,
-    });
+    onUpdate({ ...section, type });
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;
     setLocalTitle(title);
-    onUpdate({
-      ...section,
-      title,
-    });
+    onUpdate({ ...section, title });
   };
 
   const renderSectionIcon = () => {
     switch (localType) {
-      case 'text': return <Type className="w-4 h-4" />;
-      case 'image': return <ImageIcon className="w-4 h-4" />;
-      case 'video': return <Video className="w-4 h-4" />;
-      case 'quote': return <Quote className="w-4 h-4" />;
+      case 'text':    return <Type className="w-4 h-4" />;
+      case 'image':   return <ImageIcon className="w-4 h-4" />;
+      case 'video':   return <Video className="w-4 h-4" />;
+      case 'quote':   return <Quote className="w-4 h-4" />;
       case 'gallery': return <Grid className="w-4 h-4" />;
-      default: return null;
+      default:        return null;
     }
   };
 
@@ -95,79 +80,53 @@ export function BlogContentSection({
     switch (localType) {
       case 'text':
         return (
-          <div className="border border-[#629960]/30 rounded-lg overflow-hidden">
-            <ReactQuill
-              theme="snow"
-              value={localContent}
+          <RichTextEditor
+            value={section.content}
+            onChange={handleContentChange}
+            placeholder="Escribe el contenido de la sección..."
+            minHeight="220px"
+          />
+        );
+
+      case 'quote':
+        return (
+          <div className="space-y-3">
+            <Input
+              value={localTitle}
+              onChange={handleTitleChange}
+              placeholder="Autor de la cita"
+            />
+            <RichTextEditor
+              value={section.content}
               onChange={handleContentChange}
-              placeholder="Escribe el contenido de la sección..."
-              className="min-h-[200px]"
-              modules={{
-                toolbar: [
-                  [{ 'header': [1, 2, 3, 4, false] }],
-                  ['bold', 'italic', 'underline', 'strike'],
-                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                  [{ 'indent': '-1'}, { 'indent': '+1' }],
-                  [{ 'align': [] }],
-                  ['link', 'image'],
-                  ['clean']
-                ]
-              }}
+              placeholder="Escribe la cita..."
+              minHeight="150px"
             />
           </div>
         );
 
       case 'image':
         return (
-          <div className="space-y-4">
-            <ImageUpload
-              onImageUpload={handleContentChange}
-              currentImage={localContent}
-              type="banner"
-            />
-          </div>
+          <ImageUpload
+            onImageUpload={handleContentChange}
+            currentImage={section.content}
+            type="banner"
+          />
         );
 
       case 'video':
         return (
           <div className="space-y-4">
             <Input
-              value={localContent}
+              value={section.content}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder="URL del video (YouTube, Vimeo, etc.)"
             />
-            {localContent && (
+            {section.content && (
               <div className="aspect-video bg-[#629960]/10 rounded-lg flex items-center justify-center">
-                <p className="text-[#629960]">Video Preview</p>
+                <p className="text-[#629960]">Vista previa del video</p>
               </div>
             )}
-          </div>
-        );
-
-      case 'quote':
-        return (
-          <div className="space-y-4">
-            <Input
-              value={localTitle}
-              onChange={handleTitleChange}
-              placeholder="Autor de la cita"
-            />
-            <div className="border border-[#629960]/30 rounded-lg overflow-hidden">
-              <ReactQuill
-                theme="snow"
-                value={localContent}
-                onChange={handleContentChange}
-                placeholder="Escribe la cita..."
-                className="min-h-[150px]"
-                modules={{
-                  toolbar: [
-                    ['bold', 'italic', 'underline'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    ['link']
-                  ]
-                }}
-              />
-            </div>
           </div>
         );
 
@@ -175,13 +134,13 @@ export function BlogContentSection({
         return (
           <div className="space-y-4">
             <Input
-              value={localContent}
+              value={section.content}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder="URLs de imágenes separadas por comas"
             />
-            {localContent && (
+            {section.content && (
               <div className="grid grid-cols-2 gap-4">
-                {localContent.split(',').map((url, index) => (
+                {section.content.split(',').map((url, index) => (
                   <div key={index} className="relative rounded-lg overflow-hidden border border-[#629960]/30">
                     <img
                       src={url.trim()}
@@ -234,24 +193,10 @@ export function BlogContentSection({
         </div>
         <div className="flex items-center gap-2">
           {canMoveUp && onMoveUp && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#629960] text-[#629960]"
-              onClick={onMoveUp}
-            >
-              ↑
-            </Button>
+            <Button variant="outline" size="sm" className="border-[#629960] text-[#629960]" onClick={onMoveUp}>↑</Button>
           )}
           {canMoveDown && onMoveDown && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#629960] text-[#629960]"
-              onClick={onMoveDown}
-            >
-              ↓
-            </Button>
+            <Button variant="outline" size="sm" className="border-[#629960] text-[#629960]" onClick={onMoveDown}>↓</Button>
           )}
           <Button
             variant="outline"

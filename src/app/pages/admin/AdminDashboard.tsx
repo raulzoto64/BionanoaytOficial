@@ -34,7 +34,7 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <div className="mb-8">
         <h2 className="text-3xl text-[#1C5D15] mb-2">Dashboard</h2>
         <p className="text-[#629960]">Resumen general del sistema</p>

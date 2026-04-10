@@ -169,6 +169,7 @@ export function Home() {
                   <Ecosystem 
                     title={section.content.title} 
                     subtitle={section.content.subtitle} 
+                    items={section.content.items}
                   />
                 </div>
                 {!hasDedicatedNews && <NewsSection />}

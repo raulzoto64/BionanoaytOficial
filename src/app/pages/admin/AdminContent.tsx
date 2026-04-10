@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -25,6 +26,7 @@ import {
   supabaseAPI 
 } from '../../data/supabase';
 import { ImageUpload } from '../../components/ImageUpload';
+import { AdminEcosystem } from './AdminEcosystem';
 
 interface PageWithContent extends Page {
   contentES: PageContent | null;
@@ -38,7 +40,7 @@ export function AdminContent() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-
+  const ecosystemRefs = useRef<Record<string, { save: () => Promise<void> }>>({});
   useEffect(() => {
     loadPages();
   }, []);
@@ -116,6 +118,15 @@ export function AdminContent() {
         supabaseAPI.updatePageContent(editingPage.id, 'es', sectionsES),
         supabaseAPI.updatePageContent(editingPage.id, 'en', sectionsEN)
       ]);
+
+      // Guardar ecosistema si existe
+      for (const ref of Object.values(ecosystemRefs.current)) {
+        if (ref) {
+          try {
+            await ref.save();
+          } catch(e) {}
+        }
+      }
 
       toast.success('Contenido guardado exitosamente en ambos idiomas');
       setEditingPage(null);
@@ -233,6 +244,15 @@ export function AdminContent() {
         supabaseAPI.updatePageContent(editingPage.id, 'en', allSectionsEN)
       ]);
 
+      // Guardar ecosistema si hay refs asociadas
+      for (const ref of Object.values(ecosystemRefs.current)) {
+        if (ref) {
+          try {
+            await ref.save();
+          } catch(e) {}
+        }
+      }
+
       toast.success('Cambios guardados exitosamente en la página');
       
       // Opcionalmente recargar para sincronizar con ID asignados por DB si fuera necesario
@@ -253,72 +273,84 @@ export function AdminContent() {
 
   // Vista de edición
   if (editingPage) {
+    const headerActions = document.getElementById('admin-header-actions');
+
     return (
-      <div>
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl text-[#1C5D15] mb-2">
-              Editar: {editingPage.slug}
-            </h2>
-            <p className="text-[#629960]">
-              Gestiona las secciones de la página
-            </p>
-          </div>
-          <div className="flex gap-3">
+      <div className="flex flex-col min-h-full">
+        {/* Usamos un Portal para enviar los botones a la barra superior global */}
+        {headerActions && createPortal(
+          <>
+            <div className="w-px h-6 bg-[#1C5D15]/20 mx-2"></div>
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] shadow-sm transform active:scale-95 transition-transform"
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {isSaving ? 'Guardando...' : 'Guardar'}
+              {isSaving ? 'Guardar Cambios' : 'Guardar Todo'}
             </Button>
-            <Button onClick={handleCancel} variant="outline">
+            <Button onClick={handleCancel} variant="outline" className="border-[#1C5D15] text-[#1C5D15] hover:bg-[#F7F9CE]">
               <X className="w-4 h-4 mr-2" />
-              Cancelar
+              Cerrar
             </Button>
+          </>,
+          headerActions
+        )}
+
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8 p-6 bg-white rounded-xl border-2 border-[#1C5D15]/10 shadow-sm">
+              <h2 className="text-3xl font-bold text-[#1C5D15] mb-2 flex items-center gap-3">
+                <Globe className="w-8 h-8" />
+                Editando Página: <span className="text-[#629960]">{editingPage.slug}</span>
+              </h2>
+              <p className="text-[#629960]">
+                Gestiona las secciones y el contenido dinámico de esta página. Los cambios se aplicarán globalmente al guardar.
+              </p>
+            </div>
+
+            {/* Botón agregar sección */}
+            <Button
+              onClick={addSection}
+              className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#629960] hover:text-white mb-6 shadow-md transition-all active:scale-95"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar Sección
+            </Button>
+
+            {/* Lista de secciones */}
+            <div className="space-y-4">
+              {sections.length === 0 ? (
+                <Card className="p-12 bg-white border-2 border-[#629960]/20 text-center">
+                  <FileText className="w-16 h-16 text-[#1C5D15] mx-auto mb-4" />
+                  <h3 className="text-2xl text-[#1C5D15] mb-2">No hay secciones</h3>
+                  <p className="text-[#629960] mb-4">Agrega tu primera sección para comenzar</p>
+                </Card>
+              ) : (
+                sections.map((section, index) => (
+                  <SectionEditor
+                    key={section.id}
+                    section={section}
+                    index={index}
+                    totalSections={sections.length}
+                    isExpanded={expandedSections.has(section.id)}
+                    onToggleExpanded={() => toggleSectionExpanded(section.id)}
+                    onUpdate={(updates) => updateSection(index, updates)}
+                    onUpdateContent={(field, value) => updateSectionContent(index, field, value)}
+                    onDelete={() => deleteSection(index)}
+                    onMoveUp={() => moveSectionUp(index)}
+                    onMoveDown={() => moveSectionDown(index)}
+                    onSaveSection={handleSaveSection}
+                    ecosystemRefs={ecosystemRefs}
+                  />
+                ))
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Botón agregar sección */}
-        <Button
-          onClick={addSection}
-          className="mb-6 bg-[#629960] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Agregar Sección
-        </Button>
-
-        {/* Lista de secciones */}
-        <div className="space-y-4">
-          {sections.length === 0 ? (
-            <Card className="p-12 bg-white border-2 border-[#629960]/20 text-center">
-              <FileText className="w-16 h-16 text-[#1C5D15] mx-auto mb-4" />
-              <h3 className="text-2xl text-[#1C5D15] mb-2">No hay secciones</h3>
-              <p className="text-[#629960] mb-4">Agrega tu primera sección para comenzar</p>
-            </Card>
-          ) : (
-            sections.map((section, index) => (
-              <SectionEditor
-                key={section.id}
-                section={section}
-                index={index}
-                totalSections={sections.length}
-                isExpanded={expandedSections.has(section.id)}
-                onToggleExpanded={() => toggleSectionExpanded(section.id)}
-                onUpdate={(updates) => updateSection(index, updates)}
-                onUpdateContent={(field, value) => updateSectionContent(index, field, value)}
-                onDelete={() => deleteSection(index)}
-                onMoveUp={() => moveSectionUp(index)}
-                onMoveDown={() => moveSectionDown(index)}
-                onSaveSection={handleSaveSection}
-              />
-            ))
-          )}
         </div>
       </div>
     );
@@ -326,7 +358,7 @@ export function AdminContent() {
 
   // Vista de lista de páginas
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <div className="mb-8">
         <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Contenido</h2>
         <p className="text-[#629960]">Administra el contenido de todas las páginas del sitio</p>
@@ -396,7 +428,6 @@ export function AdminContent() {
   );
 }
 
-// Componente Editor de Sección
 function SectionEditor({
   section,
   index,
@@ -409,6 +440,7 @@ function SectionEditor({
   onMoveUp,
   onMoveDown,
   onSaveSection,
+  ecosystemRefs,
 }: {
   section: Section;
   index: number;
@@ -421,6 +453,7 @@ function SectionEditor({
   onMoveUp: () => void;
   onMoveDown: () => void;
   onSaveSection: (section: Section) => void;
+  ecosystemRefs?: React.MutableRefObject<Record<string, { save: () => Promise<void> }>>;
 }) {
   const sectionTypes = [
     { value: 'hero', label: 'Hero (Banner Principal)' },
@@ -1878,6 +1911,126 @@ function SectionEditor({
                     />
                   </div>
                 </div>
+
+                {/* Editor de Items para Ecosistema */}
+                <div className="mt-6">
+                  <Label className="text-[#1C5D15] font-bold">Items Destacados del Ecosistema</Label>
+                  <div className="space-y-4 mt-2">
+                    {(section.content.items || []).map((item: any, idx: number) => (
+                      <div key={idx} className="border p-4 rounded-lg bg-gray-50/50">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-[#1C5D15]">Título (Español)</Label>
+                            <Input
+                              type="text"
+                              value={item.title || ''}
+                              onChange={(e) => {
+                                const newItems = [...(section.content.items || [])];
+                                newItems[idx].title = e.target.value;
+                                onUpdateContent('items', newItems);
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[#1C5D15]">Título (English)</Label>
+                            <Input
+                              type="text"
+                              value={(section as any).contentEN?.items?.[idx]?.title || ''}
+                              onChange={(e) => {
+                                const currentContentEN = (section as any).contentEN || {};
+                                const currentItemsEN = [...(currentContentEN.items || [])];
+                                if (!currentItemsEN[idx]) currentItemsEN[idx] = {};
+                                currentItemsEN[idx].title = e.target.value;
+                                (section as any).contentEN = { ...currentContentEN, items: currentItemsEN };
+                                onUpdate(section);
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4 mt-2">
+                          <div>
+                            <Label className="text-[#1C5D15]">Descripción (Español)</Label>
+                            <textarea
+                              value={item.description || ''}
+                              onChange={(e) => {
+                                const newItems = [...(section.content.items || [])];
+                                newItems[idx].description = e.target.value;
+                                onUpdateContent('items', newItems);
+                              }}
+                              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                              rows={2}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[#1C5D15]">Descripción (English)</Label>
+                            <textarea
+                              value={(section as any).contentEN?.items?.[idx]?.description || ''}
+                              onChange={(e) => {
+                                const currentContentEN = (section as any).contentEN || {};
+                                const currentItemsEN = [...(currentContentEN.items || [])];
+                                if (!currentItemsEN[idx]) currentItemsEN[idx] = {};
+                                currentItemsEN[idx].description = e.target.value;
+                                (section as any).contentEN = { ...currentContentEN, items: currentItemsEN };
+                                onUpdate(section);
+                              }}
+                              className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                              rows={2}
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <Label className="text-[#1C5D15 text-xs]">SVG Icon Path (Opcional)</Label>
+                          <Input
+                            type="text"
+                            value={item.iconPath || ''}
+                            onChange={(e) => {
+                              const newItems = [...(section.content.items || [])];
+                              newItems[idx].iconPath = e.target.value;
+                              onUpdateContent('items', newItems);
+                            }}
+                            className="mt-1 text-xs"
+                            placeholder="M13 10V3L4 14..."
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newItems = (section.content.items || []).filter((_: any, i: number) => i !== idx);
+                            onUpdateContent('items', newItems);
+                          }}
+                          className="mt-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" /> Eliminar Item
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newItems = [...(section.content.items || [])];
+                        newItems.push({ title: '', description: '', iconPath: '' });
+                        onUpdateContent('items', newItems);
+                      }}
+                      className="w-full border-dashed border-[#1C5D15] text-[#1C5D15] hover:bg-[#1C5D15]/5"
+                    >
+                      <Plus className="w-4 h-4 mr-2" /> Agregar Item Destacado
+                    </Button>
+                  </div>
+                </div>
+
+                {section.type === 'ecosystem' && ecosystemRefs && (
+                  <div className="mt-8 pt-8 border-t border-[#1C5D15]/20">
+                    <AdminEcosystem 
+                      ref={(el: any) => {
+                        if (el) ecosystemRefs.current[section.id] = el;
+                      }} 
+                    />
+                  </div>
+                )}
               </div>
             )}
 

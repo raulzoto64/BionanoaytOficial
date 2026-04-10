@@ -144,8 +144,8 @@ export function AdminTranslations() {
   }
 
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
+    <div className="p-4 md:p-6 text-foreground">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Traducciones</h2>
           <p className="text-[#629960]">Sistema multiidioma (Español / English)</p>

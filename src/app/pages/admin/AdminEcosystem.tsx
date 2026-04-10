@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -22,22 +22,7 @@ import {
 } from '../../data/supabase';
 import { ImageUpload } from '../../components/ImageUpload';
 
-// Interface for ecosystem content management
-interface EcosystemContent {
-  id: string;
-  title: { es: string; en: string };
-  subtitle: { es: string; en: string };
-  description: { es: string; en: string };
-  features: Array<{
-    icon: string;
-    title: { es: string; en: string };
-    description: { es: string; en: string };
-  }>;
-  ctaText: { es: string; en: string };
-  ctaLink: string;
-}
-
-export function AdminEcosystem() {
+export const AdminEcosystem = forwardRef((props, ref) => {
   const [members, setMembers] = useState<EcosystemMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<EcosystemMember | null>(null);
   const [translations, setTranslations] = useState<{ es: EcosystemMemberTranslation; en: EcosystemMemberTranslation }>({
@@ -48,39 +33,12 @@ export function AdminEcosystem() {
   const [loading, setLoading] = useState(true);
   const [loadingMember, setLoadingMember] = useState<string | null>(null);
   
-  // Ecosystem content management state
-  const [ecosystemContent, setEcosystemContent] = useState<EcosystemContent>({
-    id: 'ecosystem-content',
-    title: { es: 'Nuestro Ecosistema', en: 'Our Ecosystem' },
-    subtitle: { es: 'Conectamos innovadores, empresarios y profesionales', en: 'We connect innovators, entrepreneurs, and professionals' },
-    description: {
-      es: 'Conectamos innovadores, empresarios y profesionales para construir un ecosistema sostenible y tecnológico. Descubre a nuestros miembros y cómo están transformando el mundo.',
-      en: 'We connect innovators, entrepreneurs, and professionals to build a sustainable and technological ecosystem. Discover our members and how they are transforming the world.'
-    },
-    features: [
-      {
-        icon: 'Users',
-        title: { es: 'Red de Innovadores', en: 'Network of Innovators' },
-        description: { es: 'Conectamos a los mejores profesionales del sector', en: 'We connect the best professionals in the sector' }
-      },
-      {
-        icon: 'TrendingUp',
-        title: { es: 'Crecimiento Sostenible', en: 'Sustainable Growth' },
-        description: { es: 'Fomentamos el desarrollo responsable y ecológico', en: 'We promote responsible and ecological development' }
-      },
-      {
-        icon: 'Users2',
-        title: { es: 'Colaboración', en: 'Collaboration' },
-        description: { es: 'Trabajamos juntos para alcanzar objetivos comunes', en: 'We work together to achieve common goals' }
-      }
-    ],
-    ctaText: { es: 'Conocer Más', en: 'Learn More' },
-    ctaLink: '/ecosystem'
-  });
+  useImperativeHandle(ref, () => ({
+    save: handleSave
+  }));
 
   useEffect(() => {
     loadMembers();
-    loadEcosystemContent();
   }, []);
 
   const loadMembers = async () => {
@@ -106,20 +64,7 @@ export function AdminEcosystem() {
     }
   };
 
-  const loadEcosystemContent = async () => {
-    // For now, we'll use the default content. In a real app, this would be fetched from the database.
-    // This is just a placeholder implementation.
-  };
 
-  const saveEcosystemContent = async () => {
-    try {
-      // In a real app, this would save to the database
-      // For now, we'll just show a success message
-      toast.success('Contenido del ecosistema guardado exitosamente');
-    } catch (error) {
-      toast.error('Error al guardar el contenido del ecosistema');
-    }
-  };
 
   const handleSelectMember = async (memberId: string) => {
     setLoadingMember(memberId);
@@ -306,16 +251,9 @@ export function AdminEcosystem() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button
-              onClick={handleSave}
-              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Guardar
-            </Button>
             <Button onClick={handleCancel} variant="outline">
               <X className="w-4 h-4 mr-2" />
-              Cancelar
+              Cerrar Edición
             </Button>
             <Button
               onClick={handleDelete}
@@ -589,124 +527,7 @@ export function AdminEcosystem() {
   // Vista de lista
   return (
     <div>
-      {/* Ecosystem Content Management */}
-      <Card className="mb-8 p-6 bg-[#1C5D15]/5 border-2 border-[#1C5D15]/20">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl text-[#1C5D15] mb-2">Contenido del Ecosistema</h2>
-            <p className="text-[#629960]">
-              Gestiona el texto y el contenido que se muestra en la sección de ecosistema en la página de inicio
-            </p>
-          </div>
-          <Button
-            onClick={saveEcosystemContent}
-            className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar Contenido
-          </Button>
-        </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Spanish Content */}
-          <div className="space-y-6">
-            <Card className="p-6">
-              <h3 className="text-xl text-[#1C5D15] mb-4">Contenido en Español</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-[#1C5D15]">Título</Label>
-                  <Input
-                    type="text"
-                    value={ecosystemContent.title.es}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, title: { ...ecosystemContent.title, es: e.target.value } })}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-[#1C5D15]">Subtítulo</Label>
-                  <Input
-                    type="text"
-                    value={ecosystemContent.subtitle.es}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, subtitle: { ...ecosystemContent.subtitle, es: e.target.value } })}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-[#1C5D15]">Descripción</Label>
-                  <Textarea
-                    value={ecosystemContent.description.es}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, description: { ...ecosystemContent.description, es: e.target.value } })}
-                    className="w-full mt-1"
-                    rows={4}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-[#1C5D15]">Texto del Botón</Label>
-                  <Input
-                    type="text"
-                    value={ecosystemContent.ctaText.es}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, ctaText: { ...ecosystemContent.ctaText, es: e.target.value } })}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* English Content */}
-          <div className="space-y-6">
-            <Card className="p-6">
-              <h3 className="text-xl text-[#1C5D15] mb-4">Contenido en Inglés</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-[#1C5D15]">Título</Label>
-                  <Input
-                    type="text"
-                    value={ecosystemContent.title.en}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, title: { ...ecosystemContent.title, en: e.target.value } })}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-[#1C5D15]">Subtítulo</Label>
-                  <Input
-                    type="text"
-                    value={ecosystemContent.subtitle.en}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, subtitle: { ...ecosystemContent.subtitle, en: e.target.value } })}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-[#1C5D15]">Descripción</Label>
-                  <Textarea
-                    value={ecosystemContent.description.en}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, description: { ...ecosystemContent.description, en: e.target.value } })}
-                    className="w-full mt-1"
-                    rows={4}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-[#1C5D15]">Texto del Botón</Label>
-                  <Input
-                    type="text"
-                    value={ecosystemContent.ctaText.en}
-                    onChange={(e) => setEcosystemContent({ ...ecosystemContent, ctaText: { ...ecosystemContent.ctaText, en: e.target.value } })}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </Card>
 
       {/* Members Management */}
       <div>
@@ -838,4 +659,4 @@ export function AdminEcosystem() {
       </Card>
     </div>
   );
-}
+});

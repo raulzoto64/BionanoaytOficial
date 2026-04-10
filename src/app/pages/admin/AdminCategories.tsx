@@ -268,7 +268,7 @@ export function AdminCategories() {
   }
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-3xl text-[#1C5D15] mb-2">

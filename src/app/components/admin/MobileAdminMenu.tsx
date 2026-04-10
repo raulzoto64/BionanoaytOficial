@@ -34,7 +34,6 @@ export function MobileAdminMenu() {
     { path: '/admin/translations', icon: Languages, label: 'Traducciones' },
     { path: '/admin/blog/posts', icon: FileEdit, label: 'Artículos del Blog' },
     { path: '/admin/blog/categories', icon: BookOpen, label: 'Categorías del Blog' },
-    { path: '/admin/ecosystem', icon: UsersRound, label: 'Ecosistema' },
     { path: '/admin/legal', icon: FileText, label: 'Páginas Legales' },
     { path: '/admin/footer', icon: FileText, label: 'Footer' },
     { path: '/admin/settings', icon: Settings, label: 'Configuración' },

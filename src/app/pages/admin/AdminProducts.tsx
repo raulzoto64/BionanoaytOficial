@@ -250,7 +250,7 @@ export function AdminProducts() {
   }
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Productos</h2>

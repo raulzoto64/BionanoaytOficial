@@ -149,19 +149,18 @@ export function AdminUsers() {
   };
 
   return (
-    <div>
-      <div className="mb-8">
-        <h2 className="text-3xl text-[#1C5D15] mb-2">Usuarios y Roles</h2>
-        <p className="text-[#629960]">Gestiona los usuarios y sus permisos</p>
-      </div>
+    <div className="p-4 md:p-6">
+      <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+          <h2 className="text-3xl text-[#1C5D15] mb-2 font-bold">Usuarios y Roles</h2>
+          <p className="text-[#629960]">Gestiona los usuarios y sus permisos</p>
+        </div>
 
-      {/* Botón para crear usuario */}
-      <div className="flex justify-end mb-6">
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
             <Button 
               onClick={resetForm}
-              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] flex items-center gap-2"
+              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] flex items-center gap-2 shadow-md transform active:scale-95 transition-all"
             >
               <Plus className="w-5 h-5" />
               {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}

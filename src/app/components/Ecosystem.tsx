@@ -15,9 +15,16 @@ import {
 interface EcosystemProps {
   title?: string;
   subtitle?: string;
+  items?: Array<{
+    title?: string;
+    label?: string;
+    description?: string;
+    desc?: string;
+    iconPath?: string;
+  }>;
 }
 
-export function Ecosystem({ title, subtitle }: EcosystemProps) {
+export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
   const { language } = useLanguage();
   const [members, setMembers] = useState<EcosystemMember[]>([]);
   const [translations, setTranslations] = useState<Record<string, EcosystemMemberTranslation>>({});
@@ -101,27 +108,27 @@ export function Ecosystem({ title, subtitle }: EcosystemProps) {
             </p>
             
             <div className="space-y-4 md:space-y-5 mb-0 md:mb-8 w-full">
-              {[
+              {(items && items.length > 0 ? items : [
                 { 
-                  label: language === 'es' ? 'Red de Innovadores' : 'Network of Innovators', 
-                  desc: language === 'es' ? 'Conectamos profesionales del sector' : 'We connect sector professionals', 
+                  title: language === 'es' ? 'Red de Innovadores' : 'Network of Innovators', 
+                  description: language === 'es' ? 'Conectamos profesionales del sector' : 'We connect sector professionals', 
                   iconPath: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" 
                 },
                 { 
-                  label: language === 'es' ? 'Crecimiento Sostenible' : 'Sustainable Growth', 
-                  desc: language === 'es' ? 'Desarrollo responsable y ecológico' : 'Responsible and ecological development', 
+                  title: language === 'es' ? 'Crecimiento Sostenible' : 'Sustainable Growth', 
+                  description: language === 'es' ? 'Desarrollo responsable y ecológico' : 'Responsible and ecological development', 
                   iconPath: "M13 10V3L4 14h7v7l9-11h-7z" 
                 }
-              ].map((item, idx) => (
+              ]).map((item, idx) => (
                 <div key={idx} className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4">
                   <div className="mt-0 md:mt-1 bg-[#19FF00]/20 p-2 md:p-2.5 rounded-xl shrink-0">
                     <svg className="w-5 h-5 md:w-5 md:h-5 text-[#1C5D15]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={item.iconPath} />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={item.iconPath || "M13 10V3L4 14h7v7l9-11h-7z"} />
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-[#1C5D15] font-bold text-base md:text-lg">{item.label}</h4>
-                    <p className="text-[#629960] text-sm md:text-base">{item.desc}</p>
+                    <h4 className="text-[#1C5D15] font-bold text-base md:text-lg">{item.title || item.label}</h4>
+                    <p className="text-[#629960] text-sm md:text-base">{item.description || item.desc}</p>
                   </div>
                 </div>
               ))}

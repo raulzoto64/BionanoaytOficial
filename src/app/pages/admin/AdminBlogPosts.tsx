@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Eye, Edit } from 'lucide-react';
+import { Trash2, Plus, Eye, Edit, BookOpen } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+import { useNavigate } from 'react-router';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
@@ -30,6 +31,7 @@ import { ImageUpload } from '../../components/ImageUpload';
 import { BlogContentSection, SectionType } from '../../components/admin/BlogContentSection';
 
 export function AdminBlogPosts() {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [postsNames, setPostsNames] = useState<Record<string, string>>({});
   const [categoriesNames, setCategoriesNames] = useState<Record<string, string>>({});
@@ -459,16 +461,26 @@ export function AdminBlogPosts() {
   }
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Artículos</h2>
           <p className="text-[#629960]">Administra los artículos del blog</p>
         </div>
-        <Button className="bg-[#1C5D15] text-white hover:bg-[#629960]" onClick={handleNewPost}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo Artículo
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            className="border-[#1C5D15] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white"
+            onClick={() => navigate('/admin/blog/categories')}
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Categorías
+          </Button>
+          <Button className="bg-[#1C5D15] text-white hover:bg-[#629960]" onClick={handleNewPost}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Artículo
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">
