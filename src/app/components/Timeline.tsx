@@ -9,6 +9,9 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  CarouselDots,
 } from "./ui/carousel";
 
 // Sub-componente para detectar si el texto se corta y mostrar tooltip
@@ -98,7 +101,7 @@ export function Timeline({ milestones, title, subtitle, description }: TimelineP
       <div className="max-w-7xl mx-auto px-5 lg:px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            !!! {title || t("timeline.title")}
+            {title || t("timeline.title")}
           </h2>
           {subtitle && (
             <h3 className="text-xl text-white/90 mb-4">{subtitle}</h3>
@@ -111,7 +114,7 @@ export function Timeline({ milestones, title, subtitle, description }: TimelineP
           )}
         </div>
 
-        <div className="px-5 md:px-16 w-full max-w-full">
+        <div className="px-2 sm:px-16 w-full max-w-full">
           <Carousel
             opts={{
               align: "start",
@@ -155,6 +158,9 @@ export function Timeline({ milestones, title, subtitle, description }: TimelineP
                   );
                 })}
             </CarouselContent>
+            <CarouselPrevious className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
+            <CarouselNext className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
+            <CarouselDots dotClassName="bg-white/20" />
           </Carousel>
         </div>
       </div>

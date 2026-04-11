@@ -92,6 +92,10 @@ export const router = createBrowserRouter([
     lazy: Login,
   },
   {
+    path: "admin/visual-editor/:id",
+    lazy: AdminVisualEditor,
+  },
+  {
     path: "admin",
     lazy: AdminLayout,
     children: [
@@ -111,10 +115,7 @@ export const router = createBrowserRouter([
         path: "content",
         lazy: AdminContent,
       },
-      {
-        path: "visual-editor/:id",
-        lazy: AdminVisualEditor,
-      },
+
       {
         path: "categories",
         lazy: AdminCategories,

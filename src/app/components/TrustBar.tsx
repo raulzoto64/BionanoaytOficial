@@ -6,6 +6,14 @@ import {
   DialogContent,
   DialogTitle,
 } from "./ui/dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  CarouselDots,
+} from "./ui/carousel";
 import { Globe, ExternalLink, Info } from "lucide-react";
 
 interface Partner {
@@ -42,43 +50,56 @@ export function TrustBar({ partners }: TrustBarProps) {
           {t('trustbar.title')}
         </h3>
 
-        <div className="flex flex-wrap justify-center items-center gap-6">
-          {partners.map((partner) => (
-            <div
-              key={partner.name}
-              onClick={() => handlePartnerClick(partner)}
-              className="flex flex-col w-36 rounded-xl border border-white/20 overflow-hidden group cursor-pointer hover:border-[#19FF00] transition-all duration-300 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-1 bg-white/5"
-            >
-              {/* Image area with hover overlay */}
-              <div className="relative w-full h-24 bg-white/10 overflow-hidden">
-                <img
-                  src={partner.image}
-                  alt={partner.name}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    {t('btn.learn_more')} →
-                  </span>
-                </div>
-              </div>
-
-              {/* Name - single line with ellipsis + tooltip */}
-              <div className="bg-black/30 px-3 py-2 border-t border-white/10 group-hover:bg-[#19FF00]/10 transition-colors">
-                <span
-                  className="text-white text-[11px] font-bold block truncate text-center group-hover:text-[#19FF00] transition-colors"
-                  title={partner.name}
+        <Carousel
+          opts={{
+            align: partners.length > 5 ? "start" : "center",
+            loop: partners.length > 5,
+            dragFree: true
+          }}
+          className="w-full max-w-5xl mx-auto px-2 sm:px-10"
+        >
+          <CarouselContent className="py-4">
+            {partners.map((partner) => (
+              <CarouselItem key={partner.name} className="flex-none px-4">
+                <div
+                  onClick={() => handlePartnerClick(partner)}
+                  className="flex flex-col w-36 rounded-xl border border-white/20 overflow-hidden group cursor-pointer hover:border-[#19FF00] transition-all duration-300 hover:shadow-xl hover:shadow-[#19FF00]/10 hover:-translate-y-1 bg-white/5"
                 >
-                  {partner.name}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+                  {/* Image area with hover overlay */}
+                  <div className="relative w-full h-24 bg-white/10 overflow-hidden">
+                    <img
+                      src={partner.image}
+                      alt={partner.name}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                        {t('btn.learn_more')} →
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Name - single line with ellipsis + tooltip */}
+                  <div className="bg-black/30 px-3 py-2 border-t border-white/10 group-hover:bg-[#19FF00]/10 transition-colors">
+                    <span
+                      className="text-white text-[11px] font-bold block truncate text-center group-hover:text-[#19FF00] transition-colors"
+                      title={partner.name}
+                    >
+                      {partner.name}
+                    </span>
+                  </div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
+          <CarouselNext className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
+          <CarouselDots dotClassName="bg-white/20" />
+        </Carousel>
       </div>
 
       <Dialog open={!!selectedPartner} onOpenChange={(open) => !open && setSelectedPartner(null)}>
@@ -125,9 +146,10 @@ export function TrustBar({ partners }: TrustBarProps) {
                 <div className="space-y-4">
                   {selectedPartner.description && (
                     <div className="bg-white/50 p-4 rounded-xl border border-[#1C5D15]/10">
-                      <p className="text-[#1C5D15] text-sm leading-relaxed italic">
-                        "{selectedPartner.description}"
-                      </p>
+                      <div 
+                        className="text-[#1C5D15] text-sm leading-relaxed [&_p]:m-0"
+                        dangerouslySetInnerHTML={{ __html: selectedPartner.description }}
+                      />
                     </div>
                   )}
 

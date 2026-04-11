@@ -6,9 +6,12 @@ import { useState, useEffect } from "react";
 import { supabaseAPI, EcosystemMember, EcosystemMemberTranslation } from "../data/supabase";
 import { Button } from "../components/ui/button";
 import { 
-  Carousel, 
-  CarouselContent, 
+  Carousel,
+  CarouselContent,
   CarouselItem, 
+  CarouselNext,
+  CarouselPrevious,
+  CarouselDots,
   type CarouselApi 
 } from "../components/ui/carousel";
 
@@ -89,7 +92,7 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
 
   return (
     <section className="py-10 md:py-14 bg-[#629960]/5 overflow-hidden">
-      <div className="max-w-6xl mx-auto px-5 lg:px-6">
+      <div className="max-w-6xl mx-auto px-2 sm:px-6">
         <div className="grid md:grid-cols-2 gap-4 md:gap-10 lg:gap-16 items-center">
           
           {/* Lado Izquierdo: Texto */}
@@ -142,7 +145,7 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
           </div>
 
           {/* Lado Derecho: Carrusel Compacto */}
-          <div className="relative mt-2 md:mt-0 flex justify-center overflow-hidden md:overflow-visible"> 
+          <div className="relative mt-2 md:mt-0 flex justify-center w-full overflow-hidden md:overflow-visible px-2 sm:px-0"> 
             <Carousel 
               key={isMobile ? 'mobile-carousel' : 'desktop-carousel'}
               orientation={isMobile ? "horizontal" : "vertical"} 
@@ -151,18 +154,18 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
               pauseOnHover={true}
               className={isMobile ? "w-full mt-2" : "h-[420px] md:h-[480px] w-full max-w-[450px] mb-5"}
             >
-              <CarouselContent className={isMobile ? "py-4" : "mb-5 h-[480px] md:h-[500px]"}> 
+              <CarouselContent className={isMobile ? "-ml-2 py-4" : "mb-5 h-[480px] md:h-[500px]"}> 
                 {members.map((member) => {
                   const translation = translations[member.id];
                   const initials = translation?.name ? translation.name.split(' ').map((n) => n.charAt(0)).join('').slice(0, 2) : 'EM';
                   
                   return (
-                    <CarouselItem key={member.id} className={isMobile ? "basis-[85%] sm:basis-1/2 focus:outline-none" : "basis-1/2 md:basis-[48%]"}>
+                    <CarouselItem key={member.id} className={isMobile ? "pl-2 basis-[85%] sm:basis-1/2 focus:outline-none" : "basis-1/2 md:basis-[48%]"}>
                       <Link 
                         to={member.slug ? `/ecosystem/${member.slug}` : '#'}
                         className="block h-full group"
                       >
-                        <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#629960]/10 group-hover:border-[#19FF00] flex flex-col h-full">
+                        <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#629960]/10 group-hover:border-[#19FF00] flex flex-col h-full mx-1">
                           <div className="flex items-center gap-4 mb-3">
                             <div className="w-12 h-12 rounded-xl border-2 border-[#629960]/10 group-hover:border-[#19FF00] flex items-center justify-center bg-gradient-to-br from-[#1C5D15] to-[#629960] transition-colors overflow-hidden shrink-0 shadow-inner">
                               {member.image ? (
@@ -177,7 +180,7 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
                             </div>
                           </div>
                           
-                          <p className="text-xs md:text-sm text-[#629960] line-clamp-2 mb-3 flex-1">
+                          <p className="text-xs md:text-sm text-[#629960] line-clamp-none md:line-clamp-2 mb-3 flex-1">
                             {translation?.description}
                           </p>
                           
@@ -191,6 +194,15 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
                   );
                 })}
               </CarouselContent>
+              {/* Controles para Desktop */}
+              {!isMobile && (
+                <>
+                  <CarouselPrevious className="hidden md:flex -top-10 left-1/2 -translate-x-1/2 rotate-90 bg-white border-[#1C5D15]/10 text-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15]" />
+                  <CarouselNext className="hidden md:flex -bottom-10 left-1/2 -translate-x-1/2 rotate-90 bg-white border-[#1C5D15]/10 text-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15]" />
+                </>
+              )}
+              {/* Puntos para todos */}
+              <CarouselDots className={isMobile ? "mt-2" : "absolute -right-8 top-1/2 -translate-y-1/2 flex-col gap-2"} />
             </Carousel>
           </div>
 

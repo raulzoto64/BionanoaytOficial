@@ -19,6 +19,8 @@ import { VisualEditorSidebar } from '../../components/admin/visual-editor/Visual
 import { VisualEditorPreview } from '../../components/admin/visual-editor/VisualEditorPreview';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 import { SEO } from '../../components/SEO';
+import { Navigation } from '../../components/Navigation';
+import { Footer } from '../../components/Footer';
 
 // Helper component for Iframe Preview (defined outside to prevent re-mounting on every render)
 const PreviewFrame = ({ children }: { children: React.ReactNode }) => {
@@ -77,6 +79,11 @@ export function AdminVisualEditor() {
   const [saving, setSaving] = useState(false);
   const [activeLanguage, setActiveLanguage] = useState<'es' | 'en'>('es');
   const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [deviceOrientation, setDeviceOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  
+  const [customWidth, setCustomWidth] = useState<number | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStart = useRef({ x: 0, w: 0 });
   
   const [sectionsES, setSectionsES] = useState<Section[]>([]);
   const [sectionsEN, setSectionsEN] = useState<Section[]>([]);
@@ -88,6 +95,29 @@ export function AdminVisualEditor() {
       loadPageData(id);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+    const handleMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - resizeStart.current.x;
+      const newW = Math.max(320, Math.min(resizeStart.current.w + (deltaX * 2), 2000));
+      setCustomWidth(newW);
+    };
+    const handleUp = () => setIsResizing(false);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+  }, [isResizing]);
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    const el = document.getElementById('device-mockup');
+    resizeStart.current = { x: e.clientX, w: el?.offsetWidth || 0 };
+  };
 
   const loadPageData = async (pageId: string) => {
     setLoading(true);
@@ -118,31 +148,47 @@ export function AdminVisualEditor() {
       let sES = targetPage.contentES?.sections || [];
       let sEN = targetPage.contentEN?.sections || [];
 
-      // Si es el Home y no tiene sección de noticias en BD, se la inyectamos para que pueda ser visible y editable.
+      // Si es el Home, aseguramos que la sección de noticias esté siempre justo debajo de 'ecosystem'
       if (page.id === 'page-home' || page.slug === 'home' || page.slug === 'page-home') {
-        const insertNewsSection = (sectionsArr: any[]) => {
-          if (sectionsArr.find((s: any) => s.type === 'news')) return sectionsArr;
+        const normalizeSections = (sectionsArr: any[]) => {
+          let arr = [...sectionsArr];
           
-          const newsBlock = {
-            id: 'news-home-auto',
-            type: 'news' as any,
-            order: 90,
-            visible: true,
-            content: { title: '', subtitle: '', ctaText: '', ctaLink: '' }
-          };
-          
-          const finalArr = [...sectionsArr];
-          const contactIdx = finalArr.findIndex((s: any) => s.type === 'contact');
-          if (contactIdx >= 0) {
-             finalArr.splice(contactIdx, 0, newsBlock);
+          // Buscar si existe news
+          let newsIdx = arr.findIndex((s: any) => s.type === 'news');
+          let newsBlock = null;
+
+          if (newsIdx >= 0) {
+            // Extraer el bloque temporalmente
+            [newsBlock] = arr.splice(newsIdx, 1);
           } else {
-             finalArr.push(newsBlock);
+            // Crear el bloque si no existe
+            newsBlock = {
+              id: 'news-home-auto',
+              type: 'news' as any,
+              order: 90,
+              visible: true,
+              content: { title: '', subtitle: '', ctaText: '', ctaLink: '' }
+            };
           }
-          return finalArr;
+
+          // Encontrar 'ecosystem'
+          const ecoIdx = arr.findIndex((s: any) => s.type === 'ecosystem');
+          if (ecoIdx >= 0) {
+            // Insertar justo después de ecosystem
+            arr.splice(ecoIdx + 1, 0, newsBlock);
+          } else {
+            // Si por alguna razón no hay ecosystem, mandar al final (pero antes de contact si existiera)
+            const contactIdx = arr.findIndex((s: any) => s.type === 'contact');
+            if (contactIdx >= 0) arr.splice(contactIdx, 0, newsBlock);
+            else arr.push(newsBlock);
+          }
+
+          // Repara y limpia el orden visual
+          return arr.map((s, idx) => ({ ...s, order: idx * 10 }));
         };
 
-        sES = insertNewsSection(sES);
-        sEN = insertNewsSection(sEN);
+        sES = normalizeSections(sES);
+        sEN = normalizeSections(sEN);
       }
 
       setSectionsES(sES);
@@ -254,26 +300,39 @@ export function AdminVisualEditor() {
         {/* Viewport Switcher */}
         <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner">
           <button 
-            onClick={() => setDeviceView('mobile')}
+            onClick={() => { setDeviceView('mobile'); setCustomWidth(null); }}
             className={`p-2 rounded-xl transition-all ${deviceView === 'mobile' ? 'bg-white text-[#1C5D15] shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
-            title="Móvil (375px)"
+            title="Móvil"
           >
             <Smartphone className="w-4 h-4" />
           </button>
           <button 
-            onClick={() => setDeviceView('tablet')}
+            onClick={() => { setDeviceView('tablet'); setCustomWidth(null); }}
             className={`p-2 rounded-xl transition-all ${deviceView === 'tablet' ? 'bg-white text-[#1C5D15] shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
-            title="Tablet (768px)"
+            title="Tablet"
           >
             <Tablet className="w-4 h-4" />
           </button>
           <button 
-            onClick={() => setDeviceView('desktop')}
+            onClick={() => { setDeviceView('desktop'); setCustomWidth(null); }}
             className={`p-2 rounded-xl transition-all ${deviceView === 'desktop' ? 'bg-white text-[#1C5D15] shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
             title="Escritorio (100%)"
           >
             <Monitor className="w-4 h-4" />
           </button>
+          
+          {deviceView !== 'desktop' && (
+            <>
+              <div className="w-px h-6 bg-gray-300 mx-1"></div>
+              <button 
+                onClick={() => { setDeviceOrientation(prev => prev === 'portrait' ? 'landscape' : 'portrait'); setCustomWidth(null); }}
+                className={`p-2 rounded-xl transition-all bg-white text-[#1C5D15] shadow-sm hover:scale-105`}
+                title="Rotar dispositivo (Ensanchar)"
+              >
+                <Smartphone className={`w-4 h-4 transition-transform duration-500 ${deviceOrientation === 'landscape' ? '-rotate-90' : ''}`} />
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -355,36 +414,80 @@ export function AdminVisualEditor() {
 
         {/* Premium Preview Canvas with Device Mockup */}
         <main className="flex-1 bg-[#222] overflow-y-auto flex items-start justify-center p-8 lg:p-12 custom-scrollbar-dark">
-          <div className="relative group transition-all duration-700 w-full flex justify-center">
+          <div className="relative group w-full flex justify-center py-10 min-h-screen items-start">
             
-            {/* Device Container */}
-            <div 
-              className={`bg-white transition-all duration-700 ease-out shadow-[0_0_100px_rgba(0,0,0,0.5)] relative mx-auto ${
-                deviceView === 'mobile' ? 'w-[375px] h-[812px] rounded-[60px] border-[12px] border-[#111] overflow-hidden' : 
-                deviceView === 'tablet' ? 'w-[768px] h-[1024px] rounded-[40px] border-[14px] border-[#111] overflow-hidden' : 
-                'w-full max-w-[1400px] min-h-screen rounded-sm shadow-none md:rounded-xl'
-              }`}
-            >
+            <div className={`relative flex items-center justify-center ${deviceView !== 'desktop' ? 'mx-auto' : 'w-full'}`}>
+              {/* Drag Handle (Right) */}
+              {deviceView !== 'desktop' && (
+                <div 
+                  onMouseDown={startResize}
+                  className="absolute -right-8 w-6 h-20 bg-white shadow-[0_0_15px_rgba(0,0,0,0.1)] hover:shadow-[0_0_20px_rgba(0,0,0,0.2)] rounded-full cursor-ew-resize z-50 flex flex-col items-center justify-center border border-gray-200 transition-all active:bg-gray-50 active:scale-95 group-hover:opacity-100 opacity-50"
+                  title="Arrastrar para redimensionar"
+                >
+                  <div className="w-1 h-8 bg-gray-300 rounded-full flex gap-1">
+                     <span className="w-px h-full bg-gray-400"></span>
+                     <span className="w-px h-full bg-gray-400"></span>
+                  </div>
+                </div>
+              )}
+
+              {/* Device Container */}
+              <div 
+                id="device-mockup"
+                style={{
+                  width: customWidth ? `${customWidth}px` : 
+                    (deviceView === 'mobile' ? (deviceOrientation === 'landscape' ? '812px' : '375px') : 
+                     deviceView === 'tablet' ? (deviceOrientation === 'landscape' ? '1024px' : '768px') : undefined)
+                }}
+                className={`bg-white ease-out shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative flex-shrink-0 origin-top ${isResizing ? '' : 'transition-all duration-700'} ${
+                  deviceView === 'mobile' ? 
+                    (deviceOrientation === 'landscape' ? 'h-[375px] rounded-[40px] border-[12px] border-[#111] overflow-hidden' : 'h-[812px] rounded-[60px] border-[12px] border-[#111] overflow-hidden') : 
+                  deviceView === 'tablet' ? 
+                    (deviceOrientation === 'landscape' ? 'h-[768px] rounded-[40px] border-[14px] border-[#111] overflow-hidden' : 'h-[1024px] rounded-[40px] border-[14px] border-[#111] overflow-hidden') : 
+                  'w-full max-w-[1400px] rounded-sm shadow-none rounded-xl overflow-hidden h-[calc(100vh-120px)] min-h-[600px]'
+                }`}
+              >
               {/* Device Notch / Camera */}
-              {deviceView === 'mobile' && (
+              {deviceView === 'mobile' && deviceOrientation === 'portrait' && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-[#111] rounded-b-3xl z-[100] flex items-end justify-center pb-1">
                   <div className="w-12 h-1 bg-gray-800 rounded-full" />
                 </div>
               )}
-              {deviceView === 'tablet' && (
+              {deviceView === 'mobile' && deviceOrientation === 'landscape' && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-7 h-40 bg-[#111] rounded-r-3xl z-[100] flex items-center justify-end pr-1">
+                  <div className="w-1 h-12 bg-gray-800 rounded-full" />
+                </div>
+              )}
+              
+              {deviceView === 'tablet' && deviceOrientation === 'portrait' && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#111] rounded-full mt-4 z-[100] border border-gray-800" />
+              )}
+              {deviceView === 'tablet' && deviceOrientation === 'landscape' && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[#111] rounded-full ml-4 z-[100] border border-gray-800" />
               )}
 
               {/* Real Content Wrapper */}
               <div className={`h-full overflow-y-auto custom-scrollbar-content ${deviceView !== 'desktop' ? 'bg-white' : ''}`}>
                  <PreviewFrame>
-                   <div className="min-h-screen">
-                     <VisualEditorPreview 
-                       sections={activeSections} 
-                       activeSectionId={activeSectionId}
-                       onSectionClick={setActiveSectionId}
-                       availableProducts={allProducts}
-                     />
+                   <div className="min-h-screen relative flex flex-col overflow-x-hidden">
+                     {/* Static Settings (No edit) */}
+                     <div className="pointer-events-none opacity-90 saturate-50 z-50">
+                       <Navigation />
+                     </div>
+                     
+                     <div className="pt-20 flex-1">
+                       <VisualEditorPreview 
+                         sections={activeSections} 
+                         activeSectionId={activeSectionId}
+                         onSectionClick={setActiveSectionId}
+                         availableProducts={allProducts}
+                       />
+                     </div>
+                     
+                     {/* Static Menu (No edit) */}
+                     <div className="pointer-events-none opacity-90 saturate-50 mt-auto shrink-0 z-40 bg-white">
+                       <Footer contactInfo={{ phone: "+57 (300) 123-4567", email: "contacto@bionanoayt.com", location: "Bogotá, Colombia" }} />
+                     </div>
                    </div>
                  </PreviewFrame>
               </div>
@@ -393,11 +496,16 @@ export function AdminVisualEditor() {
               {deviceView === 'mobile' && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-[#111] rounded-full z-[100]" />
               )}
-            </div>
+            </div> {/* Closes device-mockup */}
 
-            {/* Viewport Info Badge */}
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1C5D15] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-xl opacity-50 group-hover:opacity-100 transition-opacity">
-              {deviceView} View • {activeLanguage.toUpperCase()}
+            {/* Iframe Shield to prevent mouse events trapped by iframe during drag */}
+            {isResizing && <div className="absolute inset-0 z-[999] cursor-ew-resize bg-transparent" />}
+            
+          </div> {/* Closes wrapper div */}
+
+          {/* Viewport Info Badge - Positioned relative to the whole container now */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#1C5D15] text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl opacity-50 transition-opacity z-[100] border border-white/20 backdrop-blur-md">
+              {deviceView} View • {customWidth ? `${Math.round(customWidth)}px` : (deviceView === 'mobile' ? (deviceOrientation === 'landscape' ? '812px' : '375px') : deviceView === 'tablet' ? (deviceOrientation === 'landscape' ? '1024px' : '768px') : '100%')} • {activeLanguage.toUpperCase()}
             </div>
           </div>
         </main>

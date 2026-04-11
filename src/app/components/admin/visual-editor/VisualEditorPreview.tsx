@@ -105,8 +105,7 @@ export function VisualEditorPreview({ sections, activeSectionId, onSectionClick,
         );
     }
   };
-
-  const visibleSections = sections.filter(s => s.visible !== false);
+  const visibleSections = sections.filter(s => s.visible !== false && s.type !== 'contact');
 
   return (
     <div className="w-full flex-1 h-full min-h-screen bg-white">

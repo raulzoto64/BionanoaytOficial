@@ -33,11 +33,11 @@ export function Leadership({ members, title, subtitle }: LeadershipProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+        <div className="flex flex-wrap justify-center gap-x-12 gap-y-16">
           {members.map((member) => (
-            <div key={member.name} className="flex flex-col items-center group">
+            <div key={member.name} className="w-64 flex flex-col items-center group">
               <div className="relative mb-6">
-                <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-[#629960]/10 shadow-lg group-hover:scale-110 group-hover:border-[#19FF00] group-hover:shadow-[#19FF00]/30 transition-all duration-500 relative bg-gray-100">
+                <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-[#629960]/10 shadow-lg group-hover:scale-110 group-hover:border-[#19FF00] group-hover:shadow-[#19FF00]/30 transition-all duration-500 relative bg-gray-100 mx-auto">
                   <img
                     src={member.image}
                     alt={member.name}
@@ -63,8 +63,8 @@ export function Leadership({ members, title, subtitle }: LeadershipProps) {
                   </div>
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-[#1C5D15] group-hover:text-[#3AC026] transition-colors duration-300">{member.name}</h3>
-              <p className="text-[#629960] font-medium">{member.role}</p>
+              <h3 className="text-xl font-bold text-[#1C5D15] group-hover:text-[#3AC026] transition-colors duration-300 text-center">{member.name}</h3>
+              <p className="text-[#629960] font-medium text-center">{member.role}</p>
             </div>
           ))}
         </div>

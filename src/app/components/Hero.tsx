@@ -36,17 +36,38 @@ export function Hero({ content }: HeroProps) {
           className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-95 [&_p]:m-0"
           dangerouslySetInnerHTML={{ __html: content.subtitle || '' }}
         />
-        <Button 
-          size="lg"
-          className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-8 py-4 text-base shadow-xl hover:shadow-[#19FF00]/20 rounded-full uppercase font-bold tracking-wider h-12"
-          asChild
-        >
-          {content.ctaLink ? (
-            <a href={content.ctaLink} className="cursor-pointer">{content.ctaText}</a>
-          ) : (
-            <span className="cursor-pointer">{content.ctaText}</span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* Primary Button */}
+          {content.ctaText && (
+            <Button 
+              size="lg"
+              className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-10 py-4 text-base shadow-xl hover:shadow-[#19FF00]/20 rounded-full uppercase font-bold tracking-wider h-12"
+              asChild
+            >
+              {content.ctaLink ? (
+                <a href={content.ctaLink}>{content.ctaText}</a>
+              ) : (
+                <span>{content.ctaText}</span>
+              )}
+            </Button>
           )}
-        </Button>
+
+          {/* Secondary Button */}
+          {content.secondaryCtaText && (
+            <Button 
+              size="lg"
+              variant="outline"
+              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-10 py-4 text-base rounded-full uppercase font-bold tracking-wider h-12"
+              asChild
+            >
+              {content.secondaryCtaLink ? (
+                <a href={content.secondaryCtaLink}>{content.secondaryCtaText}</a>
+              ) : (
+                <span>{content.secondaryCtaText}</span>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </section>
   );

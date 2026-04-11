@@ -709,6 +709,19 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                       }}
                       className="text-xs h-9"
                     />
+                    <Input
+                      placeholder="Enlace LinkedIn (Global)"
+                      value={sectionES.content.members[idx].linkedin || ""}
+                      onChange={(e) => {
+                        const newListES = [...sectionES.content.members];
+                        const newListEN = [...sectionEN.content.members];
+                        newListES[idx].linkedin = e.target.value;
+                        newListEN[idx].linkedin = e.target.value;
+                        handleContentChange("members", newListES, 'es');
+                        handleContentChange("members", newListEN, 'en');
+                      }}
+                      className="text-xs h-9"
+                    />
                     <div>
                       <Label className="text-[9px] uppercase font-bold text-gray-400 mb-1 block">Foto (Global)</Label>
                       <ImageUpload
