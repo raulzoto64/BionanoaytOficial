@@ -104,7 +104,7 @@ export function Home() {
             case "trust":
               return (
                 <div key={section.id} id="trust">
-                  <TrustBar partners={section.content.partners} />
+                  <TrustBar partners={section.content.partners || []} title={section.content.title} subtitle={section.content.subtitle} />
                 </div>
               );
             case "features":

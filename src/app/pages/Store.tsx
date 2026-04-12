@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { PageContent, Section, supabaseAPI } from "../data/supabase";
+import { ensureExternalLink } from "../utils/url";
 import {
   FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
   AlertTriangle, ChevronDown, ChevronUp, Quote, CheckCircle,
   Sprout, Building2, Fish, Apple, HeartPulse, Shirt, Warehouse, Shield,
-  Star, ShoppingCart, Package, Truck, Award, Users
+  Star, ShoppingCart, Package, Truck, Award, Users, Info, ExternalLink
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "../components/ui/dialog";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 import { useNavigate, useSearchParams } from "react-router";
+import { FlipCards } from "../components/FlipCards";
 
 // ── Mapa de iconos ─────────────────────────────────────────────────────────
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -76,7 +83,13 @@ export function Store() {
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [ecosystemMembers, setEcosystemMembers] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  // Estados para el popup de partners (movidos AFUERA del map)
+  const [selectedPartner, setSelectedPartner] = useState<any>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -132,10 +145,29 @@ export function Store() {
     }
   };
 
+  const loadEcosystemMembers = async () => {
+    try {
+      const members = await supabaseAPI.getEcosystemMembers();
+      const membersWithTranslations = await Promise.all(
+        members.map(async (member) => {
+          const translation = await supabaseAPI.getEcosystemMemberTranslation(member.id, language);
+          return {
+            ...member,
+            translation
+          };
+        })
+      );
+      setEcosystemMembers(membersWithTranslations.filter(m => m.status === 'active'));
+    } catch (error) {
+      console.error('Error loading ecosystem members:', error);
+    }
+  };
+
   useEffect(() => {
     loadPageContent();
     loadProducts();
     loadCategories();
+    loadEcosystemMembers();
   }, [language]);
 
   useEffect(() => {
@@ -224,78 +256,198 @@ export function Store() {
                     )}
                   </div>
                 </div>
+
+                {/* ✅ Popup Modal Exactamente igual que Home */}
+                <Dialog open={!!selectedPartner} onOpenChange={(open) => !open && setSelectedPartner(null)}>
+                  <DialogContent
+                    className="sm:max-w-[500px] bg-[#F7F9CE] border-2 border-[#1C5D15] p-0 overflow-hidden rounded-2xl shadow-2xl flex flex-col max-h-[80vh]"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    <style dangerouslySetInnerHTML={{
+                      __html: `
+                      .dialog-content-scroll::-webkit-scrollbar { display: none; }
+                      [data-slot="dialog-close"] { 
+                        transition: color 0.3s ease; 
+                        z-index: 100;
+                        color: ${isScrolled ? '#1C5D15' : 'white'};
+                      }
+                    `}} />
+                    {selectedPartner && (
+                      <div
+                        className="flex flex-col h-full overflow-y-auto dialog-content-scroll"
+                        onScroll={(e) => {
+                          const scrollTop = (e.target as HTMLDivElement).scrollTop;
+                          setIsScrolled(scrollTop > 80);
+                        }}
+                      >
+                        {/* Header con imagen como BANNER COMPLETO de fondo */}
+                        <div className="relative h-60 bg-[#1C5D15] overflow-hidden shrink-0">
+                          <img
+                            src={selectedPartner.image}
+                            alt={selectedPartner.name}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#1C5D15] to-transparent opacity-70" />
+                        </div>
+
+                        {/* Contenido */}
+                        <div className="pt-6 pb-8 px-8 flex-1">
+                          <div className="text-center mb-6">
+                            <DialogTitle className="text-2xl font-bold text-[#1C5D15] mb-1">{selectedPartner.name}</DialogTitle>
+                            {selectedPartner.placeholder && (
+                              <span className="text-sm font-medium text-[#629960] uppercase tracking-widest">{selectedPartner.placeholder}</span>
+                            )}
+                          </div>
+
+                          <div className="space-y-4">
+                            {selectedPartner.description && (
+                              <div className="bg-white/50 p-4 rounded-xl border border-[#1C5D15]/10">
+                                <p className="text-[#1C5D15] text-sm leading-relaxed">{selectedPartner.description}</p>
+                              </div>
+                            )}
+
+                            {selectedPartner.details && selectedPartner.details.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-xs font-bold text-[#1C5D15] uppercase tracking-wider flex items-center gap-2">
+                                  <Info className="w-3 h-3" />
+                                  Detalles Clave:
+                                </h4>
+                                <ul className="grid grid-cols-1 gap-2">
+                                  {selectedPartner.details.map((detail: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-2 text-sm text-[#629960] bg-white/30 p-2 rounded-lg border border-white/50">
+                                      <span className="text-[#19FF00] font-bold">✓</span>
+                                      {detail}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Footer Boton */}
+                        <div className="bg-[#1C5D15]/5 p-6 border-t border-[#1C5D15]/10 flex justify-center">
+                            <button
+                              onClick={() => navigate(`/ecosystem/${selectedPartner.slug}`)}
+                              className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
+                            >
+                              <Globe className="w-4 h-4" />
+                              Ver Cliente
+                            </button>
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+
               </section>
             );
 
 
-          // ── 2. FEATURES (Beneficios de comprar en Bionano AYT) ──────────
-          case 'features':
+          // ── 2. FLIPCARDS (Tarjetas que giran) ────────────────────────────
+          case 'flipcards':
+            return <FlipCards key={section.id} items={section.content.items} />;
+
+          // ── ✅ NUEVA SECCION: CLIENTES / SECTORES ─────────────────────────
+          case 'clientes':
+            // ✅ USAMOS MIEMBROS DEL ECOSISTEMA DIRECTAMENTE
+            let clientesList: any[] = [];
+            
+            if (section.content.selectedMemberIds?.length > 0) {
+              const selectedIds = section.content.selectedMemberIds;
+              const filtered = ecosystemMembers.filter(m => selectedIds.includes(m.id));
+              
+              // ✅ MAPEAMOS TODOS LOS CAMPOS EXISTENTES EN ECOSYSTEM MEMBER
+              clientesList = filtered.map(member => ({
+                id: member.id,
+                slug: member.slug,
+                name: member.translation?.name || member.slug,
+                placeholder: member.sector,
+                image: member.image,
+                description: member.translation?.description || "",
+                link: member.social_media?.website,
+                social_media: member.social_media,
+                videos: member.videos,
+                short_videos: member.short_videos,
+                details: []
+              }));
+            }
+
             return (
-              <>
-                <section key={section.id} className="py-10">
-                  <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                      {section.content.items?.map((item: any, index: number) => (
-                        <div key={index} className="group flip-card h-28 min-h-[7rem]">
-                          <div className="flip-card-inner relative h-full rounded-2xl shadow-sm transition-transform duration-500 bg-transparent" style={{ transformStyle: 'preserve-3d' }}>
-                            <div className="flip-card-face absolute inset-0 rounded-2xl bg-white border border-[#E8F0E2] p-2 flex flex-col items-center justify-center gap-1.5 text-center [backface-visibility:hidden]">
-                              <div className="w-9 h-9 rounded-full bg-[#1C5D15] flex items-center justify-center">
-                                <Icon name={item.icon} className="w-4.5 h-4.5 text-[#19FF00]" />
-                              </div>
-                              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#1C5D15] leading-none">
-                                {item.title}
-                              </span>
-                            </div>
-                            <div className="flip-card-face flip-card-back absolute inset-0 rounded-2xl bg-[#1C5D15] text-white p-2 flex flex-col justify-center gap-1.5 text-center" style={{ transform: 'rotateY(180deg)' }}>
-            <div className="flex items-center gap-1.5 justify-center">
-              <Icon name={item.icon} className="w-3.5 h-3.5 text-[#19FF00]" />
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#19FF00] leading-none">
-                {item.title}
-              </h3>
-            </div>
-            <p className="text-[0.6rem] leading-[0.95rem] text-white/85">
-              {item.description}
-            </p>
-                            </div>
+              <section key={section.id} className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-6">
+                  <div className="text-center mb-16">
+                    {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
+                    {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {clientesList.map((cliente: any, index: number) => (
+                      <div 
+                        key={index} 
+                        onClick={() => setSelectedPartner(cliente)}
+                        className="rounded-2xl overflow-hidden text-center transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 group"
+                        style={{ backgroundColor: '#F7F9CE' }}
+                      >
+                        <div className="relative h-32 overflow-hidden">
+                          <img 
+                            src={cliente.image} 
+                            alt={cliente.name} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                              Ver Más →
+                            </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="p-4 border-t border-[#1C5D15]/10">
+                          <h3 className="font-bold text-[#1C5D15] mb-1">{cliente.name}</h3>
+                          <p className="text-xs text-[#629960]">{cliente.description}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </section>
+                </div>
+              </section>
+            );
 
-                {/* FILTRO DE CATEGORIAS EXACTAMENTE ABAJO DE LOS CUADROS BLANCOS */}
-                <section className="py-4 bg-white border-y border-[#E8F0E2] sticky top-16 z-30 shadow-sm">
-                  <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex flex-wrap gap-2.5 justify-center">
+          // ── 3. CATEGORY FILTER (Barra de filtros) ───────────────────────
+          case 'category-filter':
+            return (
+              <section key={section.id} className="py-4 bg-white border-y border-[#E8F0E2] sticky top-16 z-30 shadow-sm">
+                <div className="max-w-7xl mx-auto px-6">
+                  <div className="flex flex-wrap gap-2.5 justify-center">
+                    <button
+                      onClick={() => handleCategoryChange('all')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        selectedCategory === 'all'
+                          ? 'bg-[#1C5D15] text-white'
+                          : 'bg-[#F7F9CE] text-[#1C5D15] hover:bg-[#E8F0E2]'
+                      }`}
+                    >
+                      Todas las Categorías
+                    </button>
+                    {categories.map((category) => (
                       <button
-                        onClick={() => handleCategoryChange('all')}
+                        key={category.id}
+                        onClick={() => handleCategoryChange(category.id)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          selectedCategory === 'all'
+                          selectedCategory === category.id
                             ? 'bg-[#1C5D15] text-white'
                             : 'bg-[#F7F9CE] text-[#1C5D15] hover:bg-[#E8F0E2]'
                         }`}
                       >
-                        Todas las Categorías
+                        {category.name}
                       </button>
-                      {categories.map((category) => (
-                        <button
-                          key={category.id}
-                          onClick={() => handleCategoryChange(category.id)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            selectedCategory === category.id
-                              ? 'bg-[#1C5D15] text-white'
-                              : 'bg-[#F7F9CE] text-[#1C5D15] hover:bg-[#E8F0E2]'
-                          }`}
-                        >
-                          {category.name}
-                        </button>
-                      ))}
-                    </div>
+                    ))}
                   </div>
-                </section>
-              </>
+                </div>
+              </section>
             );
+
+          // ── 4. FEATURES (Ahora es la seccion normal para Tecnologia no Store) ──────────
+          case 'features':
+            return null;
 
 
           // ── 3. PRODUCTS ──────────────────────────────────────────────────
@@ -314,6 +466,30 @@ export function Store() {
 
           // ── 4. TRUST (Testimonios o certificaciones) ────────────────────
           case 'trust':
+            // ✅ SI ESTA EN STORE Y TIENE selectedMemberIds USAMOS MIEMBROS DEL ECOSISTEMA
+            // ✅ SINO USAMOS PARTNERS MANUALES
+            let partnersList: any[] = section.content.partners || [];
+
+            if (section.content.selectedMemberIds?.length > 0) {
+              const selectedIds = section.content.selectedMemberIds;
+              const filtered = ecosystemMembers.filter(m => selectedIds.includes(m.id));
+              
+              // ✅ MAPEAMOS TODOS LOS CAMPOS EXISTENTES EN ECOSYSTEM MEMBER
+              partnersList = filtered.map(member => ({
+                id: member.id,
+                slug: member.slug,
+                name: member.translation?.name || member.slug,
+                placeholder: member.sector,
+                image: member.image,
+                description: member.translation?.description || "",
+                link: member.social_media?.website,
+                social_media: member.social_media,
+                videos: member.videos,
+                short_videos: member.short_videos,
+                details: []
+              }));
+            }
+
             return (
               <section key={section.id} className="py-20 bg-white">
                 <div className="max-w-6xl mx-auto px-6">
@@ -321,16 +497,131 @@ export function Store() {
                     {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
                     {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {section.content.partners?.map((partner: any, index: number) => (
-                      <div key={index} className="bg-[#F7F9CE] rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
-                        <img src={partner.logo} alt={partner.name} className="w-16 h-16 mx-auto mb-4 object-contain" />
-                        <h3 className="font-bold text-[#1C5D15] mb-2">{partner.name}</h3>
-                        <p className="text-sm text-[#629960]">{partner.description}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {partnersList.map((partner: any, index: number) => (
+                      <div 
+                        key={index} 
+                        onClick={() => setSelectedPartner(partner)}
+                        className="bg-[#F7F9CE] rounded-2xl overflow-hidden text-center transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 group"
+                      >
+                        {/* Imagen como banner de fondo completo */}
+                        <div className="relative h-32 bg-[#F7F9CE] overflow-hidden">
+                          <img 
+                            src={partner.image} 
+                            alt={partner.name} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          {/* Overlay hover con boton Ver Mas */}
+                          <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                              Ver Más →
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-4 border-t border-[#1C5D15]/10">
+                          <h3 className="font-bold text-[#1C5D15] mb-1">{partner.name}</h3>
+                          <p className="text-xs text-[#629960]">{partner.description}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Popup Modal Exactamente igual que Home */}
+                <Dialog open={!!selectedPartner} onOpenChange={(open) => !open && setSelectedPartner(null)}>
+                  <DialogContent
+                    className="sm:max-w-[500px] bg-[#F7F9CE] border-2 border-[#1C5D15] p-0 overflow-hidden rounded-2xl shadow-2xl flex flex-col max-h-[80vh]"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    <style dangerouslySetInnerHTML={{
+                      __html: `
+                      .dialog-content-scroll::-webkit-scrollbar { display: none; }
+                      [data-slot="dialog-close"] { 
+                        transition: color 0.3s ease; 
+                        z-index: 100;
+                        color: ${isScrolled ? '#1C5D15' : 'white'};
+                      }
+                    `}} />
+                    {selectedPartner && (
+                      <div
+                        className="flex flex-col h-full overflow-y-auto dialog-content-scroll"
+                        onScroll={(e) => {
+                          const scrollTop = (e.target as HTMLDivElement).scrollTop;
+                          setIsScrolled(scrollTop > 80);
+                        }}
+                      >
+                        {/* Header con imagen como BANNER COMPLETO de fondo */}
+                        <div className="relative h-60 bg-[#1C5D15] overflow-hidden shrink-0">
+                          <img
+                            src={selectedPartner.image}
+                            alt={selectedPartner.name}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#1C5D15] to-transparent opacity-70" />
+                        </div>
+
+                        {/* Contenido */}
+                        <div className="pt-6 pb-8 px-8 flex-1">
+                          <div className="text-center mb-6">
+                            <DialogTitle className="text-2xl font-bold text-[#1C5D15] mb-1">{selectedPartner.name}</DialogTitle>
+                            {selectedPartner.placeholder && (
+                              <span className="text-sm font-medium text-[#629960] uppercase tracking-widest">{selectedPartner.placeholder}</span>
+                            )}
+                          </div>
+
+                          <div className="space-y-4">
+                            {selectedPartner.description && (
+                              <div className="bg-white/50 p-4 rounded-xl border border-[#1C5D15]/10">
+                                <p className="text-[#1C5D15] text-sm leading-relaxed">{selectedPartner.description}</p>
+                              </div>
+                            )}
+
+                            {selectedPartner.details && selectedPartner.details.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-xs font-bold text-[#1C5D15] uppercase tracking-wider flex items-center gap-2">
+                                  <Info className="w-3 h-3" />
+                                  Detalles Clave:
+                                </h4>
+                                <ul className="grid grid-cols-1 gap-2">
+                                  {selectedPartner.details.map((detail: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-2 text-sm text-[#629960] bg-white/30 p-2 rounded-lg border border-white/50">
+                                      <span className="text-[#19FF00] font-bold">✓</span>
+                                      {detail}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Footer Boton */}
+                        <div className="bg-[#1C5D15]/5 p-6 border-t border-[#1C5D15]/10 flex justify-center">
+                          {selectedPartner.link ? (
+                              <a
+                                href={ensureExternalLink(selectedPartner.link)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
+                            >
+                              <Globe className="w-4 h-4" />
+                              Visitar Sitio Web
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            <button
+                              disabled
+                              className="px-8 py-3 bg-gray-200 text-gray-400 rounded-full font-bold cursor-not-allowed"
+                            >
+                              Sin enlace disponible
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </section>
             );
 

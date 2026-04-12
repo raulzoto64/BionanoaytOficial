@@ -42,25 +42,26 @@ export function RichTextEditor({
   // Función para limpiar HTML de etiquetas innecesarias
   const cleanHtml = (html: string): string => {
     if (!html) return '';
+    let cleaned = html.trim();
+
+    // ✅ Caso 1: Eliminar etiquetas <p> y </p> cuando son solo texto plano sin formato interno
+    // Detectamos si NO hay etiquetas internas (solo texto dentro de los párrafos)
+    const hasInnerFormatting = /<(?!\/?p\s*>)/i.test(cleaned);
     
-    // Caso 1: El contenido es SOLO un párrafo sin atributos y sin formato interno
-    const singleParagraphRegex = /^<p>([^<>]+)<\/p>$/i;
-    if (singleParagraphRegex.test(html.trim())) {
-      return html.trim().replace(singleParagraphRegex, '$1');
+    if (!hasInnerFormatting) {
+      // Remover TODAS las etiquetas <p> y </p> para que se maneje por CSS
+      cleaned = cleaned.replace(/<\/?p\s*>/gi, '\n').trim();
     }
-    
-    // Caso 2: El contenido es <p></p> vacío
-    if (html.trim() === '<p></p>') {
+
+    // ✅ Caso 2: El contenido es <p></p> vacío
+    if (cleaned === '<p></p>' || cleaned === '') {
       return '';
     }
-    
-    // Caso 3: Contenido vacío
-    if (html.trim() === '') {
-      return '';
-    }
-    
-    // Si tiene formato real (negritas, enlaces, listas, etc.), mantener el HTML
-    return html;
+
+    // ✅ Caso 3: Eliminar párrafos vacíos al final
+    cleaned = cleaned.replace(/(<p>\s*<\/p>\s*)+$/gi, '');
+
+    return cleaned;
   };
 
   const editor = useEditor({

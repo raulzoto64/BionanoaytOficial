@@ -607,6 +607,7 @@ function SectionEditor({
     { value: 'trust', label: 'Confianza' },
     { value: 'ecosystem', label: 'Ecosistema' },
     { value: 'featured', label: 'Destacado' },
+    { value: 'blog', label: 'Blog / Noticias' },
   ];
 
   const handleSaveSection = async () => {
@@ -723,7 +724,7 @@ function SectionEditor({
             {/* Campos comunes a múltiples secciones */}
             {(section.type === 'hero' || section.type === 'text' || section.type === 'features' || 
               section.type === 'team' || section.type === 'products' || section.type === 'featured' ||
-              section.type === 'trust' || section.type === 'ecosystem' || section.type === 'timeline') && (
+              section.type === 'trust' || section.type === 'ecosystem' || section.type === 'timeline' || section.type === 'blog') && (
               <>
                 <div className="grid md:grid-cols-2 gap-3">
                   <div>

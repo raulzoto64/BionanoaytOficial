@@ -19,9 +19,10 @@ interface VisualEditorSidebarProps {
   sectionEN: Section;
   onUpdateSection: (sectionId: string, content: any, lang: 'es' | 'en' | 'both') => void;
   availableProducts?: any[];
+  availableEcosystemMembers?: any[];
 }
 
-export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, availableProducts = [] }: VisualEditorSidebarProps) {
+export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, availableProducts = [], availableEcosystemMembers = [] }: VisualEditorSidebarProps) {
   const [fieldLangs, setFieldLangs] = useState<Record<string, 'es' | 'en'>>({});
 
   if (!sectionES || !sectionEN) {
@@ -1382,8 +1383,8 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         </div>
       )}
 
-      {/* Tipo Ecosystem / News / Products */}
-      {(sectionES.type === "ecosystem" || sectionES.type === "news" || sectionES.type === "products") && (
+      {/* Tipo Ecosystem / News / Products / Blog */}
+      {(sectionES.type === "ecosystem" || sectionES.type === "news" || sectionES.type === "products" || sectionES.type === "blog") && (
         <div className="space-y-6">
           <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
             <div>
@@ -1514,6 +1515,36 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                   onChange={(e) => handleContentChange("ctaLink", e.target.value, 'both')}
                   placeholder="Ej: /blog"
                 />
+              </div>
+            </div>
+          )}
+
+          {sectionES.type === "blog" && (
+            <div className="space-y-6">
+              <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+                <div className="bg-[#19FF00]/10 rounded-lg p-3 mb-2">
+                  <p className="text-[10px] text-[#1C5D15] font-medium">
+                    ✅ Los artículos del blog se cargan AUTOMATICAMENTE, no se pueden editar aqui. Solo puedes cambiar el titulo y subtitulo de la sección.
+                  </p>
+                </div>
+                <div>
+                  <LanguageToggle fieldKey="blog-title" label="Título de la sección" />
+                  <Input
+                    value={(getFieldLang('blog-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ''}
+                    onChange={(e) => handleContentChange('title', e.target.value, getFieldLang('blog-title'))}
+                    placeholder="Nuestro Blog"
+                    className="focus:ring-[#19FF00]/30"
+                  />
+                </div>
+                <div>
+                  <LanguageToggle fieldKey="blog-subtitle" label="Subtítulo" />
+                  <Input
+                    value={(getFieldLang('blog-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ''}
+                    onChange={(e) => handleContentChange('subtitle', e.target.value, getFieldLang('blog-subtitle'))}
+                    placeholder="Artículos, consejos y novedades sobre biotecnología"
+                    className="focus:ring-[#19FF00]/30"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -2129,6 +2160,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         </div>
       )}
 
+
       {/* Tipo CTA */}
       {sectionES.type === "cta" && (
         <div className="space-y-6">
@@ -2201,6 +2233,101 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
           </div>
         </div>
       )}
+
+      {/* Tipo Clientes / Sectores */}
+      {sectionES.type === "clientes" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="clientes-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('clientes-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange('title', e.target.value, getFieldLang('clientes-title'))}
+                placeholder="Nuestros Clientes Confian"
+                className="focus:ring-[#19FF00]/30"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="clientes-subtitle" label="Subtítulo" />
+              <Input
+                value={(getFieldLang('clientes-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(e) => handleContentChange('subtitle', e.target.value, getFieldLang('clientes-subtitle'))}
+                placeholder="Empresas y agricultores que confian en nosotros"
+                className="focus:ring-[#19FF00]/30"
+              />
+            </div>
+          </div>
+
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight flex items-center gap-2">
+              <CheckCircle2 className="w-3 h-3 text-[#19FF00]" />
+              Miembros del Ecosistema Disponibles
+            </Label>
+            
+            <p className="text-[10px] text-[#629960] px-1">
+              Selecciona los miembros que quieres mostrar en esta sección. El orden de selección es el orden de aparición.
+            </p>
+
+            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+              {
+                // Aqui se cargaran dinamicamente todos los miembros del ecosistema
+                [
+                  { id: 'eco-001', name: 'Biotecnología' },
+                  { id: 'eco-002', name: 'Sostenibilidad Ambiental' },
+                  { id: 'eco-003', name: 'Nanotecnología Aplicada' },
+                  { id: 'eco-004', name: 'Agricultura Moderna' }
+                ].map((member) => {
+                  const isSelected = (sectionES.content.selectedMemberIds || []).includes(member.id);
+                  
+                  return (
+                    <div 
+                      key={member.id} 
+                      className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all ${
+                        isSelected 
+                          ? 'bg-[#19FF00]/10 border-[#19FF00]/40' 
+                          : 'bg-gray-50 border-gray-100 hover:bg-gray-100'
+                      }`}
+                      onClick={() => {
+                        const currentIds = sectionES.content.selectedMemberIds || [];
+                        let newIds;
+                        
+                        if (isSelected) {
+                          newIds = currentIds.filter((id: string) => id !== member.id);
+                        } else {
+                          newIds = [...currentIds, member.id];
+                        }
+
+                        handleContentChange('selectedMemberIds', newIds, 'both');
+                      }}
+                    >
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer ${
+                        isSelected 
+                          ? 'bg-[#19FF00] border-[#19FF00]' 
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#1C5D15]" />}
+                      </div>
+                      
+                      <span className={`text-sm font-medium ${
+                        isSelected ? 'text-[#1C5D15]' : 'text-gray-600'
+                      }`}>
+                        {member.name}
+                      </span>
+                    </div>
+                  );
+                })
+              }
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-[10px] text-gray-500">
+                {(sectionES.content.selectedMemberIds || []).length} miembros seleccionados
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

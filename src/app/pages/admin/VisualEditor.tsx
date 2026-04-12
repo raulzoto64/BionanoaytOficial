@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router';
-import { supabase, supabaseAPI, PageWithContent, Section } from '../../data/supabase';
+import { supabase, supabaseAPI, PageWithContent, Section, EcosystemMember, EcosystemMemberTranslation } from '../../data/supabase';
 import { Button } from '../../components/ui/button';
 import { 
   ChevronLeft, 
@@ -11,7 +11,9 @@ import {
   Smartphone, 
   Globe, 
   Loader2,
-  ExternalLink
+  ExternalLink,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -57,17 +59,18 @@ const PreviewFrame = ({ children }: { children: React.ReactNode }) => {
   // but usually not necessary. For now stay stable.
 
   return (
-    <iframe 
-      ref={frameRef} 
-      title="Visual Preview"
-      className="w-full h-full border-none transition-opacity duration-300"
-      onLoad={() => {
-        // Trigger style injection on actual load if not done
-        setStylesLoaded(false);
-      }}
-    >
+    <>
+      <iframe 
+        ref={frameRef} 
+        title="Visual Preview"
+        className="w-full h-full border-none transition-opacity duration-300"
+        onLoad={() => {
+          // Trigger style injection on actual load if not done
+          setStylesLoaded(false);
+        }}
+      />
       {mountNode && createPortal(children, mountNode)}
-    </iframe>
+    </>
   );
 };
 
@@ -85,9 +88,13 @@ export function AdminVisualEditor() {
   const [isResizing, setIsResizing] = useState(false);
   const resizeStart = useRef({ x: 0, w: 0 });
   
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [sectionsES, setSectionsES] = useState<Section[]>([]);
   const [sectionsEN, setSectionsEN] = useState<Section[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [allEcosystemMembers, setAllEcosystemMembers] = useState<any[]>([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -198,23 +205,50 @@ export function AdminVisualEditor() {
         setActiveSectionId(targetPage.contentES.sections[0].id);
       }
 
-      // 2. Cargar lista de productos y sus traducciones de forma eficiente (UNA sola petición extra)
-      const [products, allTranslations] = await Promise.all([
+      // 2. Cargar lista de productos, miembros y categorias de forma eficiente
+      const [products, productTranslations, members, memberTranslations, categories, categoryTranslations] = await Promise.all([
         supabaseAPI.getProducts(),
-        supabase.from('product_translations').select('*').eq('language', activeLanguage)
+        supabase.from('product_translations').select('*').eq('language', activeLanguage),
+        supabaseAPI.getEcosystemMembers(),
+        supabase.from('ecosystem_member_translations').select('*').eq('language', activeLanguage),
+        supabaseAPI.getCategories(),
+        supabase.from('category_translations').select('*').eq('language', activeLanguage)
       ]);
 
-      const translationsMap = (allTranslations.data || []).reduce((acc: any, t: any) => {
+      const productTranslationsMap = (productTranslations.data || []).reduce((acc: any, t: any) => {
         acc[t.product_id] = t;
         return acc;
       }, {});
 
       const productsWithDetails = products.map(p => ({
         ...p,
-        translation: translationsMap[p.id] || null
+        translation: productTranslationsMap[p.id] || null
       }));
-
       setAllProducts(productsWithDetails);
+
+      const memberTranslationsMap = (memberTranslations.data || []).reduce((acc: any, t: any) => {
+        acc[t.member_id] = t;
+        return acc;
+      }, {});
+
+      const membersWithDetails = members.map(m => ({
+        ...m,
+        translation: memberTranslationsMap[m.id] || null
+      }));
+      setAllEcosystemMembers(membersWithDetails);
+      
+      const categoryTranslationsMap = (categoryTranslations.data || []).reduce((acc: any, t: any) => {
+        acc[t.category_id] = t;
+        return acc;
+      }, {});
+
+      const categoriesWithDetails = categories.map(c => ({
+        ...c,
+        name: categoryTranslationsMap[c.id]?.name || c.id
+      }));
+      
+      // ✅ Guardamos las categorias en un estado para pasarlas al Preview
+      setAllCategories(categoriesWithDetails);
       
     } catch (err) {
       toast.error('Error al cargar la página');
@@ -389,8 +423,22 @@ export function AdminVisualEditor() {
 
       {/* Main Workspace */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Boton Toggle Flotante - Posición inteligente */}
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`absolute z-[999] transition-all duration-300 ease-out bg-white shadow-xl rounded-lg p-2 hover:bg-gray-50 hover:shadow-2xl ${
+            sidebarOpen 
+              ? 'left-[356px] top-[72px]' 
+              : 'left-4 top-[72px]'
+          }`}
+          title="Alternar panel de configuración"
+        >
+          {sidebarOpen ? <PanelLeftClose className="w-5 h-5 text-[#1C5D15]" /> : <PanelLeftOpen className="w-5 h-5 text-[#1C5D15]" />}
+        </button>
+
         {/* Sidebar Controls */}
-        <aside className="w-[400px] bg-white border-r flex-shrink-0 flex flex-col h-full overflow-hidden shadow-2xl relative z-10">
+        <aside className={`${sidebarOpen ? 'w-[400px]' : 'w-0'} bg-white border-r flex-shrink-0 flex flex-col h-full overflow-hidden shadow-2xl relative z-10 transition-all duration-300 ease-out`}>
+
           <div className="p-4 border-b bg-gray-50/80 flex items-center justify-between">
             <div>
               <h2 className="font-black text-[#1C5D15] text-xs uppercase tracking-widest">Configuración</h2>
@@ -489,6 +537,8 @@ export function AdminVisualEditor() {
                          activeSectionId={activeSectionId}
                          onSectionClick={setActiveSectionId}
                          availableProducts={allProducts}
+                         availableEcosystemMembers={allEcosystemMembers}
+                         availableCategories={allCategories}
                        />
                      </div>
                      

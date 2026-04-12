@@ -18,7 +18,7 @@ const AdminDashboard = () => import("./pages/admin/AdminDashboard").then(m => ({
 const AdminProducts = () => import("./pages/admin/AdminProducts").then(m => ({ Component: m.AdminProducts }));
 const AdminPrices = () => import("./pages/admin/AdminPrices").then(m => ({ Component: m.AdminPrices }));
 const AdminContent = () => import("./pages/admin/AdminContent").then(m => ({ Component: m.AdminContent }));
-const AdminVisualEditor = () => import("./pages/admin/VisualEditor").then(m => ({ Component: m.AdminVisualEditor }));
+const AdminVisualEditor = () => import("./pages/admin/VisualEditor.tsx").then(m => ({ Component: m.AdminVisualEditor }));
 const AdminCategories = () => import("./pages/admin/AdminCategories").then(m => ({ Component: m.AdminCategories }));
 const AdminTranslations = () => import("./pages/admin/AdminTranslations").then(m => ({ Component: m.AdminTranslations }));
 const AdminSettings = () => import("./pages/admin/AdminSettings").then(m => ({ Component: m.AdminSettings }));

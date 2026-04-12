@@ -98,6 +98,7 @@ export interface Section {
     | "team"
     | "timeline"
     | "contact"
+    | "blog"
     | "custom"
     | "trust"
     | "featured"
@@ -111,10 +112,14 @@ export interface Section {
     | "problems"
     | "sectors"
     | "certifications"
-    | "cta";
+    | "cta"
+    | "flipcards"
+    | "clientes"
+    | "category-filter";
   order: number;
   visible: boolean;
   content: Record<string, any>;
+  page_id?: string;
 }
 
 export interface SiteSettings {

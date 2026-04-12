@@ -1,9 +1,10 @@
-import { Section } from '../../../data/supabase';
+import { Section, EcosystemMember, EcosystemMemberTranslation } from '../../../data/supabase';
 import { EditableBlock } from './EditableBlock';
 import { useState } from 'react';
 
 // Importar los mismos componentes que usa el Front-End real
 import { Hero } from '../../Hero';
+import { HeroBlog } from '../../HeroBlog';
 import { Purpose } from '../../Purpose';
 import { FeaturedProduct } from '../../FeaturedProduct';
 import { Timeline } from '../../Timeline';
@@ -12,6 +13,7 @@ import { TrustBar } from '../../TrustBar';
 import { Ecosystem } from '../../Ecosystem';
 import { NewsSection } from '../../NewsSection';
 import { Products } from '../../Products';
+import { FlipCards } from '../../FlipCards';
 import {
   ChevronDown, ChevronUp, Quote, CheckCircle,
   FlaskConical, Globe, Star, Zap, Microscope,
@@ -50,21 +52,58 @@ interface VisualEditorPreviewProps {
   activeSectionId: string | null;
   onSectionClick: (id: string) => void;
   availableProducts?: any[];
+  availableEcosystemMembers?: (EcosystemMember & { translation: EcosystemMemberTranslation | null })[];
+  availableCategories?: any[];
 }
 
-export function VisualEditorPreview({ sections, activeSectionId, onSectionClick, availableProducts = [] }: VisualEditorPreviewProps) {
-
+export function VisualEditorPreview({
+  sections,
+  activeSectionId,
+  onSectionClick,
+  availableProducts = [],
+  availableEcosystemMembers = [],
+  availableCategories = [],
+}: VisualEditorPreviewProps) {
   const renderSectionComponent = (section: Section) => {
     switch (section.type) {
-
       // ── Componentes existentes ───────────────────────────────────────────
-      case 'hero':
+      case "hero":
         return <Hero content={section.content} />;
 
-      case 'trust':
+      case "hero-blog":
+        return <HeroBlog content={section.content} />;
+
+      case "trust":
+        // ✅ Vista previa EN VIVO exacta al componente TrustBar real
+        // Si estamos en tienda y tiene selectedMemberIds usamos del ecosistema
+        // Sino usamos los partners editados manualmente EN TIEMPO REAL
+        if (section.page_id === 'page-store' && section.content.selectedMemberIds?.length > 0) {
+          const selectedMemberIds = section.content.selectedMemberIds || [];
+          const filteredPartners = availableEcosystemMembers.filter((member) =>
+            selectedMemberIds.includes(member.id)
+          );
+
+          // ✅ Convertimos miembros del ecosistema al formato EXACTO que espera TrustBar
+          // Para que use el MISMO popup EXACTAMENTE IGUAL que en Home
+          const partnersFormatted = filteredPartners.map(member => ({
+            name: member.translation?.name || member.slug,
+            placeholder: member.sector,
+            image: member.image,
+            description: member.translation?.description || "",
+            link: member.social_media?.website,
+            social_media: member.social_media,
+            videos: (member as any).videos || [],
+            short_videos: (member as any).short_videos || [],
+            details: []
+          }));
+          
+          return <TrustBar partners={partnersFormatted} />;
+        }
+
+        // ✅ PARA HOME: Mostrar partners MANUALES que tu estas editando AHORA MISMO
         return <TrustBar partners={section.content.partners || []} />;
 
-      case 'features':
+      case "features":
         // Si tiene contenido de proceso, renderiza el layout alternado igual que en Process.tsx
         if (section.content.badge || section.content.items?.[0]?.details || section.content.items?.[0]?.duration || section.content.items?.[0]?.result) {
           return (
@@ -143,15 +182,13 @@ export function VisualEditorPreview({ sections, activeSectionId, onSectionClick,
         return <FeaturedProduct content={section.content} />;
 
       case 'products':
-        const selectedIds = section.content.selectedProductIds || [];
-        const filteredProducts = selectedIds.length > 0
-          ? availableProducts.filter(p => selectedIds.includes(p.id))
-          : availableProducts.filter(p => p.featured);
+        // ✅ USANDO EXACTAMENTE EL MISMO COMPONENTE QUE LA HOME REAL
+        // Ahora la vista previa es 100% identica a la pagina final
         return (
           <Products
-            title={section.content.title || ''}
-            subtitle={section.content.subtitle || ''}
-            products={filteredProducts}
+            title={section.content.title}
+            subtitle={section.content.subtitle}
+            products={availableProducts}
           />
         );
 
@@ -258,6 +295,29 @@ export function VisualEditorPreview({ sections, activeSectionId, onSectionClick,
             ctaLink={section.content.ctaLink}
             isEditor={true}
           />
+        );
+
+      case 'blog':
+        // ✅ Seccion BLOG: Muestra los articulos automaticamente tal cual estan
+        // Solo permitimos editar titulo y subtitulo, los articulos se cargan solos
+        return (
+          <NewsSection
+            title={section.content.title}
+            subtitle={section.content.subtitle}
+            ctaText="Ver Todos los Artículos"
+            ctaLink="/blog"
+            isEditor={true}
+          />
+        );
+
+      case 'blog-posts':
+        return (
+          <div className="py-20 bg-white">
+            <div className="max-w-6xl mx-auto px-6 text-center">
+              <h2 className="text-xl font-bold text-[#1C5D15] mb-2">📰 BLOG-POSTS</h2>
+              <p className="text-[#629960]">Listado de artículos del blog. Se carga automaticamente con los posts publicados.</p>
+            </div>
+          </div>
         );
 
       // ── Nuevos tipos (Technology / Process) ─────────────────────────────
@@ -417,6 +477,90 @@ export function VisualEditorPreview({ sections, activeSectionId, onSectionClick,
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      // ── Nuevos tipos STORE ───────────────────────────────
+      case 'flipcards':
+        // ✅ FlipCards NO tiene titulo ni subtitulo, solo las tarjetas directamente
+        return <FlipCards items={section.content.items || []} />;
+
+      case 'category-filter':
+        return (
+          <section className="py-4 bg-white border-y border-[#E8F0E2] sticky top-16 z-30 shadow-sm">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex flex-wrap gap-2.5 justify-center">
+                <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#1C5D15] text-white">
+                  Todas las Categorías
+                </span>
+                {availableCategories.map((category) => (
+                  <span key={category.id} className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#F7F9CE] text-[#1C5D15]">
+                    {category.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case 'clientes':
+        // ✅ USAMOS MIEMBROS DEL ECOSISTEMA DIRECTAMENTE
+        if (section.content.selectedMemberIds?.length > 0) {
+          const selectedMemberIds = section.content.selectedMemberIds || [];
+          const filteredMembers = availableEcosystemMembers.filter((member) =>
+            selectedMemberIds.includes(member.id)
+          );
+
+          return (
+            <section className="py-20 bg-white">
+              <div className="max-w-6xl mx-auto px-6">
+                <div className="text-center mb-16">
+                  {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
+                  {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredMembers.map((member, index: number) => (
+                    <div 
+                      key={member.id}
+                      className="rounded-2xl overflow-hidden text-center transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 group"
+                      style={{ backgroundColor: '#F7F9CE' }}
+                    >
+                      <div className="relative h-32 overflow-hidden">
+                        <img 
+                          src={member.image} 
+                          alt={member.translation?.name || member.slug} 
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                            Ver Más →
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-4 border-t border-[#1C5D15]/10">
+                        <h3 className="font-bold text-[#1C5D15] mb-1">{member.translation?.name || member.slug}</h3>
+                        <p className="text-xs text-[#629960]">{member.translation?.description || ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        // Fallback si no hay miembros seleccionados
+        return (
+          <section className="py-20 bg-white">
+            <div className="max-w-6xl mx-auto px-6">
+              <div className="text-center mb-16">
+                {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
+                {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
+              </div>
+              <div className="text-center py-16 bg-[#1C5D15]/5 rounded-3xl">
+                <p className="text-[#629960] font-medium">🔌 Selecciona miembros del ecosistema en el panel izquierdo para mostrarlos aqui</p>
               </div>
             </div>
           </section>
