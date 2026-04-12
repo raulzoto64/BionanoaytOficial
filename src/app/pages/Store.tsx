@@ -1,228 +1,394 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router";
-import { Filter, Search, Star } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { useEffect, useState } from "react";
+import { PageContent, Section, supabaseAPI } from "../data/supabase";
+import {
+  FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
+  AlertTriangle, ChevronDown, ChevronUp, Quote, CheckCircle,
+  Sprout, Building2, Fish, Apple, HeartPulse, Shirt, Warehouse, Shield,
+  Star, ShoppingCart, Package, Truck, Award, Users
+} from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { useDatabase } from "../hooks/useDatabase";
-import { supabaseAPI, Product, ProductTranslation, Category, CategoryTranslation } from "../data/supabase";
+import { SEO } from "../components/SEO";
+import { useNavigate, useSearchParams } from "react-router";
 
-interface ProductWithDetails {
-  product: Product;
-  translation: ProductTranslation;
-  category: CategoryTranslation | null;
+// ── Mapa de iconos ─────────────────────────────────────────────────────────
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
+  AlertTriangle, CheckCircle, Sprout, Building2, Fish, Apple,
+  HeartPulse, Shirt, Warehouse, Shield, Star, ShoppingCart, Package, Truck, Award, Users
+};
+
+function Icon({ name, className }: { name: string; className?: string }) {
+  const C = ICON_MAP[name] || FlaskConical;
+  return <C className={className} />;
 }
 
+// ── Componente de estrellas ─────────────────────────────────────────────
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex items-center gap-1 mb-2">
+    <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
           className={`w-4 h-4 ${
-            star <= rating
-              ? "fill-[#19FF00] text-[#19FF00]"
-              : "fill-gray-200 text-gray-200"
+            star <= rating ? 'text-yellow-400 fill-yellow-400' :
+            star - 0.5 === rating ? 'text-yellow-400 fill-yellow-400/50' :
+            'text-gray-300'
           }`}
         />
       ))}
-      <span className="text-sm text-[#629960] ml-1">({rating}.0)</span>
+    </div>
+  );
+}
+
+// ── Componente de producto para la sección products ────────────────────────
+function ProductCard({ product, index }: { product: any; index: number }) {
+  const navigate = useNavigate();
+  const rating = index % 2 === 0 ? 5 : 4.5; // Alternar entre 5 y 4.5 estrellas
+
+  return (
+    <div
+      onClick={() => navigate(`/products/${product.slug}`)}
+      className="cursor-pointer bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
+    >
+      <div className="h-44 overflow-hidden bg-[#F7F9CE]">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      </div>
+      <div className="p-4">
+        <div className="mb-2 text-[11px] uppercase font-bold tracking-wide text-[#1C5D15]">
+          {product.category}
+        </div>
+        <h3 className="text-lg font-semibold text-[#1C5D15] mb-2 line-clamp-2">{product.name}</h3>
+        <p className="text-sm text-[#629960] mb-3 line-clamp-3">{product.description}</p>
+        <div className="flex items-center justify-between">
+          <StarRating rating={rating} />
+          <span className="text-sm font-bold text-[#19FF00]">Ver detalle</span>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function Store() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [products, setProducts] = useState<ProductWithDetails[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pageContent, setPageContent] = useState<PageContent | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { language } = useLanguage();
-  const { updateTrigger } = useDatabase();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Handle category from URL
-  const selectedCategory = searchParams.get("category") || "all";
-
-  const handleCategoryChange = (category: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (category === "all") {
-      newParams.delete("category");
-    } else {
-      newParams.set("category", category);
+  const loadPageContent = async () => {
+    try {
+      const content = await supabaseAPI.getPageContent('page-store', language);
+      setPageContent(content);
+    } catch (error) {
+      console.error('Error loading store content:', error);
     }
-    setSearchParams(newParams, { replace: true });
+  };
+
+  const loadProducts = async () => {
+    try {
+      const productsData = await supabaseAPI.getProducts();
+      const productsWithDetails = await Promise.all(
+        productsData.map(async (product) => {
+          const translation = await supabaseAPI.getProductTranslation(product.id, language);
+          const category = await supabaseAPI.getCategoryTranslation(product.category, language);
+
+          return {
+            ...product,
+            name: translation?.name || product.slug,
+            description: translation?.description || '',
+            category_id: product.category,
+            category: category?.name || product.category,
+            price: product.price_per_unit || 0,
+          };
+        })
+      );
+      setProducts(productsWithDetails.filter((product) => product.status === 'active'));
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await supabaseAPI.getCategories();
+      const categoriesWithTranslations = await Promise.all(
+        categoriesData.map(async (category) => {
+          const translation = await supabaseAPI.getCategoryTranslation(category.id, language);
+          return {
+            ...category,
+            name: translation?.name || category.id,
+          };
+        })
+      );
+      setCategories(categoriesWithTranslations);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
   };
 
   useEffect(() => {
-    loadData();
-  }, [language, updateTrigger]); // Re-cargar cuando cambie el idioma o la base de datos
+    loadPageContent();
+    loadProducts();
+    loadCategories();
+  }, [language]);
 
-  const loadData = async () => {
-    if (products.length === 0) setLoading(true);
-    try {
-      
-      // Cargar productos
-      const productsData = await supabaseAPI.getProducts();
-      
-      // Cargar categorías
-      const categoriesData = await supabaseAPI.getCategories();
-      
-      // Combinar productos con sus traducciones y categorías
-      const productsWithDetails = await Promise.all(
-        productsData.map(async (product: Product) => {
-          const translation = await supabaseAPI.getProductTranslation(product.id, language);
-          const category = await supabaseAPI.getCategoryTranslation(product.category, language);
-          
-          return {
-            product,
-            translation: translation!,
-            category,
-          };
-        })
-      );
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    } else {
+      setSelectedCategory('all');
+    }
+  }, [searchParams]);
 
-
-      // Combinar categorías con traducciones
-      const categoriesWithTranslations = await Promise.all(
-        categoriesData.map(async (cat: Category) => {
-          const translation = await supabaseAPI.getCategoryTranslation(cat.id, language);
-          return {
-            id: cat.id,
-            name: translation?.name || cat.slug,
-          };
-        })
-      );
-
-      setProducts(productsWithDetails);
-      setCategories([
-        { id: "all", name: language === 'es' ? "Todos los productos" : "All products" },
-        ...categoriesWithTranslations,
-      ]);
-      
-    } catch (error) {
-      // En caso de error, usar datos hardcodeados como fallback
-    } finally {
-      setLoading(false);
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === 'all') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category: categoryId });
     }
   };
 
-  const filteredProducts = products.filter((item) => {
-    const matchesCategory =
-      selectedCategory === "all" || item.product.category === selectedCategory;
-    const matchesSearch = item.translation?.name
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredProducts = selectedCategory === 'all' 
+    ? products 
+    : products.filter(product => product.category_id === selectedCategory);
 
-  const handleProductClick = (slug: string) => {
-    navigate(`/products/${slug}`);
-  };
+  if (!pageContent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F9CE]">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🛒</div>
+          <h2 className="text-2xl text-[#1C5D15] mb-2">Cargando tienda...</h2>
+          <p className="text-[#629960]">Por favor, espera mientras se cargan los productos</p>
+        </div>
+      </div>
+    );
+  }
+
+  const seoData = pageContent.sections.find(sec => sec.type === 'hero')?.content?.seo || {};
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-[#1C5D15] text-white py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl mb-4">
-            {language === 'es' ? 'Tienda Online' : 'Online Store'}
-          </h1>
-          <p className="text-xl text-[#F7F9CE]">
-            {language === 'es'
-              ? 'Productos bionanotecnológicos de alta calidad'
-              : 'High-quality bionanotechnology products'}
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen">
+      <SEO
+        title={seoData.metaTitle}
+        description={seoData.metaDescription}
+        keywords={seoData.metaKeywords}
+      />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Search & Filter Bar */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder={language === 'es' ? 'Buscar productos...' : 'Search products...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex gap-2 items-center">
-            <Filter className="w-5 h-5 text-[#629960]" />
-            <select
-              value={selectedCategory}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="px-4 py-2 border rounded-lg bg-white text-[#1C5D15]"
-            >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 border-4 border-t-[#19FF00] border-[#1C5D15]/20 rounded-full animate-spin mb-4"></div>
-            <p className="text-[#629960]">
-              {language === 'es' ? 'Cargando productos...' : 'Loading products...'}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Products Grid */}
-            <div className="grid md:grid-cols-3 gap-8">
-              {filteredProducts.map((item) => (
+      {pageContent.sections
+        .filter((section: Section) => section.visible)
+        .map((section: Section) => {
+          switch (section.type) {
+            // ── 1. HERO ──────────────────────────────────────────────────────
+          case 'hero':
+            return (
+              <section key={section.id} className="relative h-[290px] flex items-center justify-center overflow-hidden">
                 <div
-                  key={item.product.id}
-                  className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-[#19FF00] cursor-pointer"
-                  onClick={() => handleProductClick(item.product.slug)}
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('${section.content.backgroundImage}')` }}
                 >
-                  <div className="h-64 overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960]">
-                    <img
-                      src={item.product.image}
-                      alt={item.translation.name}
-                      className="w-full h-full object-cover opacity-80"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <StarRating rating={5} />
-                    <h3 className="text-xl mb-2 text-[#1C5D15] line-clamp-2">
-                      {item.translation.name}
-                    </h3>
-                    <p className="text-sm text-[#629960] mb-4 line-clamp-2">
-                      {item.translation.short_description}
-                    </p>
-                    <div className="mb-4">
-                      <span className="text-sm text-[#629960]">
-                        {item.category?.name || ''}
-                      </span>
-                    </div>
-                    <Button className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] rounded-full hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg font-bold uppercase tracking-wider h-11">
-                      {language === 'es' ? 'Ver detalles' : 'View details'}
-                    </Button>
+                  <div className="absolute inset-0 bg-[#1C5D15]/85" />
+                </div>
+                <div className="relative z-10 max-w-5xl mx-auto px-6 text-center text-white">
+                  <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+                    {section.content.title}
+                  </h1>
+                  <div
+                    className="text-lg md:text-xl text-white/90 mb-6 max-w-2xl mx-auto leading-relaxed [&_p]:m-0"
+                    dangerouslySetInnerHTML={{ __html: section.content.subtitle || '' }}
+                  />
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    {section.content.ctaText && (
+                      <a
+                        href={section.content.ctaLink || '#products'}
+                        className="inline-block px-6 py-3 bg-[#19FF00] text-[#1C5D15] font-bold rounded-full hover:bg-white hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-lg uppercase text-sm tracking-wider"
+                      >
+                        {section.content.ctaText}
+                      </a>
+                    )}
+                    {section.content.secondaryCtaText && (
+                      <a
+                        href={section.content.secondaryCtaLink || '#products'}
+                        className="inline-block px-6 py-3 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase text-sm tracking-wider"
+                      >
+                        {section.content.secondaryCtaText}
+                      </a>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
+              </section>
+            );
 
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-xl text-[#629960]">
-                  {language === 'es'
-                    ? 'No se encontraron productos con los filtros seleccionados'
-                    : 'No products found with the selected filters'}
-                </p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+
+          // ── 2. FEATURES (Beneficios de comprar en Bionano AYT) ──────────
+          case 'features':
+            return (
+              <>
+                <section key={section.id} className="py-10">
+                  <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                      {section.content.items?.map((item: any, index: number) => (
+                        <div key={index} className="group flip-card h-28 min-h-[7rem]">
+                          <div className="flip-card-inner relative h-full rounded-2xl shadow-sm transition-transform duration-500 bg-transparent" style={{ transformStyle: 'preserve-3d' }}>
+                            <div className="flip-card-face absolute inset-0 rounded-2xl bg-white border border-[#E8F0E2] p-2 flex flex-col items-center justify-center gap-1.5 text-center [backface-visibility:hidden]">
+                              <div className="w-9 h-9 rounded-full bg-[#1C5D15] flex items-center justify-center">
+                                <Icon name={item.icon} className="w-4.5 h-4.5 text-[#19FF00]" />
+                              </div>
+                              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#1C5D15] leading-none">
+                                {item.title}
+                              </span>
+                            </div>
+                            <div className="flip-card-face flip-card-back absolute inset-0 rounded-2xl bg-[#1C5D15] text-white p-2 flex flex-col justify-center gap-1.5 text-center" style={{ transform: 'rotateY(180deg)' }}>
+            <div className="flex items-center gap-1.5 justify-center">
+              <Icon name={item.icon} className="w-3.5 h-3.5 text-[#19FF00]" />
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#19FF00] leading-none">
+                {item.title}
+              </h3>
+            </div>
+            <p className="text-[0.6rem] leading-[0.95rem] text-white/85">
+              {item.description}
+            </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                {/* FILTRO DE CATEGORIAS EXACTAMENTE ABAJO DE LOS CUADROS BLANCOS */}
+                <section className="py-4 bg-white border-y border-[#E8F0E2] sticky top-16 z-30 shadow-sm">
+                  <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex flex-wrap gap-2.5 justify-center">
+                      <button
+                        onClick={() => handleCategoryChange('all')}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          selectedCategory === 'all'
+                            ? 'bg-[#1C5D15] text-white'
+                            : 'bg-[#F7F9CE] text-[#1C5D15] hover:bg-[#E8F0E2]'
+                        }`}
+                      >
+                        Todas las Categorías
+                      </button>
+                      {categories.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => handleCategoryChange(category.id)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            selectedCategory === category.id
+                              ? 'bg-[#1C5D15] text-white'
+                              : 'bg-[#F7F9CE] text-[#1C5D15] hover:bg-[#E8F0E2]'
+                          }`}
+                        >
+                          {category.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              </>
+            );
+
+
+          // ── 3. PRODUCTS ──────────────────────────────────────────────────
+          case 'products':
+            return (
+              <section key={section.id} id="products" className="py-16 bg-[#F7F9CE]">
+                <div className="max-w-7xl mx-auto px-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredProducts.map((product, index) => (
+                      <ProductCard key={product.id} product={product} index={index} />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+
+          // ── 4. TRUST (Testimonios o certificaciones) ────────────────────
+          case 'trust':
+            return (
+              <section key={section.id} className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-6">
+                  <div className="text-center mb-16">
+                    {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
+                    {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {section.content.partners?.map((partner: any, index: number) => (
+                      <div key={index} className="bg-[#F7F9CE] rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300">
+                        <img src={partner.logo} alt={partner.name} className="w-16 h-16 mx-auto mb-4 object-contain" />
+                        <h3 className="font-bold text-[#1C5D15] mb-2">{partner.name}</h3>
+                        <p className="text-sm text-[#629960]">{partner.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+
+          // ── 5. CTA FINAL ────────────────────────────────────────────────
+          case 'cta':
+            return (
+              <section key={section.id} className="py-24 bg-[#1C5D15] text-white relative overflow-hidden">
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute top-0 left-0 w-96 h-96 bg-[#19FF00] rounded-full -translate-x-1/2 -translate-y-1/2" />
+                  <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#19FF00] rounded-full translate-x-1/2 translate-y-1/2" />
+                </div>
+                <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+                  {section.content.icon ? (
+                    <div className="flex justify-center mb-6">
+                      <Icon name={section.content.icon} className="w-16 h-16 text-[#19FF00]" />
+                    </div>
+                  ) : (
+                    <div className="text-5xl mb-6">{section.content.emoji || '🛒'}</div>
+                  )}
+                  <h2 className="text-4xl md:text-5xl font-bold mb-6">{section.content.title}</h2>
+                  <p className="text-xl text-white/85 mb-10 max-w-2xl mx-auto leading-relaxed">{section.content.subtitle}</p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a
+                      href={section.content.ctaLink || '/#contact'}
+                      className="inline-block px-10 py-4 bg-[#19FF00] text-[#1C5D15] font-bold rounded-full hover:bg-white hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-2xl hover:shadow-[#19FF00]/30 uppercase tracking-wider text-sm"
+                    >
+                      {section.content.ctaText}
+                    </a>
+                    {section.content.secondaryCtaText && (
+                      <a
+                        href={section.content.secondaryCtaLink || '/store'}
+                        className="inline-block px-10 py-4 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm"
+                      >
+                        {section.content.secondaryCtaText}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </section>
+            );
+
+          // ── 6. TEXT/BANNER ──────────────────────────────────────────────
+          case 'text':
+            return (
+              <section key={section.id} className="py-16 bg-[#19FF00] text-[#1C5D15]">
+                <div className="max-w-6xl mx-auto px-6">
+                  <div
+                    className="text-center prose prose-lg max-w-none"
+                    dangerouslySetInnerHTML={{ __html: section.content.html }}
+                  />
+                </div>
+              </section>
+            );
+
+          default:
+            return null;
+        }
+      })}
     </div>
   );
 }

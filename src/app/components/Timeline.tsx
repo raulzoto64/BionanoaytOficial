@@ -125,7 +125,7 @@ export function Timeline({ milestones, title, subtitle, description }: TimelineP
           >
             <CarouselContent className="-ml-4">
               {milestones
-                .filter((m) => m.title.trim() && m.description.trim())
+                .filter((m) => m.title?.trim() && m.description?.trim())
                 .map((milestone, index) => {
                   const IconComponent = getIconComponent(milestone.icon);
                   return (

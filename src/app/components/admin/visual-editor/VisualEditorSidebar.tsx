@@ -8,6 +8,12 @@ import { Trash2, Plus, X, Globe, CheckCircle2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner';
 import { RichTextEditor } from '../RichTextEditor';
 
+const CTA_ICON_OPTIONS = [
+  'FlaskConical', 'Globe', 'Microscope', 'Factory', 'TrendingUp',
+  'AlertTriangle', 'CheckCircle', 'Sprout', 'Building2', 'Fish',
+  'Apple', 'HeartPulse', 'Shirt', 'Warehouse', 'Shield'
+];
+
 interface VisualEditorSidebarProps {
   sectionES: Section;
   sectionEN: Section;
@@ -143,6 +149,238 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         </div>
       )}
 
+      {/* Tipo Bento / ¿Por Qué Elegirnos? */}
+      {sectionES.type === "bento" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="bento-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('bento-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('bento-title'))}
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="bento-subtitle" label="Subtítulo" />
+              <Input
+                value={(getFieldLang('bento-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(e) => handleContentChange("subtitle", e.target.value, getFieldLang('bento-subtitle'))}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">CARDS BENTO</Label>
+            {(sectionES.content.items || []).map((_: any, idx: number) => {
+              const fKey = `bento-${idx}`;
+
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("items", newListES, 'es');
+                      handleContentChange("items", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Card #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                        <select
+                          className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                          value={sectionES.content.items[idx].icon || 'FlaskConical'}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.items || [])];
+                            const newListEN = [...(sectionEN.content.items || [])];
+                            newListES[idx].icon = e.target.value;
+                            newListEN[idx].icon = e.target.value;
+                            handleContentChange("items", newListES, 'es');
+                            handleContentChange("items", newListEN, 'en');
+                          }}
+                        >
+                          <option value="FlaskConical">Frasco (Flask)</option>
+                          <option value="Globe">Globo (Globe)</option>
+                          <option value="Shield">Escudo (Shield)</option>
+                          <option value="Leaf">Hoja (Leaf)</option>
+                          <option value="Zap">Rayo (Zap)</option>
+                          <option value="Microscope">Microscopio</option>
+                          <option value="Atom">Átomo (Atom)</option>
+                          <option value="Star">Estrella (Star)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Tamaño</Label>
+                        <select
+                          className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                          value={sectionES.content.items[idx].size || 'normal'}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.items || [])];
+                            const newListEN = [...(sectionEN.content.items || [])];
+                            newListES[idx].size = e.target.value;
+                            newListEN[idx].size = e.target.value;
+                            handleContentChange("items", newListES, 'es');
+                            handleContentChange("items", newListEN, 'en');
+                          }}
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="large">Grande (Doble)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <Input
+                      placeholder="Título"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].title : sectionEN.content.items[idx].title) || ""}
+                      onChange={(e) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].title = e.target.value;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <RichTextEditor
+                      placeholder="Descripción"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].description : sectionEN.content.items[idx].description) || ""}
+                      onChange={(val) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].description = val;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      minHeight="60px"
+                    />
+
+                    {/* LISTA DE CHECKS */}
+                    <div className="space-y-2 pt-2 border-t border-gray-100">
+                      <Label className="text-[#1C5D15] text-[10px] font-bold uppercase tracking-tight">Lista de características ✓</Label>
+                      <div className="grid gap-2">
+                        {((getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].details : sectionEN.content.items[idx].details) || []).map((detail: string, dIdx: number) => (
+                          <div key={dIdx} className="flex gap-1.5 animate-in slide-in-from-left-2 transition-all">
+                            <Input
+                              value={detail}
+                              onChange={(e) => {
+                                const lang = getFieldLang(fKey);
+                                const target = lang === 'es' ? sectionES : sectionEN;
+                                const newList = [...target.content.items];
+                                if (!newList[idx].details) newList[idx].details = [];
+                                newList[idx].details[dIdx] = e.target.value;
+                                handleContentChange("items", newList, lang);
+                              }}
+                              className="text-[10px] h-8 flex-1"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-300 hover:text-red-500 hover:bg-red-50"
+                              onClick={() => {
+                                const newListES = [...sectionES.content.items];
+                                const newListEN = [...sectionEN.content.items];
+                                newListES[idx].details = (newListES[idx].details || []).filter((_: any, i: number) => i !== dIdx);
+                                newListEN[idx].details = (newListEN[idx].details || []).filter((_: any, i: number) => i !== dIdx);
+                                handleContentChange("items", newListES, 'es');
+                                handleContentChange("items", newListEN, 'en');
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full h-8 text-[10px] text-[#1C5D15]/60 hover:text-[#1C5D15] border-dashed border border-[#1C5D15]/20 bg-gray-50/50"
+                          onClick={() => {
+                            const newListES = [...sectionES.content.items];
+                            const newListEN = [...sectionEN.content.items];
+                            if (!newListES[idx].details) newListES[idx].details = [];
+                            if (!newListEN[idx].details) newListEN[idx].details = [];
+                            newListES[idx].details.push("");
+                            newListEN[idx].details.push("");
+                            handleContentChange("items", newListES, 'es');
+                            handleContentChange("items", newListEN, 'en');
+                          }}
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" /> Nueva Característica
+                        </Button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.items || [];
+                const currentEN = sectionEN.content.items || [];
+                const newItem = { icon: "FlaskConical", size: "normal", title: "", description: "", details: [] };
+                handleContentChange("items", [...currentES, { ...newItem }], 'es');
+                handleContentChange("items", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Card Bento
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo Quote */}
+      {sectionES.type === "quote" && (
+        <div className="space-y-6">
+          <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="quote-text" label="Cita" />
+              <RichTextEditor
+                value={(getFieldLang('quote-text') === 'es' ? sectionES.content.quote : sectionEN.content.quote) || ''}
+                onChange={(val) => handleContentChange('quote', val, getFieldLang('quote-text'))}
+                minHeight="120px"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="quote-author" label="Autor" />
+              <Input
+                value={(getFieldLang('quote-author') === 'es' ? sectionES.content.author : sectionEN.content.author) || ''}
+                onChange={(e) => handleContentChange('author', e.target.value, getFieldLang('quote-author'))}
+                placeholder="Nombre del autor"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="quote-role" label="Cargo / Rol" />
+              <Input
+                value={(getFieldLang('quote-role') === 'es' ? sectionES.content.role : sectionEN.content.role) || ''}
+                onChange={(e) => handleContentChange('role', e.target.value, getFieldLang('quote-role'))}
+                placeholder="Puesto o división"
+              />
+            </div>
+            <div>
+              <Label className="text-[#1C5D15] font-bold text-xs uppercase mb-2 block">Imagen (Global)</Label>
+              <ImageUpload
+                currentImage={sectionES.content.image}
+                onImageUpload={(url) => handleContentChange('image', url, 'both')}
+                type="avatar"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tipo Timeline */}
       {sectionES.type === "timeline" && (
         <div className="space-y-6">
@@ -175,8 +413,175 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
 
           <div className="space-y-4">
             <Label className="text-[#1C5D15] font-bold px-1">HITOS (SINCRONIZADOS)</Label>
-            {(sectionES.content.milestones || []).map((ms: any, idx: number) => {
+            {((sectionES.content.milestones || sectionEN.content.milestones || []) as any[]).map((ms: any, idx: number) => {
               const fKey = `milestone-${idx}`;
+              const sample = sectionES.content.milestones?.[idx] || sectionEN.content.milestones?.[idx] || {};
+              const isStep = sample.step !== undefined;
+              const isPhase = sample.phase !== undefined;
+              const isYear = !isStep && !isPhase;
+
+              const getValue = (field: string) => {
+                if (getFieldLang(fKey) === 'es') {
+                  return sectionES.content.milestones?.[idx]?.[field] ?? '';
+                }
+                return sectionEN.content.milestones?.[idx]?.[field] ?? '';
+              };
+
+              const updateField = (field: string, value: any) => {
+                const lang = getFieldLang(fKey);
+                const target = lang === 'es' ? sectionES : sectionEN;
+                const newList = [...(target.content.milestones || [])];
+                newList[idx] = { ...newList[idx], [field]: value };
+                handleContentChange("milestones", newList, lang);
+              };
+
+              return (
+                <div key={idx} className="p-3 border rounded-xl bg-gray-50/50 relative group space-y-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    onClick={() => {
+                      const newES = (sectionES.content.milestones || []).filter((_: any, i: number) => i !== idx);
+                      const newEN = (sectionEN.content.milestones || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("milestones", newES, 'es');
+                      handleContentChange("milestones", newEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Hito #${idx + 1}`} />
+
+                  {isStep && (
+                    <>
+                      <Input
+                        placeholder="Paso"
+                        value={getValue('step') || ''}
+                        onChange={(e) => updateField('step', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                      <Input
+                        placeholder="Título"
+                        value={getValue('title') || ''}
+                        onChange={(e) => updateField('title', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                      <RichTextEditor
+                        placeholder="Descripción"
+                        value={getValue('desc') || ''}
+                        onChange={(val) => updateField('desc', val)}
+                        minHeight="60px"
+                      />
+                    </>
+                  )}
+
+                  {isPhase && (
+                    <>
+                      <Input
+                        placeholder="Fase"
+                        value={getValue('phase') || ''}
+                        onChange={(e) => updateField('phase', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                      <Input
+                        placeholder="Duración"
+                        value={getValue('time') || ''}
+                        onChange={(e) => updateField('time', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                      <RichTextEditor
+                        placeholder="Descripción"
+                        value={getValue('desc') || ''}
+                        onChange={(val) => updateField('desc', val)}
+                        minHeight="60px"
+                      />
+                    </>
+                  )}
+
+                  {isYear && (
+                    <>
+                      <Input
+                        placeholder="Año"
+                        value={getValue('year') || ''}
+                        onChange={(e) => updateField('year', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                      <Input
+                        placeholder="Título"
+                        value={getValue('title') || ''}
+                        onChange={(e) => updateField('title', e.target.value)}
+                        className="text-xs h-8"
+                      />
+                      <RichTextEditor
+                        placeholder="Descripción"
+                        value={getValue('description') || ''}
+                        onChange={(val) => updateField('description', val)}
+                        minHeight="60px"
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.milestones || [];
+                const currentEN = sectionEN.content.milestones || [];
+                const sample = currentES[0] || sectionEN.content.milestones?.[0] || {};
+                let newItem: any = { year: "", title: "", description: "", icon: "Lightbulb" };
+                if (sample.step !== undefined) {
+                  newItem = { step: "", title: "", desc: "" };
+                } else if (sample.phase !== undefined) {
+                  newItem = { phase: "", time: "", desc: "" };
+                }
+                handleContentChange("milestones", [...currentES, { ...newItem }], 'es');
+                handleContentChange("milestones", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2 text-[#1C5D15]" /> Agregar Hito Sincronizado
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo History */}
+      {sectionES.type === "history" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="history-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('history-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('history-title'))}
+                placeholder="Título de historia"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="history-subtitle" label="Subtítulo" />
+              <Input
+                value={(getFieldLang('history-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(e) => handleContentChange("subtitle", e.target.value, getFieldLang('history-subtitle'))}
+                placeholder="Subtítulo de historia"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="history-desc" label="Descripción de Sección" />
+              <RichTextEditor
+                value={(getFieldLang('history-desc') === 'es' ? sectionES.content.description : sectionEN.content.description) || ""}
+                onChange={(val) => handleContentChange("description", val, getFieldLang('history-desc'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1">HITOS (SINCRONIZADOS)</Label>
+            {(sectionES.content.milestones || []).map((ms: any, idx: number) => {
+              const fKey = `history-${idx}`;
               return (
                 <div key={idx} className="p-3 border rounded-xl bg-gray-50/50 relative group space-y-3">
                   <Button
@@ -284,6 +689,100 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         </div>
       )}
 
+      {/* Tipo FAQ */}
+      {sectionES.type === "faq" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="faq-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('faq-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('faq-title'))}
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="faq-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('faq-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(val) => handleContentChange("subtitle", val, getFieldLang('faq-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">PREGUNTAS FRECUENTES</Label>
+            {(sectionES.content.items || []).map((item: any, idx: number) => {
+              const fKey = `faq-item-${idx}`;
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("items", newListES, 'es');
+                      handleContentChange("items", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Pregunta #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <div>
+                      <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Pregunta</Label>
+                      <Input
+                        value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].question : sectionEN.content.items[idx].question) || ""}
+                        onChange={(e) => {
+                          const lang = getFieldLang(fKey);
+                          const target = lang === 'es' ? sectionES : sectionEN;
+                          const newList = [...target.content.items];
+                          newList[idx] = { ...newList[idx], question: e.target.value };
+                          handleContentChange("items", newList, lang);
+                        }}
+                        className="text-xs h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Respuesta</Label>
+                      <RichTextEditor
+                        value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].answer : sectionEN.content.items[idx].answer) || ""}
+                        onChange={(val) => {
+                          const lang = getFieldLang(fKey);
+                          const target = lang === 'es' ? sectionES : sectionEN;
+                          const newList = [...target.content.items];
+                          newList[idx] = { ...newList[idx], answer: val };
+                          handleContentChange("items", newList, lang);
+                        }}
+                        minHeight="80px"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.items || [];
+                const currentEN = sectionEN.content.items || [];
+                const newItem = { question: "", answer: "" };
+                handleContentChange("items", [...currentES, { ...newItem }], 'es');
+                handleContentChange("items", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Pregunta
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Tipo Features / Trust */}
       {(sectionES.type === "features" || sectionES.type === "trust") && (
         <div className="space-y-6">
@@ -335,6 +834,39 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                   <LanguageToggle fieldKey={fKey} label={`Item #${idx + 1}`} />
 
                   <div className="grid gap-3">
+
+                    {/* Selector de icono - SOLO modo normal features (Purpose/Propósito) */}
+                    {sectionES.type === "features" && !sectionES.content.badge && !sectionES.content.items?.[0]?.details && (
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                        <select
+                          className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                          value={sectionES.content.items?.[idx]?.icon || 'Users'}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.items || [])];
+                            const newListEN = [...(sectionEN.content.items || [])];
+                            newListES[idx] = { ...newListES[idx], icon: e.target.value };
+                            newListEN[idx] = { ...newListEN[idx], icon: e.target.value };
+                            handleContentChange("items", newListES, 'es');
+                            handleContentChange("items", newListEN, 'en');
+                          }}
+                        >
+                          <option value="Users">Personas (Users)</option>
+                          <option value="Target">Objetivo (Target)</option>
+                          <option value="Lightbulb">Bombilla (Lightbulb)</option>
+                          <option value="Shield">Escudo (Shield)</option>
+                          <option value="Leaf">Hoja (Leaf)</option>
+                          <option value="Globe">Globo (Globe)</option>
+                          <option value="Zap">Rayo (Zap)</option>
+                          <option value="Star">Estrella (Star)</option>
+                          <option value="TrendingUp">Crecimiento (TrendingUp)</option>
+                          <option value="Microscope">Microscopio</option>
+                          <option value="Atom">Átomo (Atom)</option>
+                          <option value="FlaskConical">Frasco (FlaskConical)</option>
+                        </select>
+                      </div>
+                    )}
+
                     <Input
                       placeholder="Nombre / Título"
                       value={(getFieldLang(fKey) === 'es' ? (sectionES.content[arrayKey][idx].title || sectionES.content[arrayKey][idx].name) : (sectionEN.content[arrayKey][idx].title || sectionEN.content[arrayKey][idx].name)) || ""}
@@ -362,39 +894,128 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                       minHeight="70px"
                     />
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-[#1C5D15] text-[9px] uppercase font-bold mb-1 block">Abreviatura / Especie</Label>
+                    {sectionES.type === "features" && (
+                      <div className="space-y-3">
                         <Input
-                          placeholder="Ej: Inversión"
-                          value={(getFieldLang(fKey) === 'es' ? sectionES.content[arrayKey][idx].placeholder : sectionEN.content[arrayKey][idx].placeholder) || ""}
+                          placeholder="Duración estimada"
+                          value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].duration : sectionEN.content.items[idx].duration) || ""}
                           onChange={(e) => {
                             const lang = getFieldLang(fKey);
                             const target = lang === 'es' ? sectionES : sectionEN;
-                            const newList = [...target.content[arrayKey]];
-                            newList[idx].placeholder = e.target.value;
-                            handleContentChange(arrayKey, newList, lang);
+                            const newList = [...target.content.items];
+                            newList[idx].duration = e.target.value;
+                            handleContentChange("items", newList, lang);
                           }}
-                          className="text-xs h-8"
+                          className="text-xs h-9"
                         />
-                      </div>
-                      <div>
-                        <Label className="text-[#1C5D15] text-[9px] uppercase font-bold mb-1 block">Enlace URL (Global)</Label>
                         <Input
-                          placeholder="https://..."
-                          value={sectionES.content[arrayKey][idx].link || ""}
+                          placeholder="Resultado esperado"
+                          value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].result : sectionEN.content.items[idx].result) || ""}
                           onChange={(e) => {
-                            const newListES = [...sectionES.content[arrayKey]];
-                            const newListEN = [...sectionEN.content[arrayKey]];
-                            newListES[idx].link = e.target.value;
-                            newListEN[idx].link = e.target.value;
-                            handleContentChange(arrayKey, newListES, 'es');
-                            handleContentChange(arrayKey, newListEN, 'en');
+                            const lang = getFieldLang(fKey);
+                            const target = lang === 'es' ? sectionES : sectionEN;
+                            const newList = [...target.content.items];
+                            newList[idx].result = e.target.value;
+                            handleContentChange("items", newList, lang);
                           }}
-                          className="text-xs h-8"
+                          className="text-xs h-9"
                         />
                       </div>
-                    </div>
+                    )}
+
+                    {/* LISTA DE CHECKS / DETALLES - MODO TECNOLOGIA */}
+                    {sectionES.type === "features" && (
+                      <div className="space-y-3 pt-2 border-t border-gray-100">
+                        <Label className="text-[#1C5D15] text-[10px] font-bold uppercase tracking-tight">Lista de Características ✓</Label>
+                        <div className="grid gap-2">
+                          {((getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].details : sectionEN.content[arrayKey][idx].details) || []).map((detail: string, dIdx: number) => (
+                            <div key={dIdx} className="flex gap-1.5 animate-in slide-in-from-left-2 transition-all">
+                              <Input
+                                value={detail}
+                                onChange={(e) => {
+                                  const lang = getFieldLang(fKey);
+                                  const target = lang === 'es' ? sectionES : sectionEN;
+                                  const newList = [...target.content[arrayKey]];
+                                  if (!newList[idx].details) newList[idx].details = [];
+                                  newList[idx].details[dIdx] = e.target.value;
+                                  handleContentChange(arrayKey, newList, lang);
+                                }}
+                                className="text-[10px] h-8 flex-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-300 hover:text-red-500 hover:bg-red-50"
+                                onClick={() => {
+                                  const newListES = [...sectionES.content[arrayKey]];
+                                  const newListEN = [...sectionEN.content[arrayKey]];
+                                  newListES[idx].details = (newListES[idx].details || []).filter((_: any, i: number) => i !== dIdx);
+                                  newListEN[idx].details = (newListEN[idx].details || []).filter((_: any, i: number) => i !== dIdx);
+                                  handleContentChange(arrayKey, newListES, 'es');
+                                  handleContentChange(arrayKey, newListEN, 'en');
+                                }}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full h-8 text-[10px] text-[#1C5D15]/60 hover:text-[#1C5D15] border-dashed border border-[#1C5D15]/20 bg-gray-50/50"
+                            onClick={() => {
+                              const newListES = [...sectionES.content[arrayKey]];
+                              const newListEN = [...sectionEN.content[arrayKey]];
+                              if (!newListES[idx].details) newListES[idx].details = [];
+                              if (!newListEN[idx].details) newListEN[idx].details = [];
+                              newListES[idx].details.push("");
+                              newListEN[idx].details.push("");
+                              handleContentChange(arrayKey, newListES, 'es');
+                              handleContentChange(arrayKey, newListEN, 'en');
+                            }}
+                          >
+                            <Plus className="w-3.5 h-3.5 mr-1" /> Nueva Característica ✓
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Placeholder y link - solo para trust */}
+                    {sectionES.type === "trust" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[#1C5D15] text-[9px] uppercase font-bold mb-1 block">Categoría</Label>
+                          <Input
+                            placeholder="Ej: Inversión"
+                            value={(getFieldLang(fKey) === 'es' ? sectionES.content[arrayKey][idx].placeholder : sectionEN.content[arrayKey][idx].placeholder) || ""}
+                            onChange={(e) => {
+                              const lang = getFieldLang(fKey);
+                              const target = lang === 'es' ? sectionES : sectionEN;
+                              const newList = [...target.content[arrayKey]];
+                              newList[idx].placeholder = e.target.value;
+                              handleContentChange(arrayKey, newList, lang);
+                            }}
+                            className="text-xs h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[#1C5D15] text-[9px] uppercase font-bold mb-1 block">Enlace URL (Global)</Label>
+                          <Input
+                            placeholder="https://..."
+                            value={sectionES.content[arrayKey][idx].link || ""}
+                            onChange={(e) => {
+                              const newListES = [...sectionES.content[arrayKey]];
+                              const newListEN = [...sectionEN.content[arrayKey]];
+                              newListES[idx].link = e.target.value;
+                              newListEN[idx].link = e.target.value;
+                              handleContentChange(arrayKey, newListES, 'es');
+                              handleContentChange(arrayKey, newListEN, 'en');
+                            }}
+                            className="text-xs h-8"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {sectionES.type === "trust" && (
                       <div className="space-y-3 pt-2 border-t border-gray-100">
@@ -451,21 +1072,23 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                       </div>
                     )}
 
-                    <div className="pt-2">
-                      <Label className="text-[9px] uppercase font-bold text-gray-400 mb-1 block">Imagen (Global)</Label>
-                      <ImageUpload
-                        currentImage={sectionES.content[arrayKey][idx].image}
-                        onImageUpload={(url) => {
-                          const newListES = [...sectionES.content[arrayKey]];
-                          const newListEN = [...sectionEN.content[arrayKey]];
-                          newListES[idx].image = url;
-                          newListEN[idx].image = url;
-                          handleContentChange(arrayKey, newListES, 'es');
-                          handleContentChange(arrayKey, newListEN, 'en');
-                        }}
-                        type="avatar"
-                      />
-                    </div>
+                    {sectionES.type === "trust" && (
+                      <div className="pt-2">
+                        <Label className="text-[9px] uppercase font-bold text-gray-400 mb-1 block">Imagen (Global)</Label>
+                        <ImageUpload
+                          currentImage={sectionES.content[arrayKey][idx].image}
+                          onImageUpload={(url) => {
+                            const newListES = [...sectionES.content[arrayKey]];
+                            const newListEN = [...sectionEN.content[arrayKey]];
+                            newListES[idx].image = url;
+                            newListEN[idx].image = url;
+                            handleContentChange(arrayKey, newListES, 'es');
+                            handleContentChange(arrayKey, newListEN, 'en');
+                          }}
+                          type="avatar"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -480,7 +1103,7 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                 const currentEN = sectionEN.content[arrayKey] || [];
                 const newItem = sectionES.type === "trust"
                   ? { name: "", image: "", link: "", description: "", placeholder: "", details: [] }
-                  : { title: "", description: "", icon: "Users" };
+                  : { title: "", description: "", icon: "Users", duration: "", result: "" };
                 handleContentChange(arrayKey, [...currentES, { ...newItem }], 'es');
                 handleContentChange(arrayKey, [...currentEN, { ...newItem }], 'en');
               }}
@@ -780,6 +1403,99 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
             </div>
           </div>
 
+          {sectionES.type === "ecosystem" && (
+            <div className="space-y-4">
+              <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+                <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2">Botón Acción CTA</h4>
+                <div>
+                  <LanguageToggle fieldKey="eco-cta-text" label="Texto del Botón" />
+                  <Input
+                    value={(getFieldLang('eco-cta-text') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
+                    onChange={(e) => handleContentChange("ctaText", e.target.value, getFieldLang('eco-cta-text'))}
+                    placeholder="Ej: Conocer Más"
+                    className="text-xs h-9"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1.5 block">Enlace del Botón (Global)</Label>
+                  <Input
+                    value={sectionES.content.ctaLink || ""}
+                    onChange={(e) => handleContentChange("ctaLink", e.target.value, 'both')}
+                    placeholder="Ej: /ecosystem"
+                    className="text-xs h-8"
+                  />
+                </div>
+              </div>
+
+              <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">CARACTERÍSTICAS SINCRONIZADAS</Label>
+              {(sectionES.content.items || []).map((_: any, idx: number) => {
+                const fKey = `ecosystem-item-${idx}`;
+
+                return (
+                  <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                      onClick={() => {
+                        const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                        const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                        handleContentChange("items", newListES, 'es');
+                        handleContentChange("items", newListEN, 'en');
+                      }}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+
+                    <LanguageToggle fieldKey={fKey} label={`Item #${idx + 1}`} />
+
+                    <div className="grid gap-3">
+                      <Input
+                        placeholder="Título"
+                        value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].title : sectionEN.content.items[idx].title) || ""}
+                        onChange={(e) => {
+                          const lang = getFieldLang(fKey);
+                          const target = lang === 'es' ? sectionES : sectionEN;
+                          const newList = [...(target.content.items || [])];
+                          newList[idx].title = e.target.value;
+                          handleContentChange("items", newList, lang);
+                        }}
+                        className="text-xs h-9"
+                      />
+
+                      <RichTextEditor
+                        placeholder="Descripción"
+                        value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].description : sectionEN.content.items[idx].description) || ""}
+                        onChange={(val) => {
+                          const lang = getFieldLang(fKey);
+                          const target = lang === 'es' ? sectionES : sectionEN;
+                          const newList = [...(target.content.items || [])];
+                          newList[idx].description = val;
+                          handleContentChange("items", newList, lang);
+                        }}
+                        minHeight="60px"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+                onClick={() => {
+                  const currentES = sectionES.content.items || [];
+                  const currentEN = sectionEN.content.items || [];
+                  const newItem = { title: "", description: "", icon: "Users" };
+                  handleContentChange("items", [...currentES, { ...newItem }], 'es');
+                  handleContentChange("items", [...currentEN, { ...newItem }], 'en');
+                }}
+              >
+                <Plus className="w-3 h-3 mr-2" /> Agregar Item Sincronizado
+              </Button>
+            </div>
+          )}
+
           {sectionES.type === "news" && (
             <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
               <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2">Botón de Acción (CTA)</h4>
@@ -905,6 +1621,581 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                 }}
                 className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                 rows={3}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo Problems */}
+      {sectionES.type === "problems" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="problems-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('problems-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('problems-title'))}
+                placeholder="Los Retos de la Industria"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="problems-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('problems-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(val) => handleContentChange("subtitle", val, getFieldLang('problems-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">PROBLEMAS IDENTIFICADOS</Label>
+            {(sectionES.content.items || []).map((_: any, idx: number) => {
+              const fKey = `problem-${idx}`;
+
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("items", newListES, 'es');
+                      handleContentChange("items", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Problema #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                        <select
+                          className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                          value={sectionES.content.items[idx].icon || 'AlertTriangle'}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.items || [])];
+                            const newListEN = [...(sectionEN.content.items || [])];
+                            newListES[idx].icon = e.target.value;
+                            newListEN[idx].icon = e.target.value;
+                            handleContentChange("items", newListES, 'es');
+                            handleContentChange("items", newListEN, 'en');
+                          }}
+                        >
+                          <option value="AlertTriangle">Triángulo de Alerta</option>
+                          <option value="TrendingUp">Tendencia Ascendente</option>
+                          <option value="Globe">Globo</option>
+                          <option value="Shield">Escudo</option>
+                          <option value="Leaf">Hoja</option>
+                          <option value="Zap">Rayo</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Estadística</Label>
+                        <Input
+                          placeholder="Ej: 40%"
+                          value={sectionES.content.items[idx].stat || ""}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.items || [])];
+                            const newListEN = [...(sectionEN.content.items || [])];
+                            newListES[idx].stat = e.target.value;
+                            newListEN[idx].stat = e.target.value;
+                            handleContentChange("items", newListES, 'es');
+                            handleContentChange("items", newListEN, 'en');
+                          }}
+                          className="text-xs h-8"
+                        />
+                      </div>
+                    </div>
+
+                    <Input
+                      placeholder="Título del Problema"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].title : sectionEN.content.items[idx].title) || ""}
+                      onChange={(e) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].title = e.target.value;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <RichTextEditor
+                      placeholder="Descripción del Problema"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].description : sectionEN.content.items[idx].description) || ""}
+                      onChange={(val) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].description = val;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      minHeight="60px"
+                    />
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Etiqueta Estadística</Label>
+                        <Input
+                          placeholder="Ej: de pérdida"
+                          value={sectionES.content.items[idx].statLabel || ""}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.items || [])];
+                            const newListEN = [...(sectionEN.content.items || [])];
+                            newListES[idx].statLabel = e.target.value;
+                            newListEN[idx].statLabel = e.target.value;
+                            handleContentChange("items", newListES, 'es');
+                            handleContentChange("items", newListEN, 'en');
+                          }}
+                          className="text-xs h-8"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.items || [];
+                const currentEN = sectionEN.content.items || [];
+                const newItem = { icon: "AlertTriangle", title: "", description: "", stat: "", statLabel: "" };
+                handleContentChange("items", [...currentES, { ...newItem }], 'es');
+                handleContentChange("items", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Problema
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo Sectors */}
+      {sectionES.type === "sectors" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="sectors-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('sectors-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('sectors-title'))}
+                placeholder="Industrias que Servimos"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="sectors-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('sectors-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(val) => handleContentChange("subtitle", val, getFieldLang('sectors-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">SECTORES INDUSTRIALES</Label>
+            {(sectionES.content.items || []).map((_: any, idx: number) => {
+              const fKey = `sector-${idx}`;
+
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("items", newListES, 'es');
+                      handleContentChange("items", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Sector #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <div>
+                      <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                      <select
+                        className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                        value={sectionES.content.items[idx].icon || 'Factory'}
+                        onChange={(e) => {
+                          const newListES = [...(sectionES.content.items || [])];
+                          const newListEN = [...(sectionEN.content.items || [])];
+                          newListES[idx].icon = e.target.value;
+                          newListEN[idx].icon = e.target.value;
+                          handleContentChange("items", newListES, 'es');
+                          handleContentChange("items", newListEN, 'en');
+                        }}
+                      >
+                        <option value="Factory">Fábrica</option>
+                        <option value="Sprout">Planta</option>
+                        <option value="Building2">Edificio</option>
+                        <option value="Fish">Pez</option>
+                        <option value="Apple">Manzana</option>
+                        <option value="HeartPulse">Corazón</option>
+                        <option value="Shirt">Camisa</option>
+                        <option value="Warehouse">Almacén</option>
+                      </select>
+                    </div>
+
+                    <Input
+                      placeholder="Nombre del Sector"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].title : sectionEN.content.items[idx].title) || ""}
+                      onChange={(e) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].title = e.target.value;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <RichTextEditor
+                      placeholder="Descripción del Sector"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].description : sectionEN.content.items[idx].description) || ""}
+                      onChange={(val) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].description = val;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      minHeight="60px"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.items || [];
+                const currentEN = sectionEN.content.items || [];
+                const newItem = { icon: "Factory", title: "", description: "" };
+                handleContentChange("items", [...currentES, { ...newItem }], 'es');
+                handleContentChange("items", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Sector
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo Stats */}
+      {sectionES.type === "stats" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="stats-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('stats-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('stats-title'))}
+                placeholder="Nuestros Resultados"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="stats-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('stats-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(val) => handleContentChange("subtitle", val, getFieldLang('stats-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">ESTADÍSTICAS</Label>
+            {(sectionES.content.stats || []).map((_: any, idx: number) => {
+              const fKey = `stat-${idx}`;
+
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.stats || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.stats || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("stats", newListES, 'es');
+                      handleContentChange("stats", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Estadística #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <Input
+                      placeholder="Valor (Ej: 95%)"
+                      value={sectionES.content.stats[idx].value || ""}
+                      onChange={(e) => {
+                        const newListES = [...(sectionES.content.stats || [])];
+                        const newListEN = [...(sectionEN.content.stats || [])];
+                        newListES[idx].value = e.target.value;
+                        newListEN[idx].value = e.target.value;
+                        handleContentChange("stats", newListES, 'es');
+                        handleContentChange("stats", newListEN, 'en');
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <Input
+                      placeholder="Etiqueta (Ej: Satisfacción del Cliente)"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.stats[idx].label : sectionEN.content.stats[idx].label) || ""}
+                      onChange={(e) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.stats];
+                        newList[idx].label = e.target.value;
+                        handleContentChange("stats", newList, lang);
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <RichTextEditor
+                      placeholder="Descripción (Opcional)"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.stats[idx].description : sectionEN.content.stats[idx].description) || ""}
+                      onChange={(val) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.stats];
+                        newList[idx].description = val;
+                        handleContentChange("stats", newList, lang);
+                      }}
+                      minHeight="60px"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.stats || [];
+                const currentEN = sectionEN.content.stats || [];
+                const newItem = { value: "", label: "", description: "" };
+                handleContentChange("stats", [...currentES, { ...newItem }], 'es');
+                handleContentChange("stats", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Estadística
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo Certifications */}
+      {sectionES.type === "certifications" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="certifications-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('certifications-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('certifications-title'))}
+                placeholder="Certificaciones y Reconocimientos"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="certifications-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('certifications-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(val) => handleContentChange("subtitle", val, getFieldLang('certifications-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">CERTIFICACIONES</Label>
+            {(sectionES.content.items || []).map((_: any, idx: number) => {
+              const fKey = `certification-${idx}`;
+
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("items", newListES, 'es');
+                      handleContentChange("items", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Certificación #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <Input
+                      placeholder="Acrónimo (Ej: ISO 9001)"
+                      value={sectionES.content.items[idx].acronym || ""}
+                      onChange={(e) => {
+                        const newListES = [...(sectionES.content.items || [])];
+                        const newListEN = [...(sectionEN.content.items || [])];
+                        newListES[idx].acronym = e.target.value;
+                        newListEN[idx].acronym = e.target.value;
+                        handleContentChange("items", newListES, 'es');
+                        handleContentChange("items", newListEN, 'en');
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <Input
+                      placeholder="Nombre Completo"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].name : sectionEN.content.items[idx].name) || ""}
+                      onChange={(e) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].name = e.target.value;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <RichTextEditor
+                      placeholder="Descripción de la Certificación"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].description : sectionEN.content.items[idx].description) || ""}
+                      onChange={(val) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].description = val;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      minHeight="60px"
+                    />
+
+                    <div>
+                      <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Año de Obtención</Label>
+                      <Input
+                        placeholder="Ej: 2023"
+                        value={sectionES.content.items[idx].year || ""}
+                        onChange={(e) => {
+                          const newListES = [...(sectionES.content.items || [])];
+                          const newListEN = [...(sectionEN.content.items || [])];
+                          newListES[idx].year = e.target.value;
+                          newListEN[idx].year = e.target.value;
+                          handleContentChange("items", newListES, 'es');
+                          handleContentChange("items", newListEN, 'en');
+                        }}
+                        className="text-xs h-8"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.items || [];
+                const currentEN = sectionEN.content.items || [];
+                const newItem = { acronym: "", name: "", description: "", year: "" };
+                handleContentChange("items", [...currentES, { ...newItem }], 'es');
+                handleContentChange("items", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Certificación
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo CTA */}
+      {sectionES.type === "cta" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+              <select
+                value={sectionES.content.icon || 'FlaskConical'}
+                onChange={(e) => handleContentChange('icon', e.target.value, 'both')}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-[#1C5D15]"
+              >
+                {CTA_ICON_OPTIONS.map((iconName) => (
+                  <option key={iconName} value={iconName}>{iconName}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <LanguageToggle fieldKey="cta-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('cta-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('cta-title'))}
+                placeholder="¡Comienza Tu Transformación!"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="cta-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('cta-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(val) => handleContentChange("subtitle", val, getFieldLang('cta-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2">Botones de Acción</h4>
+            <div>
+              <LanguageToggle fieldKey="cta-primary" label="Botón Primario" />
+              <Input
+                placeholder="Texto del Botón"
+                value={(getFieldLang('cta-primary') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
+                onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('cta-primary'))}
+                className="text-xs h-9 mb-2"
+              />
+              <Input
+                placeholder="Enlace URL"
+                value={(getFieldLang('cta-primary') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ""}
+                onChange={(e) => handleContentChange('ctaLink', e.target.value, getFieldLang('cta-primary'))}
+                className="text-xs h-9"
+              />
+            </div>
+
+            <div className="h-px bg-gray-100" />
+
+            <div>
+              <LanguageToggle fieldKey="cta-secondary" label="Botón Secundario" />
+              <Input
+                placeholder="Texto del Botón"
+                value={(getFieldLang('cta-secondary') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ""}
+                onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('cta-secondary'))}
+                className="text-xs h-9 mb-2"
+              />
+              <Input
+                placeholder="Enlace URL"
+                value={(getFieldLang('cta-secondary') === 'es' ? sectionES.content.secondaryCtaLink : sectionEN.content.secondaryCtaLink) || ""}
+                onChange={(e) => handleContentChange('secondaryCtaLink', e.target.value, getFieldLang('cta-secondary'))}
+                className="text-xs h-9"
               />
             </div>
           </div>

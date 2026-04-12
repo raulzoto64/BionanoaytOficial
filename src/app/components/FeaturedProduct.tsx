@@ -1,6 +1,12 @@
 import { Button } from "./ui/button";
 import { Leaf, Shield, Droplets } from "lucide-react";
 
+// Elimina etiquetas HTML del texto para evitar que se rendericen como string literal
+function stripHtml(html: string): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+}
+
 interface Feature {
   icon: 'Shield' | 'Leaf' | 'Droplets';
   title: string;
@@ -48,9 +54,7 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
             <h2 className="text-4xl md:text-5xl mb-6 text-[#1C5D15]">
               {content.productName}
             </h2>
-            <p className="text-xl mb-6 text-[#629960]">
-              {content.productDescription}
-            </p>
+<p className="text-xl mb-6 text-[#629960] leading-relaxed" dangerouslySetInnerHTML={{ __html: content.productDescription }}></p>
             
             <div className="space-y-4 mb-8">
               {content.features.map((feature: any, index: number) => {
@@ -62,7 +66,7 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
                     </div>
                     <div>
                       <h4 className="text-[#1C5D15] mb-1">{feature.title}</h4>
-                      <p className="text-[#629960]">{feature.description}</p>
+<p className="text-[#629960]" dangerouslySetInnerHTML={{ __html: feature.description }}></p>
                     </div>
                   </div>
                 );

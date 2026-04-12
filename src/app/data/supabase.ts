@@ -102,7 +102,16 @@ export interface Section {
     | "trust"
     | "featured"
     | "ecosystem"
-    | "news";
+    | "news"
+    | "stats"
+    | "bento"
+    | "quote"
+    | "faq"
+    | "history"
+    | "problems"
+    | "sectors"
+    | "certifications"
+    | "cta";
   order: number;
   visible: boolean;
   content: Record<string, any>;

@@ -561,8 +561,8 @@ function SectionEditor({
             <h4 className="text-md text-[#1C5D15] font-semibold">Contenido</h4>
             
             {/* Campos comunes a múltiples secciones */}
-            {(section.type === 'hero' || section.type === 'text' || section.type === 'features' || 
-              section.type === 'team' || section.type === 'products' || section.type === 'featured' ||
+            {(section.type === 'hero' || section.type === 'text' ||
+              section.type === 'team' || section.type === 'featured' ||
               section.type === 'trust') && (
               <>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -805,74 +805,6 @@ function SectionEditor({
                   </div>
                 )}
 
-                {section.type === 'products' && (
-                  <div>
-                    <Label className="text-[#1C5D15]">Productos</Label>
-                    {section.content.products && section.content.products.length > 0 ? (
-                      (section.content.products as any[]).map((product: any, idx: number) => (
-                        <div key={idx} className="border p-4 rounded-lg mb-4">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <Label className="text-[#1C5D15]">Nombre</Label>
-                              <Input
-                                type="text"
-                                value={product.name || ''}
-                                onChange={(e) => {
-                                  const newProducts = [...section.content.products];
-                                  newProducts[idx].name = e.target.value;
-                                  onUpdateContent('products', newProducts);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[#1C5D15]">Categoría</Label>
-                              <Input
-                                type="text"
-                                value={product.category || ''}
-                                onChange={(e) => {
-                                  const newProducts = [...section.content.products];
-                                  newProducts[idx].category = e.target.value;
-                                  onUpdateContent('products', newProducts);
-                                }}
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          <div className="mt-4">
-                            <Label className="text-[#1C5D15]">Descripción</Label>
-                            <textarea
-                              value={product.description || ''}
-                              onChange={(e) => {
-                                const newProducts = [...section.content.products];
-                                newProducts[idx].description = e.target.value;
-                                onUpdateContent('products', newProducts);
-                              }}
-                              className="w-full mt-1 px-3 py-2 border rounded-lg"
-                              rows={2}
-                            />
-                          </div>
-                          <div className="mt-4">
-                            <Label className="text-[#1C5D15]">Imagen</Label>
-                            <ImageUpload
-                              currentImage={product.image}
-                              onImageUpload={(url) => {
-                                const newProducts = [...section.content.products];
-                                newProducts[idx].image = url;
-                                onUpdateContent('products', newProducts);
-                              }}
-                              type="banner"
-                            />
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-[#629960] text-sm">
-                        No hay productos definidos
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {section.type === 'trust' && (
                   <div>

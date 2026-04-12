@@ -39,6 +39,30 @@ export function RichTextEditor({
   placeholder = 'Escribe aquí el contenido...',
   minHeight = '300px',
 }: RichTextEditorProps) {
+  // Función para limpiar HTML de etiquetas innecesarias
+  const cleanHtml = (html: string): string => {
+    if (!html) return '';
+    
+    // Caso 1: El contenido es SOLO un párrafo sin atributos y sin formato interno
+    const singleParagraphRegex = /^<p>([^<>]+)<\/p>$/i;
+    if (singleParagraphRegex.test(html.trim())) {
+      return html.trim().replace(singleParagraphRegex, '$1');
+    }
+    
+    // Caso 2: El contenido es <p></p> vacío
+    if (html.trim() === '<p></p>') {
+      return '';
+    }
+    
+    // Caso 3: Contenido vacío
+    if (html.trim() === '') {
+      return '';
+    }
+    
+    // Si tiene formato real (negritas, enlaces, listas, etc.), mantener el HTML
+    return html;
+  };
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -49,13 +73,16 @@ export function RichTextEditor({
     ],
     content: value,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const rawHtml = editor.getHTML();
+      const cleanedHtml = cleanHtml(rawHtml);
+      onChange(cleanedHtml);
     },
   });
 
   // Sync external value changes (e.g. when switching language tabs)
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
+      // @ts-ignore: Mantenemos compatibilidad con versiones antiguas de TipTap
       editor.commands.setContent(value || '', false);
     }
   }, [value, editor]);

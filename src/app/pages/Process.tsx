@@ -3,7 +3,7 @@ import { PageContent, Section, supabaseAPI } from "../data/supabase";
 import {
   FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
   AlertTriangle, ChevronDown, ChevronUp, Quote, CheckCircle,
-  Sprout, Building2, Fish, Apple, HeartPulse, Shirt, Warehouse
+  Sprout, Building2, Fish, Apple, HeartPulse, Shirt, Warehouse, Shield
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
@@ -12,7 +12,7 @@ import { SEO } from "../components/SEO";
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
   AlertTriangle, CheckCircle, Sprout, Building2, Fish, Apple,
-  HeartPulse, Shirt, Warehouse
+  HeartPulse, Shirt, Warehouse, Shield
 };
 function Icon({ name, className }: { name: string; className?: string }) {
   const C = ICON_MAP[name] || FlaskConical;
@@ -275,19 +275,23 @@ export function Process() {
                     <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>
                     {section.content.subtitle && <p className="text-xl text-[#629960]">{section.content.subtitle}</p>}
                   </div>
-                  <div className="flex flex-col md:flex-row items-start justify-center gap-4 flex-wrap">
+                  {/* Grid de 5 columnas en desktop, 1 en móvil */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     {section.content.milestones?.map((item: any, index: number) => (
-                      <div key={index} className="flex items-center gap-4">
-                        <div className="text-center bg-white p-6 rounded-2xl shadow-lg border-2 border-[#629960]/20 hover:border-[#19FF00] transition-all duration-300 w-full max-w-[200px] hover:-translate-y-1 group">
-                          <div className="w-10 h-10 bg-[#1C5D15] text-[#19FF00] rounded-full flex items-center justify-center text-sm font-black mx-auto mb-3 group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-colors">
+                      <div key={index} className="relative">
+                        <div className="text-center bg-white p-5 rounded-2xl shadow-lg border-2 border-[#629960]/20 hover:border-[#19FF00] transition-all duration-300 hover:-translate-y-1 group h-full flex flex-col items-center">
+                          <div className="w-10 h-10 bg-[#1C5D15] text-[#19FF00] rounded-full flex items-center justify-center text-sm font-black mx-auto mb-3 group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-colors shrink-0">
                             {index + 1}
                           </div>
-                          <div className="text-lg font-bold text-[#1C5D15] mb-1">{item.phase}</div>
-                          <div className="text-[#629960] text-xs">{item.time}</div>
-                          {item.desc && <p className="text-[#629960] text-xs mt-2 leading-relaxed">{item.desc}</p>}
+                          <div className="text-base font-bold text-[#1C5D15] mb-1">{item.phase}</div>
+                          <div className="text-[#629960] text-xs font-semibold uppercase tracking-wide mb-2">{item.time}</div>
+                          {item.desc && <p className="text-[#629960] text-xs leading-relaxed">{item.desc}</p>}
                         </div>
-                        {index < (section.content.milestones.length - 1) && (
-                          <div className="hidden md:flex text-[#19FF00] text-3xl font-black opacity-50">→</div>
+                        {/* Flecha entre cajas en desktop */}
+                        {index < (section.content.milestones?.length - 1) && (
+                          <div className="hidden lg:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-4 items-center justify-center">
+                            <span className="text-[#19FF00] font-black text-lg">›</span>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -412,7 +416,13 @@ export function Process() {
                   <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#19FF00] rounded-full translate-x-1/2 translate-y-1/2" />
                 </div>
                 <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-                  <div className="text-5xl mb-6">{section.content.emoji || '🚀'}</div>
+                  {section.content.icon ? (
+                    <div className="flex justify-center mb-6">
+                      <Icon name={section.content.icon} className="w-16 h-16 text-[#19FF00]" />
+                    </div>
+                  ) : (
+                    <div className="text-5xl mb-6">{section.content.emoji || '🚀'}</div>
+                  )}
                   <h2 className="text-4xl md:text-5xl font-bold mb-6">{section.content.title}</h2>
                   <p className="text-xl text-white/85 mb-10 max-w-2xl mx-auto leading-relaxed">{section.content.subtitle}</p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">

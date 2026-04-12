@@ -241,8 +241,13 @@ export function AdminVisualEditor() {
     }
   };
 
-  const activeSectionES = sectionsES.find(s => s.id === activeSectionId) || null;
-  const activeSectionEN = sectionsEN.find(s => s.id === activeSectionId) || null;
+  const activeSectionESById = sectionsES.find(s => s.id === activeSectionId) || null;
+  const activeSectionENById = sectionsEN.find(s => s.id === activeSectionId) || null;
+  const activeSectionIndexByES = activeSectionESById ? sectionsES.findIndex(s => s.id === activeSectionId) : -1;
+  const activeSectionIndexByEN = activeSectionENById ? sectionsEN.findIndex(s => s.id === activeSectionId) : -1;
+
+  const activeSectionES = activeSectionESById || (activeSectionIndexByEN >= 0 && activeSectionIndexByEN < sectionsES.length ? sectionsES[activeSectionIndexByEN] : null);
+  const activeSectionEN = activeSectionENById || (activeSectionIndexByES >= 0 && activeSectionIndexByES < sectionsEN.length ? sectionsEN[activeSectionIndexByES] : null);
   const activeSections = activeLanguage === 'es' ? sectionsES : sectionsEN;
 
   const handleUpdateSection = (sectionId: string, content: any, lang: 'es' | 'en' | 'both' = 'both') => {
@@ -257,7 +262,10 @@ export function AdminVisualEditor() {
 
   const handleViewLive = () => {
     if (!page) return;
-    const url = page.slug === 'page-home' ? '/' : `/${page.slug}`;
+    const slugWithoutPrefix = page.slug.replace(/^page-/, '');
+    const url = page.slug === 'page-home'
+      ? '/'
+      : `/${slugWithoutPrefix}`;
     window.open(url, '_blank');
   };
 

@@ -36,7 +36,7 @@ export function Purpose({ purposes }: PurposeProps) {
                   <IconComponent className="w-10 h-10 text-[#1C5D15]" />
                 </div>
                 <h3 className="text-2xl mb-4 text-[#1C5D15]">{purpose.title}</h3>
-                <p className="text-[#629960] leading-relaxed">{purpose.description}</p>
+<p className="text-[#629960] leading-relaxed" dangerouslySetInnerHTML={{ __html: purpose.description }}></p>
               </div>
             );
           })}
