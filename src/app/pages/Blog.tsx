@@ -25,6 +25,8 @@ interface PostWithTranslation {
 export function Blog() {
   const { language } = useLanguage();
   const [posts, setPosts] = useState<PostWithTranslation[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<PostWithTranslation[]>([]);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'news' | 'article'>('all');
   const [pageData, setPageData] = useState<PageWithContent | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -157,6 +159,7 @@ export function Blog() {
         }));
 
         setPosts(postsWithTranslations);
+        setFilteredPosts(postsWithTranslations);
       } catch (error) {
       } finally {
         setLoading(false);
@@ -165,6 +168,15 @@ export function Blog() {
 
     loadData();
   }, [language]);
+
+  // Filtrar posts cuando cambia el filtro activo
+  useEffect(() => {
+    if (activeFilter === 'all') {
+      setFilteredPosts(posts);
+    } else {
+      setFilteredPosts(posts.filter(post => post.type === activeFilter));
+    }
+  }, [activeFilter, posts]);
 
   if (loading) {
     return (
@@ -180,50 +192,92 @@ export function Blog() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* PRUEBA FORZADA HERO BLOG */}
-        <HeroBlog content={{
-          badge: "Blog",
-          title: language === 'es' ? 'Actualidad y Ciencia' : 'News & Science',
-          subtitle: language === 'es' 
-            ? 'Explora las últimas innovaciones en bioseguridad, nanotecnología y desarrollo sostenible.' 
-            : 'Explore the latest innovations in biosecurity, nanotechnology, and sustainable development.',
-          backgroundImage: "https://sb-jzmdfoptxmqywihyhoty.supabase.co/storage/v1/object/public/site_assets/blog-hero-bg.jpg"
-        }} />
-        
-        <div className="mt-16">
-          {/* Grid de cartas */}
-          {posts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-              {posts.map((post) => (
-                <ContentCard 
-                  key={post.id} 
-                  type="blog" 
-                  data={post} 
-                />
-              ))}
+    <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0]">
+      {/* RENDERIZAR SECCIONES DINAMICAS DESDE EL EDITOR VISUAL */}
+      {pageData && pageData.sections && pageData.sections.map((section: any) => {
+        // El hero-blog va FUERA del contenedor para ser full width
+        if (section.type === 'hero-blog' && section.visible) {
+          return (
+            <div key={section.id} className="-mt-[1px]">
+              <HeroBlog content={section.content} />
             </div>
-          ) : (
-            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-[#629960]/30">
-              <h3 className="text-xl font-bold text-[#1C5D15] mb-2">
-                {language === 'es' ? 'Próximamente' : 'Coming Soon'}
-              </h3>
-              <p className="text-[#629960]">
-                {language === 'es' ? 'Estamos preparando nuevos artículos para ti.' : 'We are preparing new articles for you.'}
-              </p>
-            </div>
-          )}
+          );
+        }
+        return null;
+      })}
 
-          {/* Paginación */}
-          {posts.length > 8 && (
-            <div className="flex justify-center mt-12 gap-2">
-              <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-[#629960]/20 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all">1</button>
-              <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-[#629960]/20 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all">2</button>
-            </div>
-          )}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* FILTRO DE CATEGORIAS */}
+        <div className="flex justify-center gap-3 mb-12">
+          <button
+            onClick={() => setActiveFilter('all')}
+            className={`px-6 py-2.5 rounded-full font-medium transition-all ${
+              activeFilter === 'all'
+                ? 'bg-[#1C5D15] text-white shadow-lg'
+                : 'bg-white text-[#1C5D15] border border-[#1C5D15]/20 hover:border-[#1C5D15]'
+            }`}
+          >
+            {language === 'es' ? 'Todos' : 'All'}
+          </button>
+          <button
+            onClick={() => setActiveFilter('news')}
+            className={`px-6 py-2.5 rounded-full font-medium transition-all ${
+              activeFilter === 'news'
+                ? 'bg-[#1C5D15] text-white shadow-lg'
+                : 'bg-white text-[#1C5D15] border border-[#1C5D15]/20 hover:border-[#1C5D15]'
+            }`}
+          >
+            {language === 'es' ? 'Noticias' : 'News'}
+          </button>
+          <button
+            onClick={() => setActiveFilter('article')}
+            className={`px-6 py-2.5 rounded-full font-medium transition-all ${
+              activeFilter === 'article'
+                ? 'bg-[#1C5D15] text-white shadow-lg'
+                : 'bg-white text-[#1C5D15] border border-[#1C5D15]/20 hover:border-[#1C5D15]'
+            }`}
+          >
+            {language === 'es' ? 'Artículos' : 'Articles'}
+          </button>
         </div>
+
+        {/* RENDERIZAR OTRAS SECCIONES DENTRO DEL CONTENEDOR */}
+        {pageData && pageData.sections && pageData.sections.map((section: any) => {
+          if (section.type !== 'hero-blog') {
+            return renderSection(section, language);
+          }
+          return null;
+        })}
+
+        {/* Grid de cartas */}
+        {filteredPosts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center mt-12">
+            {filteredPosts.map((post) => (
+              <ContentCard 
+                key={post.id} 
+                type="blog" 
+                data={post} 
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-[#629960]/30">
+            <h3 className="text-xl font-bold text-[#1C5D15] mb-2">
+              {language === 'es' ? 'Próximamente' : 'Coming Soon'}
+            </h3>
+            <p className="text-[#629960]">
+              {language === 'es' ? 'Estamos preparando nuevos artículos para ti.' : 'We are preparing new articles for you.'}
+            </p>
+          </div>
+        )}
+
+        {/* Paginación */}
+        {filteredPosts.length > 8 && (
+          <div className="flex justify-center mt-12 gap-2">
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-[#629960]/20 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all">1</button>
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl border border-[#629960]/20 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all">2</button>
+          </div>
+        )}
       </div>
     </div>
   );

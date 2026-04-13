@@ -71,7 +71,8 @@ export function VisualEditorPreview({
         return <Hero content={section.content} />;
 
       case "hero-blog":
-        return <HeroBlog content={section.content} />;
+        // ✅ DENTRO DEL EDITOR QUITAR MARGEN SUPERIOR PARA QUE SE PEGUE ARRIBA IGUAL QUE EN LA PAGINA REAL
+        return <div className="-mt-[1px]"><HeroBlog content={section.content} /></div>;
 
       case "trust":
         // ✅ Vista previa EN VIVO exacta al componente TrustBar real
@@ -311,11 +312,29 @@ export function VisualEditorPreview({
         );
 
       case 'blog-posts':
+        // ✅ AHORA MUESTRA LOS POSTS REALES DENTRO DEL EDITOR TAMBIEN
         return (
           <div className="py-20 bg-white">
-            <div className="max-w-6xl mx-auto px-6 text-center">
-              <h2 className="text-xl font-bold text-[#1C5D15] mb-2">📰 BLOG-POSTS</h2>
-              <p className="text-[#629960]">Listado de artículos del blog. Se carga automaticamente con los posts publicados.</p>
+            <div className="max-w-6xl mx-auto px-6">
+              <div className="flex justify-center gap-3 mb-12">
+                <span className="px-6 py-2.5 rounded-full font-medium bg-[#1C5D15] text-white shadow-lg">
+                  Todos
+                </span>
+                <span className="px-6 py-2.5 rounded-full font-medium bg-white text-[#1C5D15] border border-[#1C5D15]/20">
+                  Noticias
+                </span>
+                <span className="px-6 py-2.5 rounded-full font-medium bg-white text-[#1C5D15] border border-[#1C5D15]/20">
+                  Artículos
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+                {[1,2,3].map((i) => (
+                  <div key={i} className="w-full h-80 rounded-2xl bg-gradient-to-br from-[#1C5D15]/5 to-[#629960]/10 border border-dashed border-[#629960]/30 flex items-center justify-center">
+                    <span className="text-[#629960]">Artículo {i}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         );

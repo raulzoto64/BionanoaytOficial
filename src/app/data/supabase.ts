@@ -88,34 +88,36 @@ export type PageWithContent = Page & {
   contentEN?: PageContent;
 };
 
-export interface Section {
-  id: string;
-  type:
-    | "hero"
-    | "text"
-    | "features"
-    | "products"
-    | "team"
-    | "timeline"
-    | "contact"
-    | "blog"
-    | "custom"
-    | "trust"
-    | "featured"
-    | "ecosystem"
-    | "news"
-    | "stats"
-    | "bento"
-    | "quote"
-    | "faq"
-    | "history"
-    | "problems"
-    | "sectors"
-    | "certifications"
-    | "cta"
-    | "flipcards"
-    | "clientes"
-    | "category-filter";
+  export interface Section {
+    id: string;
+    type:
+      | "hero"
+      | "hero-blog"
+      | "text"
+      | "features"
+      | "products"
+      | "team"
+      | "timeline"
+      | "contact"
+      | "blog"
+      | "custom"
+      | "trust"
+      | "featured"
+      | "ecosystem"
+      | "news"
+      | "blog-posts"
+      | "stats"
+      | "bento"
+      | "quote"
+      | "faq"
+      | "history"
+      | "problems"
+      | "sectors"
+      | "certifications"
+      | "cta"
+      | "flipcards"
+      | "clientes"
+      | "category-filter";
   order: number;
   visible: boolean;
   content: Record<string, any>;
@@ -381,26 +383,33 @@ export const supabaseAPI = {
     key: string,
     fetchFn: () => Promise<T>,
     persist: boolean = true,
+    revalidateOnCache: boolean = false,
   ): Promise<T> => {
     const cachedData = supabaseAPI._getFromCache(key, persist);
 
-    // Si hay datos en caché, devolverlos inmediatamente y revalidar en segundo plano
+    // Si hay datos en caché, devolverlos INMEDIATAMENTE SIN REVALIDAR
+    // ✅ Ya no volvemos a descargar si ya tenemos datos
     if (cachedData) {
-      // Revalidación asíncrona (no bloqueante)
-      fetchFn()
-        .then((freshData) => {
-          supabaseAPI._saveToCache(key, freshData, persist);
-          // Disparar evento para que los componentes se enteren si los datos cambiaron significativamente
-          window.dispatchEvent(
-            new CustomEvent("cache-updated", { detail: { key, data: freshData } }),
-          );
-        })
-        .catch((err) => console.warn(`Revalidación fallida para ${key}:`, err));
+      // ✅ ELIMINADO: La revalidación automatica era la causa del BUCLE INFINITO
+      // Ahora solo revalidamos si explicitamente lo solicitan, y solo SI HAN CAMBIADO LOS DATOS
+      if (revalidateOnCache) {
+        fetchFn()
+          .then((freshData) => {
+            // Solo actualizamos y disparamos evento SI LOS DATOS REALMENTE CAMBIARON
+            if (JSON.stringify(freshData) !== JSON.stringify(cachedData)) {
+              supabaseAPI._saveToCache(key, freshData, persist);
+              window.dispatchEvent(
+                new CustomEvent("cache-updated", { detail: { key, data: freshData } }),
+              );
+            }
+          })
+          .catch((err) => console.warn(`Revalidación fallida para ${key}:`, err));
+      }
 
       return cachedData as T;
     }
 
-    // Si no hay caché, esperar a la petición inicial
+    // Si no hay caché, esperar a la petición inicial UNA SOLA VEZ
     const data = await fetchFn();
     supabaseAPI._saveToCache(key, data, persist);
     return data;
@@ -787,33 +796,36 @@ export const supabaseAPI = {
     productId: string,
     language: "es" | "en",
   ): Promise<ProductTranslation> => {
-    const { data: translation, error } = await supabase
-      .from("product_translations")
-      .select("*")
-      .eq("product_id", productId)
-      .eq("language", language)
-      .single();
+    const cacheKey = `product-translation-${productId}-${language}`;
+    return supabaseAPI._fetchWithCache(cacheKey, async () => {
+      const { data: translation, error } = await supabase
+        .from("product_translations")
+        .select("*")
+        .eq("product_id", productId)
+        .eq("language", language)
+        .single();
 
-    if (error) {
-      // Si el error es de que no se encontró la fila, devolvemos una traducción vacía
-      if (error.code === "PGRST116" || error.code === "406") {
-        return {
-          product_id: productId,
-          language: language,
-          name: "",
-          description: "",
-          short_description: "",
-          features: [],
-          benefits: [],
-          technical_specs: {},
-          meta_title: "",
-          meta_description: "",
-        };
+      if (error) {
+        // Si el error es de que no se encontró la fila, devolvemos una traducción vacía
+        if (error.code === "PGRST116" || error.code === "406") {
+          return {
+            product_id: productId,
+            language: language,
+            name: "",
+            description: "",
+            short_description: "",
+            features: [],
+            benefits: [],
+            technical_specs: {},
+            meta_title: "",
+            meta_description: "",
+          };
+        }
+        throw new Error(error.message);
       }
-      throw new Error(error.message);
-    }
 
-    return translation;
+      return translation;
+    });
   },
 
   updateProduct: async (
@@ -882,16 +894,19 @@ export const supabaseAPI = {
   // ==========================================
 
   getPricesByProduct: async (productId: string): Promise<PriceByQuantity[]> => {
-    const { data: prices, error } = await supabase
-      .from("prices_by_quantity")
-      .select("*")
-      .eq("product_id", productId);
+    const cacheKey = `product-prices-${productId}`;
+    return supabaseAPI._fetchWithCache(cacheKey, async () => {
+      const { data: prices, error } = await supabase
+        .from("prices_by_quantity")
+        .select("*")
+        .eq("product_id", productId);
 
-    if (error) {
-      throw new Error(error.message);
-    }
+      if (error) {
+        throw new Error(error.message);
+      }
 
-    return prices || [];
+      return prices || [];
+    });
   },
 
   calculatePrice: async (

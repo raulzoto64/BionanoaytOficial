@@ -80,6 +80,51 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         <p className="text-[10px] text-[#629960] mt-1 font-medium">Edición Pro: Multi-idioma Inline activo</p>
       </div>
 
+      {/* Tipo HERO BLOG */}
+      {sectionES.type === 'hero-blog' && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="hero-blog-badge" label="Badge / Etiqueta" />
+              <Input
+                value={(getFieldLang('hero-blog-badge') === 'es' ? sectionES.content.badge : sectionEN.content.badge) || ''}
+                onChange={(e) => handleContentChange('badge', e.target.value, getFieldLang('hero-blog-badge'))}
+                placeholder="Blog"
+                className="focus:ring-[#19FF00]/30"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="hero-blog-title" label="Título Principal" />
+              <Input
+                value={(getFieldLang('hero-blog-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ''}
+                onChange={(e) => handleContentChange('title', e.target.value, getFieldLang('hero-blog-title'))}
+                placeholder="Actualidad y Ciencia"
+                className="focus:ring-[#19FF00]/30"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="hero-blog-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('hero-blog-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ''}
+                onChange={(val) => handleContentChange('subtitle', val, getFieldLang('hero-blog-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
+          </div>
+
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <Label className="text-[#1C5D15] font-bold text-xs uppercase mb-2 block">Imagen de Fondo (Global)</Label>
+              <ImageUpload
+                currentImage={sectionES.content.backgroundImage}
+                onImageUpload={(url) => handleContentChange('backgroundImage', url, 'both')}
+                type="banner"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tipo Hero */}
       {sectionES.type === 'hero' && (
         <div className="space-y-6">
