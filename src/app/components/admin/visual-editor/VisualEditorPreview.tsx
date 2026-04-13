@@ -33,6 +33,8 @@ import { NewsSection } from '../../NewsSection';
 import { TrustBar } from '../../TrustBar';
 import { Purpose } from '../../Purpose';
 import { Ecosystem } from '../../Ecosystem';
+import { HeroBlog } from '../../HeroBlog';
+import { BlogPostsSection } from '../../BlogPostsSection';
 
 // Mapeo de nombres de iconos a componentes
 const IconMap: Record<string, any> = {
@@ -74,6 +76,8 @@ interface VisualEditorPreviewProps {
   availableCategories?: Category[];
   availableEcosystemMembers?: EcosystemMember[];
   availableProducts?: Product[];
+  availableBlogPosts?: any[];
+  pageSlug?: string;
 }
 
 function EditableBlock({ 
@@ -145,7 +149,9 @@ export function VisualEditorPreview({
   onSectionClick,
   availableCategories = [],
   availableEcosystemMembers = [],
-  availableProducts = []
+  availableProducts = [],
+  availableBlogPosts = [],
+  pageSlug = ''
 }: VisualEditorPreviewProps) {
 
   const renderSectionComponent = (section: Section) => {
@@ -274,6 +280,25 @@ export function VisualEditorPreview({
         );
 
       case 'trust':
+        if (pageSlug?.includes('store') && section.content.selectedMemberIds?.length > 0) {
+          const selectedIds = section.content.selectedMemberIds;
+          const filtered = availableEcosystemMembers.filter(m => selectedIds.includes(m.id));
+          return (
+            <section className="py-20 bg-white">
+              <div className="max-w-6xl mx-auto px-6 text-center">
+                <h2 className="text-[#1C5D15] text-4xl font-bold mb-4">{section.content.title}</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {filtered.map(m => (
+                    <div key={m.id} className="bg-[#F7F9CE] p-4 rounded-xl border border-[#1C5D15]/10">
+                      <img src={m.image} className="h-16 w-16 mx-auto mb-2 object-contain" />
+                      <div className="text-[#1C5D15] font-bold text-xs">{m.translation?.name || m.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
         return <TrustBar partners={section.content.partners || []} title={section.content.title} subtitle={section.content.subtitle} />;
       
       case 'ecosystem':
@@ -288,17 +313,28 @@ export function VisualEditorPreview({
         );
 
       case 'hero-blog':
+        return <HeroBlog content={section.content} />;
+
+      case 'blog-posts':
+      case 'blog':
         return (
-          <div className="relative h-96 bg-gray-900 flex items-center justify-center text-white text-center rounded-3xl overflow-hidden mx-4 my-8">
-            <img src={section.content.backgroundImage} className="absolute inset-0 w-full h-full object-cover opacity-50" />
-            <div className="relative z-10 p-10">
-              <span className="bg-[#19FF00] text-[#1C5D15] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 inline-block">
-                {section.content.badge}
-              </span>
-              <h1 className="text-4xl font-black mb-4">{section.content.title}</h1>
-              <div dangerouslySetInnerHTML={{ __html: section.content.subtitle }} />
-            </div>
-          </div>
+          <BlogPostsSection 
+            posts={availableBlogPosts} 
+            language="es" 
+            activeFilter="all" 
+            onFilterChange={() => {}} 
+            totalPages={1}
+          />
+        );
+
+      case 'history':
+        return (
+          <Timeline
+            milestones={section.content.milestones || []}
+            title={section.content.title}
+            subtitle={section.content.subtitle}
+            description={section.content.description}
+          />
         );
 
       // --- Tipos adicionales ---
@@ -306,6 +342,29 @@ export function VisualEditorPreview({
         return <FeaturedProduct content={section.content} />;
 
       case 'timeline':
+        if (pageSlug?.includes('technology')) {
+          return (
+            <section className="py-20 bg-gray-50">
+              <div className="max-w-6xl mx-auto px-6">
+                <div className="text-center mb-16">
+                  <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>
+                  {section.content.subtitle && <p className="text-xl text-[#629960]">{section.content.subtitle}</p>}
+                </div>
+                <div className="grid md:grid-cols-4 gap-6">
+                  {(section.content.milestones || []).map((item: any, index: number) => (
+                    <div key={index} className="text-center group">
+                      <div className="w-20 h-20 bg-[#1C5D15] text-[#19FF00] rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-4 shadow-xl group-hover:scale-110 group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-all duration-300">
+                        {item.step}
+                      </div>
+                      <h3 className="text-xl font-bold text-[#1C5D15] mb-2">{item.title}</h3>
+                      <p className="text-[#629960] text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
         return (
           <Timeline
             milestones={section.content.milestones || []}

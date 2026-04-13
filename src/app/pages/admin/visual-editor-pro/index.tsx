@@ -232,6 +232,7 @@ export function AdminVisualEditor() {
             handleUpdateSection={handleUpdateSection}
             allProducts={allProducts}
             allEcosystemMembers={allEcosystemMembers}
+            pageSlug={page?.slug}
           />
 
           <DeviceCanvas 

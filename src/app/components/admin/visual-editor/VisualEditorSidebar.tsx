@@ -20,9 +20,17 @@ interface VisualEditorSidebarProps {
   onUpdateSection: (sectionId: string, content: any, lang: 'es' | 'en' | 'both') => void;
   availableProducts?: any[];
   availableEcosystemMembers?: any[];
+  pageSlug?: string;
 }
 
-export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, availableProducts = [], availableEcosystemMembers = [] }: VisualEditorSidebarProps) {
+export function VisualEditorSidebar({ 
+  sectionES, 
+  sectionEN, 
+  onUpdateSection, 
+  availableProducts = [], 
+  availableEcosystemMembers = [],
+  pageSlug = ''
+}: VisualEditorSidebarProps) {
   const [fieldLangs, setFieldLangs] = useState<Record<string, 'es' | 'en'>>({});
 
   if (!sectionES || !sectionEN) {
@@ -853,11 +861,41 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
             )}
           </div>
 
-          <div className="space-y-4">
-            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">
-              {sectionES.type === "trust" ? "Aliados Sincronizados" : "Características Sincronizadas"}
-            </Label>
-            {(sectionES.content.items || sectionES.content.partners || []).map((_: any, idx: number) => {
+          {/* Si es Store y tipo trust, permitimos selección de ecosistema */}
+          {pageSlug?.includes('store') && sectionES.type === "trust" ? (
+            <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+              <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight flex items-center gap-2">
+                <CheckCircle2 className="w-3 h-3 text-[#19FF00]" />
+                Clientes (Ecosistema)
+              </Label>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                {availableEcosystemMembers.map(member => {
+                  const isSelected = (sectionES.content.selectedMemberIds || []).includes(member.id);
+                  return (
+                    <div 
+                      key={member.id}
+                      onClick={() => {
+                        const current = sectionES.content.selectedMemberIds || [];
+                        const next = isSelected ? current.filter((id: string) => id !== member.id) : [...current, member.id];
+                        handleContentChange('selectedMemberIds', next, 'both');
+                      }}
+                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${isSelected ? 'bg-[#19FF00]/10 border-[#19FF00]/40' : 'bg-gray-50 border-gray-100'}`}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-[#1C5D15] border-[#1C5D15]' : 'bg-white border-gray-300'}`}>
+                        {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                      </div>
+                      <span className="text-[10px] font-bold text-[#1C5D15] truncate">{member.translation?.name || member.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">
+                {sectionES.type === "trust" ? "Aliados Sincronizados" : "Características Sincronizadas"}
+              </Label>
+              {(sectionES.content.items || sectionES.content.partners || []).map((_: any, idx: number) => {
               const arrayKey = sectionES.type === "trust" ? "partners" : "items";
               const currentListES = sectionES.content[arrayKey] || [];
               const fKey = `${arrayKey}-${idx}`;
@@ -1158,8 +1196,9 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
               <Plus className="w-3 h-3 mr-2" /> Agregar Item Sincronizado
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
 
       {/* Tipo Featured */}
       {sectionES.type === "featured" && (
@@ -1311,8 +1350,8 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         </div>
       )}
 
-      {/* Tipo Timeline */}
-      {sectionES.type === "timeline" && (
+      {/* Tipo Timeline / History */}
+      {(sectionES.type === "timeline" || sectionES.type === "history") && (
         <div className="space-y-6">
           <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
             <div>
@@ -1331,20 +1370,25 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                 placeholder="Hitos importantes"
               />
             </div>
-            <div>
-              <LanguageToggle fieldKey="time-desc" label="Descripción Principal" />
-              <RichTextEditor
-                value={(getFieldLang('time-desc') === 'es' ? sectionES.content.description : sectionEN.content.description) || ""}
-                onChange={(val) => handleContentChange("description", val, getFieldLang('time-desc'))}
-                minHeight="100px"
-              />
-            </div>
+            {sectionES.content.description !== undefined && (
+              <div>
+                <LanguageToggle fieldKey="time-desc" label="Descripción Principal" />
+                <RichTextEditor
+                  value={(getFieldLang('time-desc') === 'es' ? sectionES.content.description : sectionEN.content.description) || ""}
+                  onChange={(val) => handleContentChange("description", val, getFieldLang('time-desc'))}
+                  minHeight="100px"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
-            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">LÍNEA DE TIEMPO / HITOS</Label>
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">
+              {sectionES.type === "timeline" && pageSlug?.includes('technology') ? "PASOS DEL PROCESO" : "HITOS / EVENTOS"}
+            </Label>
             {(sectionES.content.milestones || []).map((_: any, idx: number) => {
               const fKey = `milestone-${idx}`;
+              const isTechStep = sectionES.type === "timeline" && pageSlug?.includes('technology');
 
               return (
                 <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
@@ -1362,50 +1406,69 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                     <Trash2 className="w-3 h-3" />
                   </Button>
 
-                  <LanguageToggle fieldKey={fKey} label={`Hito #${idx + 1}`} />
+                  <LanguageToggle fieldKey={fKey} label={isTechStep ? `Paso #${idx + 1}` : `Hito #${idx + 1}`} />
 
                   <div className="grid gap-3">
-                    <div className="grid grid-cols-2 gap-2">
+                    {isTechStep ? (
                       <div>
-                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Año</Label>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Número / Paso</Label>
                         <Input
-                          placeholder="Ej: 2024"
-                          value={sectionES.content.milestones[idx].year || ""}
+                          placeholder="Ej: 01"
+                          value={sectionES.content.milestones[idx].step || ""}
                           onChange={(e) => {
                             const newListES = [...(sectionES.content.milestones || [])];
                             const newListEN = [...(sectionEN.content.milestones || [])];
-                            newListES[idx].year = e.target.value;
-                            newListEN[idx].year = e.target.value;
+                            newListES[idx].step = e.target.value;
+                            newListEN[idx].step = e.target.value;
                             handleContentChange("milestones", newListES, 'es');
                             handleContentChange("milestones", newListEN, 'en');
                           }}
                           className="text-xs h-8"
                         />
                       </div>
-                      <div>
-                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
-                        <select
-                          className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
-                          value={sectionES.content.milestones[idx].icon || 'Lightbulb'}
-                          onChange={(e) => {
-                            const newListES = [...(sectionES.content.milestones || [])];
-                            const newListEN = [...(sectionEN.content.milestones || [])];
-                            newListES[idx].icon = e.target.value;
-                            newListEN[idx].icon = e.target.value;
-                            handleContentChange("milestones", newListES, 'es');
-                            handleContentChange("milestones", newListEN, 'en');
-                          }}
-                        >
-                          <option value="Lightbulb">Idea (Lightbulb)</option>
-                          <option value="FileCheck">Registro (FileCheck)</option>
-                          <option value="TrendingUp">Crecimiento (TrendingUp)</option>
-                          <option value="Rocket">Lanzamiento (Rocket)</option>
-                        </select>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Año / Fecha</Label>
+                          <Input
+                            placeholder="Ej: 2024"
+                            value={sectionES.content.milestones[idx].year || ""}
+                            onChange={(e) => {
+                              const newListES = [...(sectionES.content.milestones || [])];
+                              const newListEN = [...(sectionEN.content.milestones || [])];
+                              newListES[idx].year = e.target.value;
+                              newListEN[idx].year = e.target.value;
+                              handleContentChange("milestones", newListES, 'es');
+                              handleContentChange("milestones", newListEN, 'en');
+                            }}
+                            className="text-xs h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                          <select
+                            className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                            value={sectionES.content.milestones[idx].icon || 'Lightbulb'}
+                            onChange={(e) => {
+                              const newListES = [...(sectionES.content.milestones || [])];
+                              const newListEN = [...(sectionEN.content.milestones || [])];
+                              newListES[idx].icon = e.target.value;
+                              newListEN[idx].icon = e.target.value;
+                              handleContentChange("milestones", newListES, 'es');
+                              handleContentChange("milestones", newListEN, 'en');
+                            }}
+                          >
+                            <option value="Lightbulb">Idea (Lightbulb)</option>
+                            <option value="FileCheck">Registro (FileCheck)</option>
+                            <option value="TrendingUp">Crecimiento (TrendingUp)</option>
+                            <option value="Rocket">Lanzamiento (Rocket)</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <Input
-                      placeholder="Título del Hito"
+                      placeholder={isTechStep ? "Título del Paso" : "Título del Hito"}
                       value={(getFieldLang(fKey) === 'es' ? sectionES.content.milestones[idx].title : sectionEN.content.milestones[idx].title) || ""}
                       onChange={(e) => {
                         const lang = getFieldLang(fKey);
@@ -1418,13 +1481,14 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
                     />
 
                     <RichTextEditor
-                      placeholder="Descripción del Hito"
-                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.milestones[idx].description : sectionEN.content.milestones[idx].description) || ""}
+                      placeholder="Descripción detallada"
+                      value={(getFieldLang(fKey) === 'es' ? (sectionES.content.milestones[idx].description || sectionES.content.milestones[idx].desc) : (sectionEN.content.milestones[idx].description || sectionEN.content.milestones[idx].desc)) || ""}
                       onChange={(val) => {
                         const lang = getFieldLang(fKey);
                         const target = lang === 'es' ? sectionES : sectionEN;
                         const newList = [...target.content.milestones];
-                        newList[idx].description = val;
+                        if (isTechStep) newList[idx].desc = val;
+                        else newList[idx].description = val;
                         handleContentChange("milestones", newList, lang);
                       }}
                       minHeight="60px"
@@ -1440,12 +1504,15 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
               onClick={() => {
                 const currentES = sectionES.content.milestones || [];
                 const currentEN = sectionEN.content.milestones || [];
-                const newItem = { year: "", title: "", description: "", icon: "Lightbulb" };
+                const isTechStep = sectionES.type === "timeline" && pageSlug?.includes('technology');
+                const newItem = isTechStep 
+                  ? { step: `0${currentES.length + 1}`, title: "", desc: "" }
+                  : { year: "", title: "", description: "", icon: "Lightbulb" };
                 handleContentChange("milestones", [...currentES, { ...newItem }], 'es');
                 handleContentChange("milestones", [...currentEN, { ...newItem }], 'en');
               }}
             >
-              <Plus className="w-3 h-3 mr-2" /> Agregar Hito
+              <Plus className="w-3 h-3 mr-2" /> {sectionES.type === "timeline" && pageSlug?.includes('technology') ? "Agregar Paso" : "Agregar Hito"}
             </Button>
           </div>
         </div>

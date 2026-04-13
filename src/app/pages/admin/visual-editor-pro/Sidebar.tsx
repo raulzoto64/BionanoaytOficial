@@ -10,6 +10,7 @@ interface SidebarProps {
   handleUpdateSection: (sectionId: string, content: any, lang?: 'es' | 'en' | 'both') => void;
   allProducts: any[];
   allEcosystemMembers: any[];
+  pageSlug?: string;
 }
 
 export function Sidebar({
@@ -19,7 +20,8 @@ export function Sidebar({
   activeSectionEN,
   handleUpdateSection,
   allProducts,
-  allEcosystemMembers
+  allEcosystemMembers,
+  pageSlug
 }: SidebarProps) {
   return (
     <>
@@ -50,6 +52,7 @@ export function Sidebar({
               onUpdateSection={handleUpdateSection}
               availableProducts={allProducts}
               availableEcosystemMembers={allEcosystemMembers}
+              pageSlug={pageSlug}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center p-10 select-none">
