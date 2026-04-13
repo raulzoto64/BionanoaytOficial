@@ -21,15 +21,15 @@ import { useDatabase } from "../hooks/useDatabase";
 
 export function Home() {
   const [pageContent, setPageContent] = useState<PageContent | null>(null);
-  const [featuredProducts, setFeaturedProducts] = useState<
-    (Product & { translation: ProductTranslation })[]
+  const [homeProducts, setHomeProducts] = useState<
+    (Product & { translation: ProductTranslation; categoryName: string })[]
   >([]);
   const { language } = useLanguage();
   const { updateTrigger } = useDatabase();
 
   useEffect(() => {
     loadPageContent();
-    loadFeaturedProducts();
+    loadHomeProducts();
   }, [language, updateTrigger]);
 
   const loadPageContent = async () => {
@@ -41,13 +41,14 @@ export function Home() {
     }
   };
 
-  const loadFeaturedProducts = async () => {
+  const loadHomeProducts = async () => {
     try {
-      const products = await supabaseAPI.getFeaturedProducts();
+      // Cargamos todos los productos activos para que cualquier selección en el editor visual funcione
+      const products = await supabaseAPI.getProducts();
+      const activeProducts = products.filter(p => p.status === 'active');
 
-      // Get translations for each featured product and category
       const productsWithTranslations = await Promise.all(
-        products.map(async (product) => {
+        activeProducts.map(async (product) => {
           const translation = await supabaseAPI.getProductTranslation(
             product.id,
             language,
@@ -60,12 +61,13 @@ export function Home() {
             ...product,
             translation,
             categoryName: categoryTranslation?.name || product.category,
-          };
+          } as (Product & { translation: ProductTranslation; categoryName: string });
         }),
       );
 
-      setFeaturedProducts(productsWithTranslations);
+      setHomeProducts(productsWithTranslations);
     } catch (error) {
+      console.error("Error loading home products:", error);
     }
   };
 
@@ -120,15 +122,24 @@ export function Home() {
                 </div>
               );
             case "products":
-              return (
-                <div key={section.id} id="products">
-                  <Products
-                    products={featuredProducts}
-                    title={section.content.title}
-                    subtitle={section.content.subtitle}
-                  />
-                </div>
-              );
+              {
+                const selectedIds = section.content.selectedProductIds || [];
+                const displayProducts = selectedIds.length > 0
+                  ? homeProducts.filter(p => selectedIds.includes(p.id))
+                  : homeProducts.filter(p => p.featured).slice(0, 3);
+
+                return (
+                  <div key={section.id} id="products">
+                    <Products
+                      products={displayProducts}
+                      title={section.content.title}
+                      subtitle={section.content.subtitle}
+                      ctaText={section.content.ctaText}
+                      ctaLink={section.content.ctaLink}
+                    />
+                  </div>
+                );
+              }
             case "timeline":
               return (
                 <div key={section.id} id="timeline">

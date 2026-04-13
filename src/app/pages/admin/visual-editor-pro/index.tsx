@@ -8,17 +8,24 @@ import { Sidebar } from './Sidebar';
 import { DeviceCanvas } from './DeviceCanvas';
 import { ProtectedRoute } from '../../../components/ProtectedRoute';
 import { SEO } from '../../../components/SEO';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { Loader2 } from 'lucide-react';
 
 export function AdminVisualEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { setLanguage } = useLanguage();
   const [page, setPage] = useState<PageWithContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeLanguage, setActiveLanguage] = useState<'es' | 'en'>('es');
   const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [deviceOrientation, setDeviceOrientation] = useState<'portrait' | 'landscape'>('portrait');
+
+  // Sincronizar el contexto de idioma con la previsualización
+  useEffect(() => {
+    setLanguage(activeLanguage);
+  }, [activeLanguage, setLanguage]);
 
   const [customWidth, setCustomWidth] = useState<number | null>(null);
   const [isResizing, setIsResizing] = useState(false);

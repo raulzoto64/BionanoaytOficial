@@ -1803,7 +1803,8 @@ export function VisualEditorSidebar({
           )}
 
           {sectionES.type === "products" && (
-            <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+            <>
+              <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b pb-2 mb-2">
                 <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Selección de Productos (Máx 3)</h4>
                 <span className="text-[9px] bg-[#1C5D15]/10 text-[#1C5D15] px-2 py-0.5 rounded-full font-bold">
@@ -1812,7 +1813,7 @@ export function VisualEditorSidebar({
               </div>
 
               <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                {availableProducts.filter(p => p.featured).map((prod) => {
+                {availableProducts.map((prod) => {
                   const isSelected = (sectionES.content.selectedProductIds || []).includes(prod.id);
                   return (
                     <div
@@ -1858,7 +1859,34 @@ export function VisualEditorSidebar({
                 </div>
               )}
             </div>
-          )}
+
+            <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+              <div className="flex items-center gap-2 border-b pb-2 mb-2">
+                <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Botón de Acción Final</h4>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <LanguageToggle fieldKey="products-cta-text" label="Texto del Botón" />
+                  <Input 
+                    value={(getFieldLang('products-cta-text') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
+                    onChange={(e) => handleContentChange("ctaText", e.target.value, getFieldLang('products-cta-text'))}
+                    placeholder="Ej: Ver Catálogo Completo"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <LanguageToggle fieldKey="products-cta-link" label="Enlace (URL)" />
+                  <Input 
+                    value={(getFieldLang('products-cta-link') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ""}
+                    onChange={(e) => handleContentChange("ctaLink", e.target.value, getFieldLang('products-cta-link'))}
+                    placeholder="Ej: /store"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
         </div>
       )}
 

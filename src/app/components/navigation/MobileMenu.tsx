@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { ShoppingCart } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useCart } from "../../contexts/CartContext";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface MobileMenuProps {
 export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps) {
   const { language, t } = useLanguage();
   const { isAuthenticated } = useAuth();
+  const { itemCount } = useCart();
 
   if (!isOpen) {
     return null;
@@ -19,7 +21,7 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
 
   return (
     <div className="min-[1000px]:hidden py-4 border-t border-[#629960]">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 px-2">
         <Link 
           to="/" 
           className="hover:text-[#19FF00] transition-colors"
@@ -86,11 +88,18 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
         </Link>
         <Link 
           to="/cart" 
-          className="hover:text-[#19FF00] transition-colors flex items-center gap-2"
+          className="hover:text-[#19FF00] transition-colors flex items-center justify-between"
           onClick={onClose}
         >
-          <ShoppingCart className="w-5 h-5" />
-          {language === 'es' ? 'Carrito' : 'Cart'}
+          <div className="flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5" />
+            <span>{language === 'es' ? 'Carrito' : 'Cart'}</span>
+          </div>
+          {itemCount > 0 && (
+            <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+              {itemCount}
+            </span>
+          )}
         </Link>
         <div className="mt-4 pt-4 border-t border-[#629960]/30">
           <Link 

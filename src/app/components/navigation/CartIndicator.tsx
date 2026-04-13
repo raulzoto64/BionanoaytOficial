@@ -1,44 +1,13 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { ShoppingCart} from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { supabaseAPI } from "../../data/supabase";
+import { useCart } from "../../contexts/CartContext";
 import { toast } from "sonner";
 
 export function CartIndicator() {
-  const { user, guestId, isAuthenticated, isGuest } = useAuth();
-  const [itemCount, setItemCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isGuest } = useAuth();
+  const { itemCount, isLoading } = useCart();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    loadCartCount();
-    
-    const handleCartUpdate = () => {
-      loadCartCount();
-    };
-
-    window.addEventListener('cart-updated', handleCartUpdate);
-    return () => window.removeEventListener('cart-updated', handleCartUpdate);
-  }, [user, guestId, isAuthenticated, isGuest]);
-
-  const loadCartCount = async () => {
-    try {
-      if (isAuthenticated && user) {
-        const items = await supabaseAPI.getCartItems(user.id);
-        setItemCount(items.reduce((total, item) => total + item.quantity, 0));
-      } else if (isGuest && guestId) {
-        const items = await supabaseAPI.getCartItemsByGuest(guestId);
-        setItemCount(items.reduce((total, item) => total + item.quantity, 0));
-      } else {
-        setItemCount(0);
-      }
-    } catch (error) {
-      toast.error('Error al cargar el carrito');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCartClick = () => {
     if (isAuthenticated || isGuest) {
@@ -52,8 +21,8 @@ export function CartIndicator() {
     return (
       <button className="group relative" onClick={handleCartClick}>
         <ShoppingCart className="w-6 h-6 text-[#629960]" />
-        <span className="absolute -top-1 -right-1 bg-[#1C5D15] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
-          ?
+        <span className="absolute -top-1 -right-1 bg-[#1C5D15] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center animate-pulse border border-white">
+          ...
         </span>
       </button>
     );
@@ -63,7 +32,7 @@ export function CartIndicator() {
     <button className="group relative" onClick={handleCartClick}>
       <ShoppingCart className="w-6 h-6 text-[#629960]" />
       {itemCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-[#1C5D15] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-colors">
+        <span className="absolute -top-1 -right-1 bg-[#1C5D15] text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-all duration-300 border border-white shadow-sm">
           {itemCount}
         </span>
       )}

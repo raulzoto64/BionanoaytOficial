@@ -215,24 +215,70 @@ export function VisualEditorPreview({
                 <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {availableProducts.slice(0, 3).map((product: any) => (
-                  <div key={product.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/50">
-                    <div className="h-64 bg-gray-100 relative">
-                      <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-[#1C5D15] uppercase tracking-widest">
-                        Bio-Tec
+                {(() => {
+                  const selectedIds = section.content.selectedProductIds || [];
+                  const displayProducts = selectedIds.length > 0 
+                    ? availableProducts.filter(p => selectedIds.includes(p.id))
+                    : availableProducts.slice(0, 3);
+                    
+                  return displayProducts.map((product: any) => {
+                    const translation = product.translation || { name: product.slug, description: '', short_description: '', features: [] };
+                    return (
+                      <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 group flex flex-col">
+                        <div className="relative h-48 bg-gray-100 overflow-hidden">
+                          <img 
+                            src={product.image} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                            alt={translation.name} 
+                          />
+                          {product.featured && (
+                            <div className="absolute top-3 right-3 bg-[#19FF00] text-[#1C5D15] px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest z-10">
+                              Most Popular
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-5 flex-1 flex flex-col">
+                          <div className="text-[#629960] text-[10px] font-bold uppercase tracking-wider mb-1">
+                            {product.category || 'Bio-Tec'}
+                          </div>
+                          <h3 className="text-lg font-bold text-[#1C5D15] mb-2 line-clamp-1">{translation.name}</h3>
+                          <p className="text-[#629960] text-xs mb-4 line-clamp-2 leading-relaxed">
+                            {translation.short_description || translation.description}
+                          </p>
+                          
+                          {translation.features && translation.features.length > 0 && (
+                            <ul className="space-y-1.5 mb-5 flex-1">
+                              {translation.features.slice(0, 3).map((f: string, i: number) => (
+                                <li key={i} className="flex items-center gap-2 text-[11px] text-[#629960]">
+                                  <div className="w-3.5 h-3.5 rounded-full bg-[#19FF00]/20 flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-2 h-2 text-[#1C5D15]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                  <span className="truncate">{f}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+
+                          <button className="w-full bg-[#1C5D15] text-white py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all duration-300">
+                            Ver detalles
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-8">
-                      <h3 className="text-xl font-bold text-[#1C5D15] mb-2">{product.name}</h3>
-                      <p className="text-[#629960] text-sm mb-6 line-clamp-2">{product.description}</p>
-                      <button className="w-full bg-[#1C5D15] text-white py-3 rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-[#1C5D15]/90 transition-colors">
-                        Saber más
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  });
+                })()}
               </div>
+
+              {/* Botón Final */}
+              {(section.content.ctaText || section.content.ctaLink) && (
+                <div className="flex justify-center mt-12">
+                  <button className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 py-3 uppercase text-sm font-bold tracking-wider">
+                    {section.content.ctaText || 'Ver Catálogo Completo'}
+                  </button>
+                </div>
+              )}
             </div>
           </section>
         );

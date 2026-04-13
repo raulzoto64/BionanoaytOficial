@@ -17,10 +17,15 @@ interface ProductsProps {
   products?: ProductWithTranslation[];
   title: string;
   subtitle: string;
+  ctaText?: string;
+  ctaLink?: string;
 }
 
-export function Products({ products, title, subtitle }: ProductsProps) {
+export function Products({ products, title, subtitle, ctaText, ctaLink }: ProductsProps) {
   const { t } = useLanguage();
+  
+  // Limit to 3 featured products
+  const displayedProducts = (products || []).slice(0, 3);
   
   // If products are not provided, display nothing (or placeholder)
   if (!products || products.length === 0) {
@@ -46,9 +51,6 @@ export function Products({ products, title, subtitle }: ProductsProps) {
       </section>
     );
   }
-  
-  // Limit to 3 featured products
-  const displayedProducts = products.slice(0, 3);
   
   return (
     <section className="py-20 bg-white">
@@ -131,8 +133,8 @@ export function Products({ products, title, subtitle }: ProductsProps) {
             className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
             asChild
           >
-            <Link to="/store">
-              {t('btn.view_full_catalog')}
+            <Link to={ctaLink || "/store"}>
+              {ctaText || t('btn.view_full_catalog')}
             </Link>
           </Button>
         </div>
