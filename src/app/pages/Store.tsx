@@ -452,17 +452,21 @@ export function Store() {
 
           // ── 3. PRODUCTS ──────────────────────────────────────────────────
           case 'products':
-            return (
-              <section key={section.id} id="products" className="py-16 bg-[#F7F9CE]">
-                <div className="max-w-7xl mx-auto px-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredProducts.map((product, index) => (
-                      <ProductCard key={product.id} product={product} index={index} />
-                    ))}
+            {
+              return (
+                <section key={section.id} id="products" className="py-16 bg-[#F7F9CE]">
+                  <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {filteredProducts.map((product, index) => (
+                        <ProductCard key={product.id} product={product} index={index} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </section>
-            );
+                </section>
+              );
+            }
+
+
 
           // ── 4. TRUST (Testimonios o certificaciones) ────────────────────
           case 'trust':

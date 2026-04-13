@@ -207,22 +207,66 @@ export function VisualEditorPreview({
         );
 
       case 'products':
-        return (
-          <section className="py-20 bg-white">
-            <div className="max-w-7xl mx-auto px-6">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
-                <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {(() => {
-                  const selectedIds = section.content.selectedProductIds || [];
-                  const displayProducts = selectedIds.length > 0 
-                    ? availableProducts.filter(p => selectedIds.includes(p.id))
-                    : availableProducts.slice(0, 3);
-                    
-                  return displayProducts.map((product: any) => {
+        {
+          const isStore = pageSlug?.includes('store');
+          const selectedIds = section.content.selectedProductIds || [];
+          const displayProducts = isStore 
+            ? availableProducts 
+            : (selectedIds.length > 0 ? availableProducts.filter(p => selectedIds.includes(p.id)) : availableProducts.filter(p => p.featured).slice(0, 3));
+
+
+
+          return (
+            <section className={`py-16 ${isStore ? 'bg-[#F7F9CE]' : 'bg-white'}`}>
+              <div className="max-w-7xl mx-auto px-6">
+                {!isStore && (
+                  <div className="text-center mb-16">
+                    <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4 text-[10px] font-black uppercase tracking-widest">
+                      Catálogo
+                    </div>
+                    <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
+                    <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>
+                  </div>
+                )}
+
+                
+                <div className={`grid gap-6 ${isStore ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
+                  {displayProducts.map((product: any, index: number) => {
                     const translation = product.translation || { name: product.slug, description: '', short_description: '', features: [] };
+                    
+                    if (isStore) {
+                      // Diseño de la Tienda
+                      return (
+                        <div key={product.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-[#1C5D15]/5">
+                          <div className="h-44 overflow-hidden bg-[#F7F9CE]">
+                            <img 
+                              src={product.image} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                              alt={translation.name} 
+                            />
+                          </div>
+                          <div className="p-4">
+                            <div className="mb-2 text-[11px] uppercase font-bold tracking-wide text-[#1C5D15]">
+                              {product.category}
+                            </div>
+                            <h3 className="text-lg font-semibold text-[#1C5D15] mb-2 line-clamp-2">{translation.name}</h3>
+                            <p className="text-sm text-[#629960] mb-3 line-clamp-3">{translation.short_description || translation.description}</p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <svg key={star} className={`w-3 h-3 ${star <= 4.5 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                  </svg>
+                                ))}
+                              </div>
+                              <span className="text-[10px] font-bold text-[#19FF00] uppercase tracking-wider">Ver detalle</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Diseño de la Home (Original)
                     return (
                       <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 group flex flex-col">
                         <div className="relative h-48 bg-gray-100 overflow-hidden">
@@ -267,21 +311,22 @@ export function VisualEditorPreview({
                         </div>
                       </div>
                     );
-                  });
-                })()}
-              </div>
-
-              {/* Botón Final */}
-              {(section.content.ctaText || section.content.ctaLink) && (
-                <div className="flex justify-center mt-12">
-                  <button className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 py-3 uppercase text-sm font-bold tracking-wider">
-                    {section.content.ctaText || 'Ver Catálogo Completo'}
-                  </button>
+                  })}
                 </div>
-              )}
-            </div>
-          </section>
-        );
+
+                {/* Botón Final (Solo si no es Store o si tiene CTA) */}
+                {(section.content.ctaText || section.content.ctaLink) && (
+                  <div className="flex justify-center mt-12">
+                    <button className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 py-3 uppercase text-sm font-bold tracking-wider">
+                      {section.content.ctaText || (isStore ? 'Contáctanos' : 'Ver Catálogo Completo')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        }
+
 
       case 'blog':
         return (
@@ -599,9 +644,15 @@ export function VisualEditorPreview({
 
       case 'category-filter':
         return (
-          <section className="py-4 bg-white border-y border-[#E8F0E2] sticky top-16 z-30 shadow-sm">
+          <section className="py-20 bg-[#629960]/5 border-y border-[#E8F0E2]">
             <div className="max-w-7xl mx-auto px-6">
-              <div className="flex flex-wrap gap-2.5 justify-center">
+              {section.content.title && (
+                <div className="text-center mb-10">
+                  <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
+                  {section.content.subtitle && <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2.5 justify-center mt-6">
                 <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#1C5D15] text-white">
                   Todas las Categorías
                 </span>
@@ -614,6 +665,7 @@ export function VisualEditorPreview({
             </div>
           </section>
         );
+
 
       case 'clientes':
         {

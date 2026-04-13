@@ -1804,61 +1804,79 @@ export function VisualEditorSidebar({
 
           {sectionES.type === "products" && (
             <>
-              <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b pb-2 mb-2">
-                <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Selección de Productos (Máx 3)</h4>
-                <span className="text-[9px] bg-[#1C5D15]/10 text-[#1C5D15] px-2 py-0.5 rounded-full font-bold">
-                  {(sectionES.content.selectedProductIds || []).length} / 3
-                </span>
-              </div>
-
-              <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                {availableProducts.map((prod) => {
-                  const isSelected = (sectionES.content.selectedProductIds || []).includes(prod.id);
-                  return (
-                    <div
-                      key={prod.id}
-                      onClick={() => {
-                        const current = sectionES.content.selectedProductIds || [];
-                        let newList;
-                        if (isSelected) {
-                          newList = current.filter((id: string) => id !== prod.id);
-                        } else {
-                          if (current.length >= 3) {
-                            toast.error('Solo puedes seleccionar un máximo de 3 productos');
-                            return;
-                          }
-                          newList = [...current, prod.id];
-                        }
-                        handleContentChange("selectedProductIds", newList, 'both');
-                      }}
-                      className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer ${isSelected ? 'bg-[#1C5D15]/5 border-[#1C5D15] shadow-sm' : 'hover:bg-gray-50 border-gray-100'
-                        }`}
-                    >
-                      <div className="w-10 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                        <img src={prod.image} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold text-[#1C5D15] truncate">{prod.translation?.name || prod.slug}</p>
-                        <p className="text-[9px] text-gray-400 uppercase tracking-tighter">{prod.category}</p>
-                      </div>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'bg-[#1C5D15] border-[#1C5D15]' : 'border-gray-200'}`}>
-                        {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {(sectionES.content.selectedProductIds || []).length === 0 && (
-                <div className="p-3 bg-amber-50 rounded-lg flex gap-2 items-start">
+            {pageSlug?.includes('store') ? (
+              <div className="p-4 bg-white border rounded-xl shadow-sm space-y-3">
+                <div className="flex items-center gap-2 text-[#1C5D15]">
+                  <CheckCircle2 className="w-4 h-4 text-[#19FF00]" />
+                  <h4 className="text-[10px] font-black uppercase tracking-widest">Catálogo Automático</h4>
+                </div>
+                <p className="text-[10px] text-gray-500 leading-relaxed italic">
+                  En la página de la Tienda, todos los productos activos de tu inventario se muestran automáticamente. No es necesario seleccionarlos manualmente aquí.
+                </p>
+                <div className="p-3 bg-amber-50 rounded-lg flex gap-2 items-start border border-amber-100">
                   <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-amber-700 leading-tight">
-                    Si no seleccionas productos aquí, se mostrarán automáticamente los productos marcados como "Destacados" en el inventario.
+                    Para gestionar qué productos aparecen, usa el <strong>Inventario de Productos</strong> en el panel de administración general.
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b pb-2 mb-2">
+                  <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Selección de Productos (Máx 3)</h4>
+                  <span className="text-[9px] bg-[#1C5D15]/10 text-[#1C5D15] px-2 py-0.5 rounded-full font-bold">
+                    {(sectionES.content.selectedProductIds || []).length} / 3
+                  </span>
+                </div>
+
+                <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                  {availableProducts.map((prod) => {
+                    const isSelected = (sectionES.content.selectedProductIds || []).includes(prod.id);
+                    return (
+                      <div
+                        key={prod.id}
+                        onClick={() => {
+                          const current = sectionES.content.selectedProductIds || [];
+                          let newList;
+                          if (isSelected) {
+                            newList = current.filter((id: string) => id !== prod.id);
+                          } else {
+                            if (current.length >= 3) {
+                              toast.error('En el Home solo puedes seleccionar un máximo de 3 productos');
+                              return;
+                            }
+                            newList = [...current, prod.id];
+                          }
+                          handleContentChange("selectedProductIds", newList, 'both');
+                        }}
+                        className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer ${isSelected ? 'bg-[#1C5D15]/5 border-[#1C5D15] shadow-sm' : 'hover:bg-gray-50 border-gray-100'
+                          }`}
+                      >
+                        <div className="w-10 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
+                          <img src={prod.image} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-[#1C5D15] truncate">{prod.translation?.name || prod.slug}</p>
+                          <p className="text-[9px] text-gray-400 uppercase tracking-tighter">{prod.category}</p>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'bg-[#1C5D15] border-[#1C5D15]' : 'border-gray-200'}`}>
+                          {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {(sectionES.content.selectedProductIds || []).length === 0 && (
+                  <div className="p-3 bg-amber-50 rounded-lg flex gap-2 items-start text-amber-600">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <p className="text-[10px] leading-tight">
+                      Si no seleccionas productos aquí, se mostrarán automáticamente los marcados como "Destacados".
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
               <div className="flex items-center gap-2 border-b pb-2 mb-2">

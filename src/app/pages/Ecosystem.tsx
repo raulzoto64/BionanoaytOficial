@@ -2,7 +2,13 @@
 
 import { useLanguage } from "../contexts/LanguageContext";
 import { useState, useEffect } from "react";
-import { supabaseAPI, EcosystemMember, EcosystemMemberTranslation } from "../data/supabase";
+import { 
+  supabaseAPI, 
+  EcosystemMember, 
+  EcosystemMemberTranslation,
+  PageContent,
+  Section
+} from "../data/supabase";
 import { 
   Select,
   SelectContent,
@@ -11,9 +17,15 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { ContentCard } from "../components/ContentCard";
+import { useDatabase } from "../hooks/useDatabase";
+import { SEO } from "../components/SEO";
+import { Hero } from "../components/Hero";
+import { Ecosystem as EcosystemFeatures } from "../components/Ecosystem";
+import { TrustBar } from "../components/TrustBar";
+import { StatsCards } from "../components/StatsCards"; // I assume this exists or I'll create it if needed, actually I'll use inline for simple stats if not.
 
-export function EcosystemPage() {
-  const { language } = useLanguage();
+// ── Componente de Catálogo de Miembros ──────────────────────────────────────
+function EcosystemCatalog({ language }: { language: string }) {
   const [members, setMembers] = useState<EcosystemMember[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<EcosystemMember[]>([]);
   const [translations, setTranslations] = useState<Record<string, EcosystemMemberTranslation>>({});
@@ -32,7 +44,6 @@ export function EcosystemPage() {
       setMembers(ecosystemMembers);
       setFilteredMembers(ecosystemMembers);
 
-      // Extract unique categories
       const uniqueCategories = Array.from(new Set(ecosystemMembers.map(member => member.sector)));
       setCategories(uniqueCategories);
 
@@ -63,105 +74,191 @@ export function EcosystemPage() {
     }
   };
 
-  // Loading state
   if (loading) {
     return (
-      <section className="py-12 md:py-16 bg-[#629960]/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="space-y-8">
-            <div className="text-center">
-              <div className="h-8 bg-[#1C5D15]/10 rounded w-32 animate-pulse mx-auto mb-4" />
-              <div className="h-12 bg-[#1C5D15]/10 rounded w-64 animate-pulse mx-auto" />
-            </div>
-            
-            <div className="flex justify-center">
-              <div className="h-10 bg-white rounded-lg animate-pulse w-48" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, idx) => (
-                <div key={idx} className="h-[280px] bg-white rounded-xl animate-pulse" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+        {[...Array(3)].map((_, idx) => (
+          <div key={idx} className="h-[280px] bg-gray-100 rounded-xl" />
+        ))}
+      </div>
     );
   }
 
   return (
-    <section className="py-10 md:py-14 bg-[#629960]/5">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <div className="inline-block px-4 py-1.5 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4 font-bold text-sm tracking-wide shadow-sm">
-              {language === 'es' ? 'Ecosistema' : 'Ecosystem'}
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-[#1C5D15] tracking-tight">
-              {language === 'es' ? 'Nuestro Ecosistema' : 'Our Ecosystem'}
-            </h1>
-            <p className="text-lg md:text-xl mb-8 text-[#629960] leading-relaxed max-w-2xl mx-auto">
-              {language === 'es' 
-                ? 'Conectamos innovadores, empresarios y profesionales para construir un ecosistema sostenible y tecnológico.' 
-                : 'We connect innovators, entrepreneurs, and professionals to build a sustainable and technological ecosystem.'
+    <div className="space-y-8">
+      <div className="flex justify-center">
+        <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+          <SelectTrigger className="w-64 bg-white border-[#629960]/20 focus:border-[#1C5D15] rounded-xl shadow-sm">
+            <SelectValue placeholder={language === 'es' ? 'Filtrar por sector' : 'Filter by sector'} />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl border-[#629960]/10">
+            <SelectItem value="all">
+              {language === 'es' ? 'Todos los sectores' : 'All sectors'}
+            </SelectItem>
+            {categories.map(category => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredMembers.map((member) => (
+          <ContentCard 
+            key={member.id} 
+            type="ecosystem" 
+            data={{
+              id: member.id,
+              slug: member.slug,
+              image: member.image,
+              sector: member.sector,
+              translation: {
+                name: translations[member.id]?.name || 'Miembro',
+                description: translations[member.id]?.description || ''
               }
-            </p>
-          </div>
+            }} 
+          />
+        ))}
+      </div>
 
-          {/* Filter */}
-          <div className="flex justify-center">
-            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="w-48 bg-white border-[#629960]/20 focus:border-[#1C5D15]">
-                <SelectValue placeholder={language === 'es' ? 'Filtrar por categoría' : 'Filter by category'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {language === 'es' ? 'Todas las categorías' : 'All categories'}
-                </SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      {filteredMembers.length === 0 && (
+        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+          <p className="text-lg text-[#629960] font-medium">
+            {language === 'es' ? 'No se encontraron miembros en este sector.' : 'No members found in this sector.'}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
-          {/* Members Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMembers.map((member) => {
-              const translation = translations[member.id];
-              
-              return (
-                <ContentCard 
-                  key={member.id} 
-                  type="ecosystem" 
-                  data={{
-                    id: member.id,
-                    slug: member.slug,
-                    image: member.image,
-                    sector: member.sector,
-                    translation: {
-                      name: translation?.name || 'Miembro',
-                      description: translation?.description || ''
-                    }
-                  }} 
-                />
-              );
-            })}
-          </div>
+// ── Página Principal Dinámica ──────────────────────────────────────────────
+export function EcosystemPage() {
+  const { language } = useLanguage();
+  const { updateTrigger } = useDatabase();
+  const [pageContent, setPageContent] = useState<PageContent | null>(null);
+  const [loading, setLoading] = useState(true);
 
-          {/* No Results Message */}
-          {filteredMembers.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-lg text-[#629960]">
-                {language === 'es' ? 'No se encontraron miembros en esta categoría.' : 'No members found in this category.'}
-              </p>
-            </div>
-          )}
+  useEffect(() => {
+    loadPageContent();
+  }, [language, updateTrigger]);
+
+  const loadPageContent = async () => {
+    setLoading(true);
+    try {
+      const content = await supabaseAPI.getPageContent("page-ecosystem", language);
+      setPageContent(content);
+    } catch (error) {
+      console.error("Error loading ecosystem page content:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F9CE]/30">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1C5D15]"></div>
+      </div>
+    );
+  }
+
+  // Fallback si no hay contenido en la DB
+  if (!pageContent || pageContent.sections.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F9CE]/30">
+        <div className="text-center p-12 bg-white rounded-3xl shadow-xl border border-[#1C5D15]/10 max-w-md">
+          <h2 className="text-2xl font-bold text-[#1C5D15] mb-4">Página en Construcción</h2>
+          <p className="text-[#629960] mb-8">Estamos configurando el ecosistema. Por favor, vuelve pronto.</p>
+          <div className="bg-[#19FF00]/10 p-4 rounded-xl text-xs text-[#1C5D15] font-mono">
+            ID: page-ecosystem
+          </div>
         </div>
       </div>
-    </section>
+    );
+  }
+
+  const heroSection = pageContent.sections.find(s => s.type === "hero");
+  const seoData = heroSection?.content?.seo || {};
+
+  return (
+    <div className="min-h-screen bg-white">
+      <SEO 
+        title={seoData.metaTitle || (language === 'es' ? 'Ecosistema - BionanoAyT' : 'Ecosystem - BionanoAyT')}
+        description={seoData.metaDescription}
+        keywords={seoData.metaKeywords}
+      />
+
+      {pageContent.sections.map((section: Section) => {
+        if (!section.visible) return null;
+
+        switch (section.type) {
+          case 'hero':
+            return <Hero key={section.id} content={section.content} />;
+
+          case 'ecosystem':
+            return (
+              <section key={section.id} className="py-20 bg-white">
+                <EcosystemFeatures 
+                  title={section.content.title}
+                  subtitle={section.content.subtitle}
+                  items={section.content.items}
+                />
+              </section>
+            );
+
+          case 'trust':
+            return (
+              <section key={section.id} className="py-16 bg-[#F7F9CE]/30">
+                <TrustBar 
+                  partners={section.content.partners || []} 
+                  title={section.content.title} 
+                  subtitle={section.content.subtitle} 
+                />
+              </section>
+            );
+
+          case 'category-filter': // Usamos este tipo para el catálogo de miembros
+            return (
+              <section key={section.id} className="py-20 bg-[#629960]/5">
+                <div className="max-w-7xl mx-auto px-6">
+                  {section.content.title && (
+                    <div className="text-center mb-16">
+                      <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
+                      {section.content.subtitle && <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>}
+                    </div>
+                  )}
+                  <EcosystemCatalog language={language} />
+                </div>
+              </section>
+            );
+
+          case 'stats':
+            return (
+              <section key={section.id} className="py-20 bg-[#1C5D15] text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#19FF00] rounded-full blur-[120px] opacity-20 -mr-32 -mt-32"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#19FF00] rounded-full blur-[120px] opacity-10 -ml-32 -mb-32"></div>
+                
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+                    {section.content.stats?.map((stat: any, idx: number) => (
+                      <div key={idx} className="space-y-2">
+                        <div className="text-5xl font-black text-[#19FF00] tracking-tighter">{stat.value}</div>
+                        <div className="text-sm font-bold uppercase tracking-widest text-white/70">{stat.label}</div>
+                        {stat.description && <p className="text-xs text-white/50">{stat.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+
+          default:
+            return null;
+        }
+      })}
+    </div>
   );
 }
