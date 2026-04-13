@@ -75,8 +75,9 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
       <div className="bg-[#1C5D15]/5 rounded-lg p-3 border border-[#1C5D15]/20">
         <h3 className="font-bold text-[#1C5D15] uppercase tracking-wider text-xs flex items-center gap-2">
           <Globe className="w-3 h-3 text-[#19FF00]" />
-          Componente: {sectionES.type}
+          Tipo: {sectionES.type}
         </h3>
+        <p className="text-[10px] text-[#629960] mt-1 font-medium italic">ID: {sectionES.id}</p>
         <p className="text-[10px] text-[#629960] mt-1 font-medium">Edición Pro: Multi-idioma Inline activo</p>
       </div>
 
@@ -1310,6 +1311,146 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         </div>
       )}
 
+      {/* Tipo Timeline */}
+      {sectionES.type === "timeline" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <div>
+              <LanguageToggle fieldKey="time-title" label="Título de Sección" />
+              <Input
+                value={(getFieldLang('time-title') === 'es' ? sectionES.content.title : sectionEN.content.title) || ""}
+                onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('time-title'))}
+                placeholder="Nuestra Trayectoria"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="time-subtitle" label="Subtítulo" />
+              <Input
+                value={(getFieldLang('time-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(e) => handleContentChange("subtitle", e.target.value, getFieldLang('time-subtitle'))}
+                placeholder="Hitos importantes"
+              />
+            </div>
+            <div>
+              <LanguageToggle fieldKey="time-desc" label="Descripción Principal" />
+              <RichTextEditor
+                value={(getFieldLang('time-desc') === 'es' ? sectionES.content.description : sectionEN.content.description) || ""}
+                onChange={(val) => handleContentChange("description", val, getFieldLang('time-desc'))}
+                minHeight="100px"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">LÍNEA DE TIEMPO / HITOS</Label>
+            {(sectionES.content.milestones || []).map((_: any, idx: number) => {
+              const fKey = `milestone-${idx}`;
+
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.milestones || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.milestones || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("milestones", newListES, 'es');
+                      handleContentChange("milestones", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Hito #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Año</Label>
+                        <Input
+                          placeholder="Ej: 2024"
+                          value={sectionES.content.milestones[idx].year || ""}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.milestones || [])];
+                            const newListEN = [...(sectionEN.content.milestones || [])];
+                            newListES[idx].year = e.target.value;
+                            newListEN[idx].year = e.target.value;
+                            handleContentChange("milestones", newListES, 'es');
+                            handleContentChange("milestones", newListEN, 'en');
+                          }}
+                          className="text-xs h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                        <select
+                          className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                          value={sectionES.content.milestones[idx].icon || 'Lightbulb'}
+                          onChange={(e) => {
+                            const newListES = [...(sectionES.content.milestones || [])];
+                            const newListEN = [...(sectionEN.content.milestones || [])];
+                            newListES[idx].icon = e.target.value;
+                            newListEN[idx].icon = e.target.value;
+                            handleContentChange("milestones", newListES, 'es');
+                            handleContentChange("milestones", newListEN, 'en');
+                          }}
+                        >
+                          <option value="Lightbulb">Idea (Lightbulb)</option>
+                          <option value="FileCheck">Registro (FileCheck)</option>
+                          <option value="TrendingUp">Crecimiento (TrendingUp)</option>
+                          <option value="Rocket">Lanzamiento (Rocket)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <Input
+                      placeholder="Título del Hito"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.milestones[idx].title : sectionEN.content.milestones[idx].title) || ""}
+                      onChange={(e) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.milestones];
+                        newList[idx].title = e.target.value;
+                        handleContentChange("milestones", newList, lang);
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <RichTextEditor
+                      placeholder="Descripción del Hito"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.milestones[idx].description : sectionEN.content.milestones[idx].description) || ""}
+                      onChange={(val) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.milestones];
+                        newList[idx].description = val;
+                        handleContentChange("milestones", newList, lang);
+                      }}
+                      minHeight="60px"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.milestones || [];
+                const currentEN = sectionEN.content.milestones || [];
+                const newItem = { year: "", title: "", description: "", icon: "Lightbulb" };
+                handleContentChange("milestones", [...currentES, { ...newItem }], 'es');
+                handleContentChange("milestones", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Hito
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Tipo Team */}
       {sectionES.type === "team" && (
         <div className="space-y-6">
@@ -2279,6 +2420,117 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
         </div>
       )}
 
+      {/* Tipo FlipCards */}
+      {sectionES.type === "flipcards" && (
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">Tarjetas Informativas (Sincronizadas)</Label>
+            {(sectionES.content.items || []).map((_: any, idx: number) => {
+              const fKey = `flipcard-${idx}`;
+              return (
+                <div key={idx} className="p-4 border rounded-xl bg-white shadow-sm relative group space-y-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                    onClick={() => {
+                      const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                      const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                      handleContentChange("items", newListES, 'es');
+                      handleContentChange("items", newListEN, 'en');
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+
+                  <LanguageToggle fieldKey={fKey} label={`Tarjeta #${idx + 1}`} />
+
+                  <div className="grid gap-3">
+                    <div>
+                      <Label className="text-[9px] font-bold text-[#1C5D15] uppercase mb-1 block">Icono</Label>
+                      <select
+                        className="w-full text-[10px] h-8 border rounded-md bg-white px-2"
+                        value={sectionES.content.items[idx].icon || 'Shield'}
+                        onChange={(e) => {
+                          const newListES = [...(sectionES.content.items || [])];
+                          const newListEN = [...(sectionEN.content.items || [])];
+                          newListES[idx].icon = e.target.value;
+                          newListEN[idx].icon = e.target.value;
+                          handleContentChange("items", newListES, 'es');
+                          handleContentChange("items", newListEN, 'en');
+                        }}
+                      >
+                        <option value="Shield">Escudo (Shield)</option>
+                        <option value="Truck">Camión (Truck)</option>
+                        <option value="CheckCircle">Check</option>
+                        <option value="Users">Personas</option>
+                        <option value="Package">Paquete</option>
+                        <option value="Award">Premio</option>
+                        <option value="Zap">Rayo</option>
+                        <option value="Sprout">Planta</option>
+                      </select>
+                    </div>
+
+                    <Input
+                      placeholder="Título"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].title : sectionEN.content.items[idx].title) || ""}
+                      onChange={(e) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].title = e.target.value;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      className="text-xs h-9"
+                    />
+
+                    <RichTextEditor
+                      placeholder="Descripción"
+                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].description : sectionEN.content.items[idx].description) || ""}
+                      onChange={(val) => {
+                        const lang = getFieldLang(fKey);
+                        const target = lang === 'es' ? sectionES : sectionEN;
+                        const newList = [...target.content.items];
+                        newList[idx].description = val;
+                        handleContentChange("items", newList, lang);
+                      }}
+                      minHeight="60px"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+              onClick={() => {
+                const currentES = sectionES.content.items || [];
+                const currentEN = sectionEN.content.items || [];
+                const newItem = { icon: "Shield", title: "", description: "" };
+                handleContentChange("items", [...currentES, { ...newItem }], 'es');
+                handleContentChange("items", [...currentEN, { ...newItem }], 'en');
+              }}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Agregar Tarjeta
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo Category Filter */}
+      {sectionES.type === "category-filter" && (
+        <div className="space-y-6">
+          <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm">
+            <div className="bg-[#1C5D15]/5 rounded-lg p-3">
+              <p className="text-[10px] text-[#1C5D15] font-medium leading-relaxed">
+                ✅ Este componente carga automáticamente las categorías del sistema. No requiere configuración manual de contenido.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tipo Clientes / Sectores */}
       {sectionES.type === "clientes" && (
         <div className="space-y-6">
@@ -2309,69 +2561,68 @@ export function VisualEditorSidebar({ sectionES, sectionEN, onUpdateSection, ava
               Miembros del Ecosistema Disponibles
             </Label>
             
-            <p className="text-[10px] text-[#629960] px-1">
-              Selecciona los miembros que quieres mostrar en esta sección. El orden de selección es el orden de aparición.
+            <p className="text-[10px] text-[#629960] px-1 leading-tight">
+              Selecciona los miembros que quieres mostrar. El orden de selección es el orden de aparición.
             </p>
 
-            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-              {
-                // Aqui se cargaran dinamicamente todos los miembros del ecosistema
-                [
-                  { id: 'eco-001', name: 'Biotecnología' },
-                  { id: 'eco-002', name: 'Sostenibilidad Ambiental' },
-                  { id: 'eco-003', name: 'Nanotecnología Aplicada' },
-                  { id: 'eco-004', name: 'Agricultura Moderna' }
-                ].map((member) => {
-                  const isSelected = (sectionES.content.selectedMemberIds || []).includes(member.id);
-                  
-                  return (
-                    <div 
-                      key={member.id} 
-                      className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all ${
-                        isSelected 
-                          ? 'bg-[#19FF00]/10 border-[#19FF00]/40' 
-                          : 'bg-gray-50 border-gray-100 hover:bg-gray-100'
-                      }`}
-                      onClick={() => {
-                        const currentIds = sectionES.content.selectedMemberIds || [];
-                        let newIds;
-                        
-                        if (isSelected) {
-                          newIds = currentIds.filter((id: string) => id !== member.id);
-                        } else {
-                          newIds = [...currentIds, member.id];
-                        }
-
-                        handleContentChange('selectedMemberIds', newIds, 'both');
-                      }}
-                    >
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer ${
-                        isSelected 
-                          ? 'bg-[#19FF00] border-[#19FF00]' 
-                          : 'border-gray-300 bg-white'
-                      }`}>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#1C5D15]" />}
-                      </div>
+            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+              {(availableEcosystemMembers || []).map((member) => {
+                const isSelected = (sectionES.content.selectedMemberIds || []).includes(member.id);
+                
+                return (
+                  <div 
+                    key={member.id} 
+                    className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'bg-[#19FF00]/5 border-[#19FF00]/30 shadow-sm' 
+                        : 'bg-gray-50 border-gray-100 hover:bg-white hover:border-[#1C5D15]/20'
+                    }`}
+                    onClick={() => {
+                      const currentIds = sectionES.content.selectedMemberIds || [];
+                      let newIds;
                       
-                      <span className={`text-sm font-medium ${
-                        isSelected ? 'text-[#1C5D15]' : 'text-gray-600'
-                      }`}>
-                        {member.name}
-                      </span>
+                      if (isSelected) {
+                        newIds = currentIds.filter((id: string) => id !== member.id);
+                      } else {
+                        newIds = [...currentIds, member.id];
+                      }
+
+                      handleContentChange('selectedMemberIds', newIds, 'both');
+                    }}
+                  >
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                      isSelected 
+                        ? 'bg-[#1C5D15] border-[#1C5D15]' 
+                        : 'border-gray-200 bg-white'
+                    }`}>
+                      {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                     </div>
-                  );
-                })
-              }
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[11px] font-bold truncate ${isSelected ? 'text-[#1C5D15]' : 'text-gray-700'}`}>
+                        {member.translation?.name || member.name}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {availableEcosystemMembers.length === 0 && (
+                <div className="py-8 text-center bg-gray-50 rounded-lg border border-dashed">
+                  <p className="text-[10px] text-gray-400">No hay miembros disponibles para seleccionar.</p>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              <span className="text-[10px] text-gray-500">
-                {(sectionES.content.selectedMemberIds || []).length} miembros seleccionados
+              <span className="text-[10px] font-bold text-[#1C5D15]">
+                {(sectionES.content.selectedMemberIds || []).length} seleccionados
               </span>
             </div>
           </div>
         </div>
       )}
+
 
     </div>
   );

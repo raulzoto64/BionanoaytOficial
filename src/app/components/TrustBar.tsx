@@ -27,9 +27,11 @@ interface Partner {
 
 interface TrustBarProps {
   partners: Partner[];
+  title?: string;
+  subtitle?: string;
 }
 
-export function TrustBar({ partners }: TrustBarProps) {
+export function TrustBar({ partners, title, subtitle }: TrustBarProps) {
   const { t } = useLanguage();
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -45,10 +47,25 @@ export function TrustBar({ partners }: TrustBarProps) {
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#19FF00]/30 to-transparent" />
 
       <div className="max-w-6xl mx-auto px-5 lg:px-6 relative z-10">
-        <h3 className="text-center text-white/70 mb-8 text-sm tracking-wider uppercase flex items-center justify-center gap-2">
-          <Info className="w-4 h-4 text-[#19FF00]" />
-          {t('trustbar.title')}
-        </h3>
+        {(title || subtitle) ? (
+          <div className="text-center mb-10">
+            {title && (
+              <h2 className="text-white text-3xl md:text-4xl font-bold mb-3">
+                {title}
+              </h2>
+            )}
+            {subtitle && (
+              <p className="text-[#19FF00] text-lg opacity-90 max-w-2xl mx-auto">
+                {subtitle}
+              </p>
+            )}
+          </div>
+        ) : (
+          <h3 className="text-center text-white/70 mb-8 text-sm tracking-wider uppercase flex items-center justify-center gap-2">
+            <Info className="w-4 h-4 text-[#19FF00]" />
+            {t('trustbar.title')}
+          </h3>
+        )}
 
         <Carousel
           opts={{

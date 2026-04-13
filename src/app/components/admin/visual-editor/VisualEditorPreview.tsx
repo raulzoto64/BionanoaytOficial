@@ -1,265 +1,311 @@
-import { Section, EcosystemMember, EcosystemMemberTranslation } from '../../../data/supabase';
-import { EditableBlock } from './EditableBlock';
-import { useState } from 'react';
-
-// Importar los mismos componentes que usa el Front-End real
-import { Hero } from '../../Hero';
-import { HeroBlog } from '../../HeroBlog';
-import { Purpose } from '../../Purpose';
+import { Section, Category, EcosystemMember, Product } from '../../../data/supabase';
+import { 
+  Quote, 
+  Shield, 
+  CheckCircle2, 
+  Users, 
+  Cloud, 
+  Zap, 
+  Sprout, 
+  Globe, 
+  Clock, 
+  FileText,
+  AlertCircle,
+  Truck,
+  Building,
+  Factory,
+  FlaskConical,
+  Microscope,
+  TrendingUp,
+  AlertTriangle,
+  Building2,
+  Fish,
+  Apple,
+  HeartPulse,
+  Shirt,
+  Warehouse
+} from 'lucide-react';
+import { FlipCards } from '../../FlipCards';
 import { FeaturedProduct } from '../../FeaturedProduct';
 import { Timeline } from '../../Timeline';
 import { Leadership } from '../../Leadership';
-import { TrustBar } from '../../TrustBar';
-import { Ecosystem } from '../../Ecosystem';
 import { NewsSection } from '../../NewsSection';
-import { Products } from '../../Products';
-import { FlipCards } from '../../FlipCards';
-import {
-  ChevronDown, ChevronUp, Quote, CheckCircle,
-  FlaskConical, Globe, Star, Zap, Microscope,
-  Atom, Shield, Leaf, Factory, TrendingUp,
-  AlertTriangle, Sprout, Building2, Fish,
-  Apple, HeartPulse, Shirt, Warehouse
-} from 'lucide-react';
+import { TrustBar } from '../../TrustBar';
+import { Purpose } from '../../Purpose';
+import { Ecosystem } from '../../Ecosystem';
 
-// Mapa global de iconos
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  FlaskConical, Globe, Star, Zap, Microscope, Atom, Shield, Leaf, Factory,
-  TrendingUp, AlertTriangle, CheckCircle, Sprout, Building2, Fish,
-  Apple, HeartPulse, Shirt, Warehouse
+// Mapeo de nombres de iconos a componentes
+const IconMap: Record<string, any> = {
+  Quote,
+  Shield,
+  CheckCircle2,
+  Users,
+  Cloud,
+  Zap,
+  Sprout,
+  Globe,
+  Clock,
+  FileText,
+  AlertCircle,
+  Truck,
+  Building,
+  Factory,
+  FlaskConical,
+  Microscope,
+  TrendingUp,
+  AlertTriangle,
+  Building2,
+  Fish,
+  Apple,
+  HeartPulse,
+  Shirt,
+  Warehouse
 };
-function Icon({ name, className }: { name: string; className?: string }) {
-  const C = ICON_MAP[name] || FlaskConical;
-  return <C className={className} />;
-}
 
-// FAQ collapsible para preview
-function FaqPreviewItem({ item }: { item: any }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border border-[#629960]/20 rounded-xl overflow-hidden">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 text-left bg-white hover:bg-[#629960]/5 transition-colors">
-        <span className="font-bold text-[#1C5D15] text-sm">{item.question}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-[#629960] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#629960] shrink-0" />}
-      </button>
-      {open && <div className="px-4 pb-4 pt-1 bg-[#629960]/5 text-[#629960] text-sm leading-relaxed">{item.answer}</div>}
-    </div>
-  );
-}
+const Icon = ({ name, className }: { name: string; className?: string }) => {
+  const IconComp = IconMap[name] || Globe;
+  return <IconComp className={className} />;
+};
 
 interface VisualEditorPreviewProps {
   sections: Section[];
   activeSectionId: string | null;
   onSectionClick: (id: string) => void;
-  availableProducts?: any[];
-  availableEcosystemMembers?: (EcosystemMember & { translation: EcosystemMemberTranslation | null })[];
-  availableCategories?: any[];
+  availableCategories?: Category[];
+  availableEcosystemMembers?: EcosystemMember[];
+  availableProducts?: Product[];
 }
 
-export function VisualEditorPreview({
-  sections,
-  activeSectionId,
+function EditableBlock({ 
+  sectionId, 
+  activeSectionId, 
+  onClick, 
+  children, 
+  label = "Sección" 
+}: { 
+  sectionId: string; 
+  activeSectionId: string | null; 
+  onClick: (id: string) => void; 
+  children: React.ReactNode;
+  label?: string;
+}) {
+  const isActive = activeSectionId === sectionId;
+  
+  return (
+    <div 
+      className={`relative group cursor-pointer transition-all duration-200 border-2 ${
+        isActive 
+          ? 'border-[#19FF00] z-10 shadow-[0_0_0_4px_rgba(25,255,0,0.1)]' 
+          : 'border-transparent hover:border-[#1C5D15]/50'
+      }`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(sectionId);
+      }}
+    >
+      {/* Etiqueta flotante */}
+      <div 
+        className={`absolute -top-6 left-0 bg-[#1C5D15] text-[#19FF00] text-xs font-bold px-2 py-1 rounded-t-md transition-opacity duration-200 ${
+          isActive || 'opacity-0 group-hover:opacity-100'
+        }`}
+        style={{ zIndex: 20 }}
+      >
+        {label}
+      </div>
+
+      <div className={isActive ? '' : 'pointer-events-none'}>
+        {children}
+      </div>
+      
+      {!isActive && (
+        <div className="absolute inset-0 z-10" />
+      )}
+    </div>
+  );
+}
+
+function FaqPreviewItem({ item }: { item: any }) {
+  return (
+    <div className="border border-gray-100 rounded-xl p-4 bg-white shadow-sm">
+      <h3 className="font-bold text-[#1C5D15] flex items-center gap-2">
+        <div className="w-1.5 h-1.5 bg-[#19FF00] rounded-full" />
+        {item.question}
+      </h3>
+      <div 
+        className="mt-2 text-sm text-[#629960] leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: item.answer }}
+      />
+    </div>
+  );
+}
+
+export function VisualEditorPreview({ 
+  sections, 
+  activeSectionId, 
   onSectionClick,
-  availableProducts = [],
-  availableEcosystemMembers = [],
   availableCategories = [],
+  availableEcosystemMembers = [],
+  availableProducts = []
 }: VisualEditorPreviewProps) {
+
   const renderSectionComponent = (section: Section) => {
     switch (section.type) {
-      // ── Componentes existentes ───────────────────────────────────────────
-      case "hero":
-        return <Hero content={section.content} />;
-
-      case "hero-blog":
-        // ✅ DENTRO DEL EDITOR QUITAR MARGEN SUPERIOR PARA QUE SE PEGUE ARRIBA IGUAL QUE EN LA PAGINA REAL
-        return <div className="-mt-[1px]"><HeroBlog content={section.content} /></div>;
-
-      case "trust":
-        // ✅ Vista previa EN VIVO exacta al componente TrustBar real
-        // Si estamos en tienda y tiene selectedMemberIds usamos del ecosistema
-        // Sino usamos los partners editados manualmente EN TIEMPO REAL
-        if (section.page_id === 'page-store' && section.content.selectedMemberIds?.length > 0) {
-          const selectedMemberIds = section.content.selectedMemberIds || [];
-          const filteredPartners = availableEcosystemMembers.filter((member) =>
-            selectedMemberIds.includes(member.id)
-          );
-
-          // ✅ Convertimos miembros del ecosistema al formato EXACTO que espera TrustBar
-          // Para que use el MISMO popup EXACTAMENTE IGUAL que en Home
-          const partnersFormatted = filteredPartners.map(member => ({
-            name: member.translation?.name || member.slug,
-            placeholder: member.sector,
-            image: member.image,
-            description: member.translation?.description || "",
-            link: member.social_media?.website,
-            social_media: member.social_media,
-            videos: (member as any).videos || [],
-            short_videos: (member as any).short_videos || [],
-            details: []
-          }));
-          
-          return <TrustBar partners={partnersFormatted} />;
-        }
-
-        // ✅ PARA HOME: Mostrar partners MANUALES que tu estas editando AHORA MISMO
-        return <TrustBar partners={section.content.partners || []} />;
-
-      case "features":
-        // Si tiene contenido de proceso, renderiza el layout alternado igual que en Process.tsx
-        if (section.content.badge || section.content.items?.[0]?.details || section.content.items?.[0]?.duration || section.content.items?.[0]?.result) {
-          return (
-            <section className="py-20 bg-white">
-              <div className="max-w-6xl mx-auto px-6">
-                <div className="text-center mb-20">
-                  {section.content.badge && (
-                    <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full font-bold text-sm uppercase tracking-wider mb-4">
-                      {section.content.badge}
-                    </div>
-                  )}
-                  {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
-                  {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
-                </div>
-                <div className="space-y-24">
-                  {section.content.items?.map((step: any, index: number) => {
-                    const isEven = index % 2 === 0;
-                    return (
-                      <div key={index} className={`flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 items-center`}>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-4 mb-6">
-                            <div className="w-16 h-16 bg-[#1C5D15] rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
-                              <Icon name={step.icon || 'FlaskConical'} className="w-8 h-8 text-[#19FF00]" />
-                            </div>
-                            <div>
-                              <div className="text-xs text-[#629960] uppercase tracking-widest font-bold">Etapa {String(index + 1).padStart(2, '0')}</div>
-                              <h3 className="text-2xl md:text-3xl font-bold text-[#1C5D15]">{step.title}</h3>
-                            </div>
-                          </div>
-                          <p className="text-lg text-[#629960] mb-6 leading-relaxed">{step.description}</p>
-                          {step.details && step.details.length > 0 && (
-                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {step.details.map((detail: string, idx: number) => (
-                                <li key={idx} className="flex items-start gap-2 text-[#629960] text-sm">
-                                  <CheckCircle className="w-4 h-4 text-[#19FF00] shrink-0 mt-0.5" />
-                                  {detail}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          {step.duration && (
-                            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-[#629960]/10 rounded-full text-sm text-[#629960] font-medium">
-                              ⏱ Duración estimada: <strong className="text-[#1C5D15]">{step.duration}</strong>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="w-full h-72 md:h-96 rounded-3xl overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960] flex items-center justify-center relative shadow-2xl">
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                              <Icon name={step.icon || 'FlaskConical'} className="w-64 h-64 text-white" />
-                            </div>
-                            <div className="relative z-10 text-center text-white p-8">
-                              <div className="text-7xl font-black text-[#19FF00]/40 mb-2">{String(index + 1).padStart(2, '0')}</div>
-                              <div className="text-2xl font-bold">{step.title}</div>
-                              {step.result && (
-                                <div className="mt-4 px-4 py-2 bg-[#19FF00]/20 rounded-xl border border-[#19FF00]/30 text-[#19FF00] font-bold text-sm">
-                                  ✓ {step.result}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+      case 'hero':
+        return (
+          <section className="relative h-[600px] flex items-center justify-center overflow-hidden bg-[#1C5D15]">
+            {section.content.backgroundImage && (
+              <img 
+                src={section.content.backgroundImage} 
+                className="absolute inset-0 w-full h-full object-cover opacity-40"
+                alt="Hero background"
+              />
+            )}
+            <div className="relative z-10 text-center px-6 max-w-4xl">
+              <h1 className="text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
+                {section.content.title}
+              </h1>
+              <div 
+                className="text-xl text-white/90 mb-10 leading-relaxed font-medium"
+                dangerouslySetInnerHTML={{ __html: section.content.subtitle }}
+              />
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {section.content.ctaText && (
+                  <button className="bg-[#19FF00] text-[#1C5D15] px-8 py-4 rounded-full font-black uppercase tracking-wider hover:scale-105 transition-transform">
+                    {section.content.ctaText}
+                  </button>
+                )}
+                {section.content.secondaryCtaText && (
+                  <button className="bg-white/10 backdrop-blur-md text-white border-2 border-white/20 px-8 py-4 rounded-full font-black uppercase tracking-wider hover:bg-white/20 transition-all">
+                    {section.content.secondaryCtaText}
+                  </button>
+                )}
               </div>
-            </section>
-          );
-        }
-        // Fallback: Purpose normal (Home)
+            </div>
+          </section>
+        );
+
+      case 'features':
         return <Purpose purposes={section.content.items || []} />;
 
+      case 'text':
+        return (
+          <section className="py-20 bg-[#F7F9CE]/30">
+            <div className="max-w-4xl mx-auto px-6 text-center">
+              <h2 className="text-4xl font-black text-[#1C5D15] mb-8">{section.content.title}</h2>
+              <div 
+                className="text-lg text-[#629960] leading-loose"
+                dangerouslySetInnerHTML={{ __html: section.content.text }}
+              />
+            </div>
+          </section>
+        );
+
+      case 'products':
+        return (
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
+                <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {availableProducts.slice(0, 3).map((product: any) => (
+                  <div key={product.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/50">
+                    <div className="h-64 bg-gray-100 relative">
+                      <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-[#1C5D15] uppercase tracking-widest">
+                        Bio-Tec
+                      </div>
+                    </div>
+                    <div className="p-8">
+                      <h3 className="text-xl font-bold text-[#1C5D15] mb-2">{product.name}</h3>
+                      <p className="text-[#629960] text-sm mb-6 line-clamp-2">{product.description}</p>
+                      <button className="w-full bg-[#1C5D15] text-white py-3 rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-[#1C5D15]/90 transition-colors">
+                        Saber más
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case 'blog':
+        return (
+          <section className="py-20 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-end justify-between mb-12">
+                <div>
+                  <h2 className="text-4xl font-black text-[#1C5D15] mb-2">{section.content.title}</h2>
+                  <p className="text-[#629960]">{section.content.subtitle}</p>
+                </div>
+                <button className="text-[#1C5D15] font-black uppercase text-xs tracking-widest border-b-2 border-[#19FF00] pb-1">
+                  Ver todo el blog
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-3xl overflow-hidden shadow-lg shadow-gray-200/50 group">
+                    <div className="h-56 bg-gray-200 overflow-hidden">
+                      <img 
+                        src={`https://images.unsplash.com/photo-1530836361283-9b4972d13bb2?q=80&w=800&auto=format&fit=crop`} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        alt="Blog post" 
+                      />
+                    </div>
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="bg-[#F7F9CE] text-[#1C5D15] text-[10px] font-bold px-2 py-1 rounded-md uppercase">Innovación</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">12 Abr 2024</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-[#1C5D15] mb-3 group-hover:text-[#629960] transition-colors">
+                        El futuro de la nanotecnología en la agricultura sostenible
+                      </h3>
+                      <p className="text-[#629960] text-xs leading-relaxed line-clamp-2">
+                        Exploramos cómo los nuevos materiales a escala nanométrica están revolucionando el campo...
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case 'trust':
+        return <TrustBar partners={section.content.partners || []} title={section.content.title} subtitle={section.content.subtitle} />;
+      
+      case 'ecosystem':
+        return (
+          <div id="allies">
+            <Ecosystem
+              title={section.content.title}
+              subtitle={section.content.subtitle}
+              items={section.content.items || []}
+            />
+          </div>
+        );
+
+      case 'hero-blog':
+        return (
+          <div className="relative h-96 bg-gray-900 flex items-center justify-center text-white text-center rounded-3xl overflow-hidden mx-4 my-8">
+            <img src={section.content.backgroundImage} className="absolute inset-0 w-full h-full object-cover opacity-50" />
+            <div className="relative z-10 p-10">
+              <span className="bg-[#19FF00] text-[#1C5D15] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 inline-block">
+                {section.content.badge}
+              </span>
+              <h1 className="text-4xl font-black mb-4">{section.content.title}</h1>
+              <div dangerouslySetInnerHTML={{ __html: section.content.subtitle }} />
+            </div>
+          </div>
+        );
+
+      // --- Tipos adicionales ---
       case 'featured':
         return <FeaturedProduct content={section.content} />;
 
-      case 'products':
-        // ✅ USANDO EXACTAMENTE EL MISMO COMPONENTE QUE LA HOME REAL
-        // Ahora la vista previa es 100% identica a la pagina final
-        return (
-          <Products
-            title={section.content.title}
-            subtitle={section.content.subtitle}
-            products={availableProducts}
-          />
-        );
-
       case 'timeline':
-        if (section.content.milestones?.[0]?.step !== undefined) {
-          return (
-            <section className="py-20 bg-gray-50">
-              <div className="max-w-6xl mx-auto px-6">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>
-                  {section.content.subtitle && <p className="text-xl text-[#629960]">{section.content.subtitle}</p>}
-                </div>
-                <div className="grid md:grid-cols-4 gap-6">
-                  {section.content.milestones?.map((item: any, index: number) => (
-                    <div key={index} className="text-center group">
-                      <div className="w-20 h-20 bg-[#1C5D15] text-[#19FF00] rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-4 shadow-xl group-hover:scale-110 group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-all duration-300">
-                        {item.step}
-                      </div>
-                      <h3 className="text-xl font-bold text-[#1C5D15] mb-2">{item.title}</h3>
-                      <p className="text-[#629960] text-sm leading-relaxed">{item.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          );
-        }
-
-        if (section.content.milestones?.[0]?.phase !== undefined) {
-          return (
-            <section className="py-20 bg-gray-50">
-              <div className="max-w-6xl mx-auto px-6">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>
-                  {section.content.subtitle && <p className="text-xl text-[#629960]">{section.content.subtitle}</p>}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                  {section.content.milestones?.map((item: any, index: number) => (
-                    <div key={index} className="relative">
-                      <div className="text-center bg-white p-5 rounded-2xl shadow-lg border-2 border-[#629960]/20 hover:border-[#19FF00] transition-all duration-300 hover:-translate-y-1 group h-full flex flex-col items-center">
-                        <div className="w-10 h-10 bg-[#1C5D15] text-[#19FF00] rounded-full flex items-center justify-center text-sm font-black mx-auto mb-3 group-hover:bg-[#19FF00] group-hover:text-[#1C5D15] transition-colors shrink-0">
-                          {index + 1}
-                        </div>
-                        <div className="text-base font-bold text-[#1C5D15] mb-1">{item.phase}</div>
-                        <div className="text-[#629960] text-xs font-semibold uppercase tracking-wide mb-2">{item.time}</div>
-                        {item.desc && <p className="text-[#629960] text-xs leading-relaxed">{item.desc}</p>}
-                      </div>
-                      {index < (section.content.milestones?.length - 1) && (
-                        <div className="hidden lg:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-4 items-center justify-center">
-                          <span className="text-[#19FF00] font-black text-lg">›</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          );
-        }
-
-        return (
-          <Timeline
-            milestones={section.content.milestones || []}
-            title={section.content.title}
-            subtitle={section.content.subtitle}
-            description={section.content.description}
-          />
-        );
-
-      case 'history':
         return (
           <Timeline
             milestones={section.content.milestones || []}
@@ -273,73 +319,13 @@ export function VisualEditorPreview({
         return (
           <Leadership
             members={section.content.members || []}
-            title={section.content.title || ''}
-            subtitle={section.content.subtitle || ''}
-          />
-        );
-
-      case 'ecosystem':
-        return (
-          <Ecosystem
             title={section.content.title}
             subtitle={section.content.subtitle}
-            items={section.content.items}
           />
         );
 
       case 'news':
-        return (
-          <NewsSection
-            title={section.content.title}
-            subtitle={section.content.subtitle}
-            ctaText={section.content.ctaText}
-            ctaLink={section.content.ctaLink}
-            isEditor={true}
-          />
-        );
-
-      case 'blog':
-        // ✅ Seccion BLOG: Muestra los articulos automaticamente tal cual estan
-        // Solo permitimos editar titulo y subtitulo, los articulos se cargan solos
-        return (
-          <NewsSection
-            title={section.content.title}
-            subtitle={section.content.subtitle}
-            ctaText="Ver Todos los Artículos"
-            ctaLink="/blog"
-            isEditor={true}
-          />
-        );
-
-      case 'blog-posts':
-        // ✅ AHORA MUESTRA LOS POSTS REALES DENTRO DEL EDITOR TAMBIEN
-        return (
-          <div className="py-20 bg-white">
-            <div className="max-w-6xl mx-auto px-6">
-              <div className="flex justify-center gap-3 mb-12">
-                <span className="px-6 py-2.5 rounded-full font-medium bg-[#1C5D15] text-white shadow-lg">
-                  Todos
-                </span>
-                <span className="px-6 py-2.5 rounded-full font-medium bg-white text-[#1C5D15] border border-[#1C5D15]/20">
-                  Noticias
-                </span>
-                <span className="px-6 py-2.5 rounded-full font-medium bg-white text-[#1C5D15] border border-[#1C5D15]/20">
-                  Artículos
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-                {[1,2,3].map((i) => (
-                  <div key={i} className="w-full h-80 rounded-2xl bg-gradient-to-br from-[#1C5D15]/5 to-[#629960]/10 border border-dashed border-[#629960]/30 flex items-center justify-center">
-                    <span className="text-[#629960]">Artículo {i}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      // ── Nuevos tipos (Technology / Process) ─────────────────────────────
+        return <NewsSection title={section.content.title} subtitle={section.content.subtitle} />;
 
       case 'stats':
         return (
@@ -374,10 +360,10 @@ export function VisualEditorPreview({
                 {section.content.items?.map((item: any, i: number) => (
                   <div key={i} className={`${item.size === 'large' ? 'md:col-span-2' : ''} bg-white rounded-2xl p-6 border-2 border-[#629960]/10 hover:border-[#19FF00] transition-all`}>
                     <div className="w-10 h-10 bg-[#19FF00]/20 rounded-xl flex items-center justify-center mb-3">
-                      <Icon name={item.icon} className="w-5 h-5 text-[#1C5D15]" />
+                      <Icon name={item.icon || "FlaskConical"} className="w-5 h-5 text-[#1C5D15]" />
                     </div>
                     <h3 className="text-base font-bold text-[#1C5D15] mb-2">{item.title}</h3>
-                    <p className="text-[#629960] text-sm leading-relaxed">{item.description}</p>
+                    <div className="text-[#629960] text-sm leading-relaxed mb-4" dangerouslySetInnerHTML={{ __html: item.description }} />
                     {item.details?.length > 0 && (
                       <ul className="mt-3 space-y-1">
                         {item.details.map((d: string, idx: number) => (
@@ -404,7 +390,7 @@ export function VisualEditorPreview({
                 </div>
               )}
               <div className="flex-1">
-                <Quote className="w-10 h-10 text-[#19FF00] opacity-30 mb-3" />
+                <Icon name="Quote" className="w-10 h-10 text-[#19FF00] opacity-30 mb-3" />
                 <blockquote className="text-xl italic text-[#1C5D15] leading-snug mb-4">"{section.content.quote}"</blockquote>
                 <div className="flex items-center gap-3">
                   <div className="h-px w-8 bg-[#19FF00]" />
@@ -423,7 +409,7 @@ export function VisualEditorPreview({
           <section className="py-16 bg-white">
             <div className="max-w-3xl mx-auto px-6">
               {section.content.title && <h2 className="text-3xl font-bold text-[#1C5D15] text-center mb-2">{section.content.title}</h2>}
-              {section.content.subtitle && <p className="text-[#629960] text-center mb-10">{section.content.subtitle}</p>}
+              {section.content.subtitle && <p className="text-[#629960] text-center mb-10" dangerouslySetInnerHTML={{ __html: section.content.subtitle }} />}
               <div className="space-y-3">
                 {section.content.items?.map((item: any, i: number) => (
                   <FaqPreviewItem key={i} item={item} />
@@ -501,9 +487,9 @@ export function VisualEditorPreview({
           </section>
         );
 
-      // ── Nuevos tipos STORE ───────────────────────────────
+      // --- STORE TYPES ---
+
       case 'flipcards':
-        // ✅ FlipCards NO tiene titulo ni subtitulo, solo las tarjetas directamente
         return <FlipCards items={section.content.items || []} />;
 
       case 'category-filter':
@@ -525,12 +511,56 @@ export function VisualEditorPreview({
         );
 
       case 'clientes':
-        // ✅ USAMOS MIEMBROS DEL ECOSISTEMA DIRECTAMENTE
-        if (section.content.selectedMemberIds?.length > 0) {
+        {
           const selectedMemberIds = section.content.selectedMemberIds || [];
           const filteredMembers = availableEcosystemMembers.filter((member) =>
             selectedMemberIds.includes(member.id)
           );
+
+          if (filteredMembers.length > 0) {
+            return (
+              <section className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-6">
+                  <div className="text-center mb-16">
+                    {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
+                    {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {filteredMembers.map((member, index: number) => (
+                      <div 
+                        key={member.id}
+                        className="rounded-2xl overflow-hidden text-center transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 group border border-[#1C5D15]/5"
+                        style={{ backgroundColor: '#F7F9CE' }}
+                      >
+                        <div className="relative h-32 overflow-hidden bg-white/50">
+                          {member.image ? (
+                            <img 
+                              src={member.image} 
+                              alt={member.translation?.name || member.slug} 
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center opacity-20">
+                              <Globe className="w-12 h-12 text-[#1C5D15]" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg">
+                              Detalles →
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-4 border-t border-[#1C5D15]/10">
+                          <h3 className="font-bold text-[#1C5D15] mb-1 truncate">{member.translation?.name || member.slug}</h3>
+                          <p className="text-[10px] text-[#629960] line-clamp-1 italic">{member.sector || "Miembro Ecosistema"}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+          }
 
           return (
             <section className="py-20 bg-white">
@@ -539,126 +569,68 @@ export function VisualEditorPreview({
                   {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
                   {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {filteredMembers.map((member, index: number) => (
-                    <div 
-                      key={member.id}
-                      className="rounded-2xl overflow-hidden text-center transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 group"
-                      style={{ backgroundColor: '#F7F9CE' }}
-                    >
-                      <div className="relative h-32 overflow-hidden">
-                        <img 
-                          src={member.image} 
-                          alt={member.translation?.name || member.slug} 
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                          <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                            Ver Más →
-                          </span>
-                        </div>
-                      </div>
-                      <div className="p-4 border-t border-[#1C5D15]/10">
-                        <h3 className="font-bold text-[#1C5D15] mb-1">{member.translation?.name || member.slug}</h3>
-                        <p className="text-xs text-[#629960]">{member.translation?.description || ""}</p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-center py-16 bg-[#1C5D15]/5 rounded-3xl border-2 border-dashed border-[#1C5D15]/20">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-[#1C5D15]/10">
+                    <Globe className="w-8 h-8 text-[#1C5D15] animate-pulse" />
+                  </div>
+                  <h3 className="text-[#1C5D15] font-bold mb-1">Sección de Clientes Vacía</h3>
+                  <p className="text-[#629960] text-sm max-w-xs mx-auto">Haz clic aquí para seleccionar los miembros del ecosistema que deseas mostrar.</p>
                 </div>
               </div>
             </section>
           );
         }
 
-        // Fallback si no hay miembros seleccionados
-        return (
-          <section className="py-20 bg-white">
-            <div className="max-w-6xl mx-auto px-6">
-              <div className="text-center mb-16">
-                {section.content.title && <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title}</h2>}
-                {section.content.subtitle && <p className="text-xl text-[#629960] max-w-3xl mx-auto">{section.content.subtitle}</p>}
-              </div>
-              <div className="text-center py-16 bg-[#1C5D15]/5 rounded-3xl">
-                <p className="text-[#629960] font-medium">🔌 Selecciona miembros del ecosistema en el panel izquierdo para mostrarlos aqui</p>
-              </div>
-            </div>
-          </section>
-        );
-
       case 'cta':
         return (
           <section className="py-16 bg-[#1C5D15] text-white text-center">
             <div className="max-w-3xl mx-auto px-6">
-              {section.content.icon ? (
+              {section.content.icon && (
                 <div className="flex items-center justify-center mb-6">
                   <Icon name={section.content.icon} className="w-16 h-16 text-[#19FF00]" />
                 </div>
-              ) : section.content.emoji ? (
-                <div className="text-5xl mb-4">{section.content.emoji}</div>
-              ) : null}
+              )}
               {section.content.title && <h2 className="text-3xl font-bold mb-3">{section.content.title}</h2>}
               {section.content.subtitle && <p className="text-white/80 text-lg mb-8">{section.content.subtitle}</p>}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {section.content.ctaText && (
-                  <span className="px-8 py-3 bg-[#19FF00] text-[#1C5D15] font-bold rounded-full text-sm uppercase tracking-wider">
+                  <button className="bg-[#19FF00] text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform">
                     {section.content.ctaText}
-                  </span>
+                  </button>
                 )}
                 {section.content.secondaryCtaText && (
-                  <span className="px-8 py-3 border-2 border-white text-white font-bold rounded-full text-sm uppercase tracking-wider">
+                  <button className="bg-transparent border-2 border-white/30 text-white px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:bg-white/10 transition-all">
                     {section.content.secondaryCtaText}
-                  </span>
+                  </button>
                 )}
               </div>
             </div>
           </section>
         );
 
-      case 'contact':
-        return (
-          <div className="py-20 text-center bg-[#1C5D15]/5">
-            <h2 className="text-3xl text-[#1C5D15] font-bold mb-2">📧 Sección de Contacto</h2>
-            <p className="text-[#629960]">Se carga automáticamente desde la configuración del footer.</p>
-          </div>
-        );
-
       default:
         return (
-          <div className="py-16 text-center bg-gray-50 border-2 border-dashed border-gray-300">
-            <h2 className="text-xl text-gray-500 font-bold mb-2 uppercase">{section.type}</h2>
-            <p className="text-gray-400 text-sm">Vista previa no disponible para este tipo de sección.</p>
+          <div className="p-20 text-center bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl text-gray-400">
+            <AlertCircle className="w-10 h-10 mx-auto mb-4 opacity-20" />
+            Componente de tipo <span className="font-bold text-[#1C5D15]">{section.type}</span> en construcción o no previsualizable.
           </div>
         );
     }
   };
 
-  const visibleSections = sections.filter(s => s.visible !== false && s.type !== 'contact');
-
   return (
-    <div className="w-full flex-1 h-full min-h-screen bg-white">
-      {visibleSections.length === 0 ? (
-        <div className="flex h-full items-center justify-center text-gray-400 py-40">
-          <div className="text-center">
-            <p className="text-2xl mb-2">📄</p>
-            <p className="font-medium">Esta página no tiene secciones visibles.</p>
-            <p className="text-sm mt-1">Usa el editor clásico para agregar secciones.</p>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col">
-          {visibleSections.map((section) => (
-            <EditableBlock
-              key={section.id}
-              sectionId={section.id}
-              activeSectionId={activeSectionId}
-              onClick={onSectionClick}
-              label={section.type.toUpperCase()}
-            >
-              {renderSectionComponent(section)}
-            </EditableBlock>
-          ))}
-        </div>
-      )}
+    <div className="space-y-0">
+      {sections.map((section) => (
+        <EditableBlock
+          key={section.id}
+          sectionId={section.id}
+          activeSectionId={activeSectionId}
+          onClick={onSectionClick}
+          label={section.type.toUpperCase()}
+        >
+          {renderSectionComponent(section)}
+        </EditableBlock>
+      ))}
     </div>
   );
 }

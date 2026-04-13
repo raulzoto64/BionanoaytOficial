@@ -140,19 +140,14 @@ INSERT INTO page_contents (page_id, language, sections) VALUES
     "content": {}
   },
   {
-    "id": "store-trust",
-    "type": "trust",
+    "id": "store-clientes",
+    "type": "clientes",
     "order": 5,
     "visible": true,
     "content": {
       "title": "Our Customers Trust Us",
       "subtitle": "Companies and farmers from all over Peru already use our products",
-      "partners": [
-        { "logo": "/images/partners/agroperu.png", "name": "Agro Peru SAC", "description": "Leading agricultural distribution company" },
-        { "logo": "/images/partners/senasa.png", "name": "SENASA", "description": "National Agrarian Health Organization" },
-        { "logo": "/images/partners/incagro.png", "name": "Inca Agro", "description": "Organic products exporter" },
-        { "logo": "/images/partners/agroandina.png", "name": "Agro Andina", "description": "Andean Farmers Association" }
-      ]
+      "selectedMemberIds": ["eco-004", "eco-003", "eco-001", "eco-002"]
     }
   },
   {

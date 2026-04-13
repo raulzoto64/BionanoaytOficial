@@ -88,36 +88,36 @@ export type PageWithContent = Page & {
   contentEN?: PageContent;
 };
 
-  export interface Section {
-    id: string;
-    type:
-      | "hero"
-      | "hero-blog"
-      | "text"
-      | "features"
-      | "products"
-      | "team"
-      | "timeline"
-      | "contact"
-      | "blog"
-      | "custom"
-      | "trust"
-      | "featured"
-      | "ecosystem"
-      | "news"
-      | "blog-posts"
-      | "stats"
-      | "bento"
-      | "quote"
-      | "faq"
-      | "history"
-      | "problems"
-      | "sectors"
-      | "certifications"
-      | "cta"
-      | "flipcards"
-      | "clientes"
-      | "category-filter";
+export interface Section {
+  id: string;
+  type:
+  | "hero"
+  | "hero-blog"
+  | "text"
+  | "features"
+  | "products"
+  | "team"
+  | "timeline"
+  | "contact"
+  | "blog"
+  | "custom"
+  | "trust"
+  | "featured"
+  | "ecosystem"
+  | "news"
+  | "blog-posts"
+  | "stats"
+  | "bento"
+  | "quote"
+  | "faq"
+  | "history"
+  | "problems"
+  | "sectors"
+  | "certifications"
+  | "cta"
+  | "flipcards"
+  | "clientes"
+  | "category-filter";
   order: number;
   visible: boolean;
   content: Record<string, any>;
@@ -459,11 +459,11 @@ export const supabaseAPI = {
       .eq("id", id)
       .select()
       .single();
-    
+
     if (error) {
       throw new Error(error.message);
     }
-    
+
     return user;
   },
 
@@ -538,38 +538,38 @@ export const supabaseAPI = {
   // ==========================================
 
   updatePageContent: async (
-  pageId: string,
-  language: "es" | "en",
-  sections: Section[],
-): Promise<PageContent> => {
-  const { data: content, error } = await supabase
-    .from("page_contents")
-    .upsert(
-      {
-        page_id: pageId,
-        language,
-        sections,
-      },
-      { onConflict: "page_id, language" } // ESTO ES CLAVE
-    )
-    .select()
-    .single();
+    pageId: string,
+    language: "es" | "en",
+    sections: Section[],
+  ): Promise<PageContent> => {
+    const { data: content, error } = await supabase
+      .from("page_contents")
+      .upsert(
+        {
+          page_id: pageId,
+          language,
+          sections,
+        },
+        { onConflict: "page_id, language" } // ESTO ES CLAVE
+      )
+      .select()
+      .single();
 
-  if (error) {
-    throw new Error(error.message);
-  }
+    if (error) {
+      throw new Error(error.message);
+    }
 
-  // Invalidar caché para asegurar que la próxima carga obtenga datos frescos
-  supabaseAPI._invalidateCache(`page-content-${pageId}-${language}`);
-  
-  // Si estamos en el navegador, disparar eventos para notificar a los componentes
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('database-updated', { detail: { key: `page-content-${pageId}-${language}` } }));
-    window.dispatchEvent(new CustomEvent('cache-updated', { detail: { key: `page-content-${pageId}-${language}`, data: content } }));
-  }
+    // Invalidar caché para asegurar que la próxima carga obtenga datos frescos
+    supabaseAPI._invalidateCache(`page-content-${pageId}-${language}`);
 
-  return content;
-},
+    // Si estamos en el navegador, disparar eventos para notificar a los componentes
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('database-updated', { detail: { key: `page-content-${pageId}-${language}` } }));
+      window.dispatchEvent(new CustomEvent('cache-updated', { detail: { key: `page-content-${pageId}-${language}`, data: content } }));
+    }
+
+    return content;
+  },
 
   updatePage: async (id: string, data: Partial<Page>): Promise<Page> => {
     const { data: page, error } = await supabase
@@ -713,11 +713,11 @@ export const supabaseAPI = {
           .insert([{ id: "settings-001", ...data }])
           .select()
           .single();
-        
+
         if (insertError) {
           throw new Error(insertError.message);
         }
-        
+
         return newSettings;
       }
       throw new Error(error.message);
@@ -1057,19 +1057,19 @@ export const supabaseAPI = {
     if (cached) return cached;
 
     let query = supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
-    
+
     if (status) {
       query = query.eq("status", status);
     }
-    
+
     if (type) {
       query = query.eq("type", type);
     }
-    
+
     const { data: posts, error } = await query;
-    
+
     if (error) throw new Error(error.message);
-    
+
     supabaseAPI._saveToCache(cacheKey, posts);
     return posts || [];
   },
@@ -1187,13 +1187,13 @@ export const supabaseAPI = {
 
   getBlogCategories: async (status?: "active" | "inactive"): Promise<BlogCategory[]> => {
     let query = supabase.from("blog_categories").select("*").order("order", { ascending: true });
-    
+
     if (status) {
       query = query.eq("status", status);
     }
-    
+
     const { data: categories, error } = await query;
-    
+
     if (error) throw new Error(error.message);
     return categories || [];
   },
@@ -1390,7 +1390,7 @@ export const supabaseAPI = {
             const sectionES = contentES.sections.find((sec: Section) => sec.id === sectionEN.id);
             if (sectionES) {
               const updatedSection = { ...sectionEN };
-              
+
               if (sectionEN.content.backgroundImage) {
                 updatedSection.content.backgroundImage = sectionES.content.backgroundImage || sectionEN.content.backgroundImage;
               }
@@ -1552,7 +1552,7 @@ export const supabaseAPI = {
       if (getError) {
         throw new Error(`Miembro con ID ${id} no encontrado`);
       }
-      
+
       return getResult;
     }
 
@@ -1649,7 +1649,7 @@ export const supabaseAPI = {
         console.error("Error fetching guest items:", fetchError);
         return;
       }
-      
+
       if (!guestItems || guestItems.length === 0) return;
 
       // 2. Por cada item del invitado, intentar moverlo o fusionarlo
@@ -1669,7 +1669,7 @@ export const supabaseAPI = {
             .from("cart_items")
             .update({ quantity: existingUserItem.quantity + item.quantity })
             .eq("id", existingUserItem.id);
-          
+
           await supabase.from("cart_items").delete().eq("id", item.id);
         } else {
           // Migrar el item al usuario manteniendo el guest_id como null para satisfacer chk_user_or_guest_id
@@ -1677,13 +1677,13 @@ export const supabaseAPI = {
             .from("cart_items")
             .update({ user_id: userId, guest_id: null })
             .eq("id", item.id);
-            
+
           if (updateError) {
             console.error("Error updating cart item to user ID:", updateError);
           }
         }
       }
-      
+
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('cart-updated'));
         window.dispatchEvent(new CustomEvent('database-updated')); // Asegurar sync
@@ -1697,7 +1697,7 @@ export const supabaseAPI = {
   addToCart: async (userId: string | null, guestId: string | null, productId: string, quantity: number = 1, packaging?: string): Promise<CartItem> => {
     // Verificar si el item ya existe en el carrito con la misma embase
     let query = supabase.from("cart_items").select("*");
-    
+
     if (userId && supabaseAPI.isValidUUID(userId)) {
       query = query.eq("user_id", userId);
     } else if (guestId && supabaseAPI.isValidUUID(guestId)) {
@@ -1709,7 +1709,7 @@ export const supabaseAPI = {
 
     // Valor de packaging para la consulta (limpio de espacios extra)
     const packagingValue = (packaging || 'Sin embase').trim();
-    
+
     // Usamos .maybeSingle() en lugar de .single() para evitar errores 406
     // cuando la consulta no devuelve nada con carácteres especiales.
     const { data: existingItem, error: fetchError } = await query
@@ -1724,10 +1724,10 @@ export const supabaseAPI = {
     if (existingItem) {
       // Actualizar cantidad si el item ya existe
       const newQuantity = existingItem.quantity + quantity;
-      
+
       const { data: updatedItem, error: updateError } = await supabase
         .from("cart_items")
-        .update({ 
+        .update({
           quantity: newQuantity
         })
         .eq("id", existingItem.id)
@@ -1735,7 +1735,7 @@ export const supabaseAPI = {
         .single();
 
       if (updateError) throw new Error(updateError.message);
-      
+
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
       return updatedItem;
     } else {
@@ -1759,7 +1759,7 @@ export const supabaseAPI = {
         .single();
 
       if (insertError) throw new Error(insertError.message);
-      
+
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
       return newItem;
     }
@@ -1768,7 +1768,7 @@ export const supabaseAPI = {
   // Obtener todos los items del carrito de un usuario o visitante
   getCartItems: async (userId: string): Promise<CartItemWithProduct[]> => {
     if (!supabaseAPI.isValidUUID(userId)) return [];
-    
+
     const { data: cartItems, error: cartError } = await supabase
       .from("cart_items")
       .select("*")
@@ -1803,7 +1803,7 @@ export const supabaseAPI = {
   // Obtener items por ID de invitado
   getCartItemsByGuest: async (guestId: string): Promise<CartItemWithProduct[]> => {
     if (!supabaseAPI.isValidUUID(guestId)) return [];
-    
+
     const { data: cartItems, error: cartError } = await supabase
       .from("cart_items")
       .select("*")
@@ -1840,7 +1840,7 @@ export const supabaseAPI = {
     // Actualizar item con nueva cantidad
     const { data: updatedItem, error: updateError } = await supabase
       .from("cart_items")
-      .update({ 
+      .update({
         quantity
       })
       .eq("id", itemId)
@@ -1850,7 +1850,7 @@ export const supabaseAPI = {
     if (updateError) {
       throw new Error(updateError.message);
     }
-    
+
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cart-updated'));
     return updatedItem;
   },
@@ -2054,11 +2054,11 @@ export const supabaseAPI = {
           .insert([{ id: "footer-001", ...data }])
           .select()
           .single();
-        
+
         if (insertError) {
           throw new Error(insertError.message);
         }
-        
+
         return newSettings;
       }
       throw new Error(error.message);
