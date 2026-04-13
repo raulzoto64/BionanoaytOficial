@@ -607,7 +607,9 @@ function SectionEditor({
     { value: 'trust', label: 'Confianza' },
     { value: 'ecosystem', label: 'Ecosistema' },
     { value: 'featured', label: 'Destacado' },
-    { value: 'blog', label: 'Blog / Noticias' },
+    { value: 'hero-blog', label: 'Hero del Blog' }, // Antes 'hero'
+  { value: 'header', label: 'Cabecera de Texto' }, // Antes 'text'
+  { value: 'blog-posts', label: 'Listado de Posts' }, // Antes 'blog'
   ];
 
   const handleSaveSection = async () => {

@@ -8,6 +8,8 @@ import {
 } from '../../../data/supabase';
 import { PageList } from './PageList';
 import { EditorView } from './EditorView';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { ConfirmModal } from '../../ui/ConfirmModal';
 
 interface PageWithContent extends Page {
   contentES: PageContent | null;
@@ -20,6 +22,7 @@ export function AdminContentEditor() {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const { confirmDialog, confirmModalProps } = useConfirm();
 
   useEffect(() => {
     loadPages();
@@ -149,9 +152,13 @@ export function AdminContentEditor() {
   };
 
   const deleteSection = (index: number) => {
-    if (!confirm('¿Estás seguro de eliminar esta sección?')) return;
-    const newSections = sections.filter((_, i) => i !== index);
-    setSections(newSections);
+    confirmDialog({
+      title: 'Eliminar Sección',
+      message: '¿Estás seguro de que deseas eliminar esta sección?',
+      onConfirm: () => {
+        setSections(prev => prev.filter((_, i) => i !== index));
+      }
+    });
   };
 
   const moveSectionUp = (index: number) => {
@@ -238,25 +245,28 @@ export function AdminContentEditor() {
     );
   }
 
-  if (editingPage) {
-    return (
-      <EditorView
-        editingPage={editingPage}
-        sections={sections}
-        expandedSections={expandedSections}
-        onSave={handleSave}
-        onCancel={handleCancel}
-        onAddSection={addSection}
-        onToggleSectionExpanded={toggleSectionExpanded}
-        onUpdateSection={updateSection}
-        onUpdateSectionContent={updateSectionContent}
-        onDeleteSection={deleteSection}
-        onMoveSectionUp={moveSectionUp}
-        onMoveSectionDown={moveSectionDown}
-        onSaveIndividualSection={handleSaveSection}
-      />
-    );
-  }
-
-  return <PageList pagesData={pagesData} onEditPage={handleEditPage} />;
+  return (
+    <>
+      <ConfirmModal {...confirmModalProps} />
+      {editingPage ? (
+        <EditorView
+          editingPage={editingPage}
+          sections={sections}
+          expandedSections={expandedSections}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          onAddSection={addSection}
+          onToggleSectionExpanded={toggleSectionExpanded}
+          onUpdateSection={updateSection}
+          onUpdateSectionContent={updateSectionContent}
+          onDeleteSection={deleteSection}
+          onMoveSectionUp={moveSectionUp}
+          onMoveSectionDown={moveSectionDown}
+          onSaveIndividualSection={handleSaveSection}
+        />
+      ) : (
+        <PageList pagesData={pagesData} onEditPage={handleEditPage} />
+      )}
+    </>
+  );
 }

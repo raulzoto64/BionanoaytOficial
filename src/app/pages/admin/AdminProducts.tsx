@@ -27,6 +27,7 @@ import { useDatabase } from '../../hooks/useDatabase';
 import { Product, ProductTranslation, supabaseAPI, Category } from '../../data/supabase';
 import { toast } from 'sonner';
 import { ImageUpload } from '../../components/ImageUpload';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -695,24 +696,13 @@ export function AdminProducts() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Eliminación</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmDelete} className="bg-red-500 text-white hover:bg-red-600">
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmModal
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Confirmar Eliminación"
+        message="¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer."
+      />
     </div>
   );
 }

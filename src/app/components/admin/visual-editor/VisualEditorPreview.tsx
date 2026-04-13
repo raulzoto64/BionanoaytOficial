@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ConfirmModal } from '../../ui/ConfirmModal';
 import { Section, Category, EcosystemMember, Product } from '../../../data/supabase';
 import { 
   Quote, 
@@ -112,6 +114,7 @@ function EditableBlock({
   label = "Sección" 
 }: EditableBlockProps) {
   const isActive = activeSectionId === sectionId;
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   
   return (
     <div 
@@ -150,21 +153,30 @@ function EditableBlock({
             <ArrowDown size={14} />
           </button>
           
-          {/* Delete */}
-          <button 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              if(window.confirm('¿Estás seguro de eliminar esta sección?')) {
-                onDelete?.(sectionId);
-              }
-            }}
-            className="p-1 hover:text-red-400 transition-colors ml-1"
-            title="Eliminar sección"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
+      {/* Delete */}
+      <button 
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          setDeleteConfirmOpen(true);
+        }}
+        className="p-1 hover:text-red-400 transition-colors ml-1"
+        title="Eliminar sección"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  </div>
+
+  {/* Custom Confirm Dialog */}
+  <ConfirmModal
+    isOpen={deleteConfirmOpen}
+    onClose={() => setDeleteConfirmOpen(false)}
+    onConfirm={() => {
+      onDelete?.(sectionId);
+    }}
+    title="Eliminar Sección"
+    message="¿Estás seguro de que quieres eliminar esta sección de forma permanente?<br/>Esta acción no se puede deshacer."
+  />
 
       {/* Actual Content Area */}
       <div className={`${isActive ? 'opacity-100' : 'opacity-90 group-hover:opacity-100'} transition-opacity`}>
@@ -474,7 +486,7 @@ export function VisualEditorPreview({
                   {filtered.map(m => (
                     <div key={m.id} className="bg-[#F7F9CE] p-4 rounded-xl border border-[#1C5D15]/10">
                       <img src={m.image} className="h-16 w-16 mx-auto mb-2 object-contain" />
-                      <div className="text-[#1C5D15] font-bold text-xs">{m.translation?.name || m.name}</div>
+                      <div className="text-[#1C5D15] font-bold text-xs">{(m as any).translation?.name || m.slug}</div>
                     </div>
                   ))}
                 </div>
@@ -763,7 +775,7 @@ export function VisualEditorPreview({
                   </span>
                   {(availableCategories || []).slice(0, 5).map((category) => (
                     <span key={category.id} className="px-5 py-2 rounded-full text-xs font-bold bg-white text-[#1C5D15] border border-[#1C5D15]/10 hover:border-[#19FF00] transition-colors">
-                      {category.name}
+                      {(category as any).name}
                     </span>
                   ))}
                 </div>
@@ -785,7 +797,7 @@ export function VisualEditorPreview({
                         {member.sector || "Miembro"}
                       </div>
                       <h3 className="text-lg font-bold text-[#1C5D15] mb-2 truncate">
-                        {member.translation?.name || member.slug}
+                        {(member as any).translation?.name || member.slug}
                       </h3>
                       <div className="w-full h-1 bg-[#F7F9CE] rounded-full"></div>
                     </div>
@@ -824,7 +836,7 @@ export function VisualEditorPreview({
                           {member.image ? (
                             <img 
                               src={member.image} 
-                              alt={member.translation?.name || member.slug} 
+                              alt={(member as any).translation?.name || member.slug} 
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                             />
                           ) : (
@@ -839,7 +851,7 @@ export function VisualEditorPreview({
                           </div>
                         </div>
                         <div className="p-4 border-t border-[#1C5D15]/10">
-                          <h3 className="font-bold text-[#1C5D15] mb-1 truncate">{member.translation?.name || member.slug}</h3>
+                          <h3 className="font-bold text-[#1C5D15] mb-1 truncate">{(member as any).translation?.name || member.slug}</h3>
                           <p className="text-[10px] text-[#629960] line-clamp-1 italic">{member.sector || "Miembro Ecosistema"}</p>
                         </div>
                       </div>

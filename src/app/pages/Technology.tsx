@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PageContent, Section, supabaseAPI } from "../data/supabase";
+import { DynamicSection } from "../components/DynamicSection";
 import { Hero } from "../components/Hero";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
@@ -300,7 +301,13 @@ export function Technology() {
             );
 
           default:
-            return null;
+            return (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                language={language}
+              />
+            );
         }
       })}
 

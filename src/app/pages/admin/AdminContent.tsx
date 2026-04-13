@@ -28,6 +28,8 @@ import {
 } from '../../data/supabase';
 import { ImageUpload } from '../../components/ImageUpload';
 import { AdminEcosystem } from './AdminEcosystem';
+import { useConfirm } from '../../hooks/useConfirm';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 interface PageWithContent extends Page {
   contentES: PageContent | null;
@@ -43,6 +45,7 @@ export function AdminContent() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const ecosystemRefs = useRef<Record<string, { save: () => Promise<void> }>>({});
   const navigate = useNavigate();
+  const { confirmDialog, confirmModalProps } = useConfirm();
   useEffect(() => {
     loadPages();
   }, []);
@@ -165,8 +168,13 @@ export function AdminContent() {
   };
 
   const deleteSection = (index: number) => {
-    if (!confirm('¿Estás seguro de eliminar esta sección?')) return;
-    setSections(prev => prev.filter((_, i) => i !== index));
+    confirmDialog({
+      title: 'Eliminar Sección',
+      message: '¿Estás seguro de que deseas eliminar esta sección?',
+      onConfirm: () => {
+        setSections(prev => prev.filter((_, i) => i !== index));
+      }
+    });
   };
 
   const moveSectionUp = (index: number) => {
@@ -256,6 +264,7 @@ export function AdminContent() {
 
     return (
       <div className="flex flex-col min-h-full">
+        <ConfirmModal {...confirmModalProps} />
         {/* Usamos un Portal para enviar los botones a la barra superior global */}
         {headerActions && createPortal(
           <>
@@ -338,6 +347,7 @@ export function AdminContent() {
   // Vista de lista de páginas
   return (
     <div className="p-4 md:p-6">
+      <ConfirmModal {...confirmModalProps} />
       <div className="mb-8">
         <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Contenido</h2>
         <p className="text-[#629960]">Administra el contenido de todas las páginas del sitio</p>

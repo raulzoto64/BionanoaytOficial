@@ -7,14 +7,7 @@ import {
   ProductTranslation,
 } from "../data/supabase";
 import { Hero } from "../components/Hero";
-import { TrustBar } from "../components/TrustBar";
-import { Purpose } from "../components/Purpose";
-import { FeaturedProduct } from "../components/FeaturedProduct";
-import { Products } from "../components/Products";
-import { Timeline } from "../components/Timeline";
-import { Leadership } from "../components/Leadership";
-import { Ecosystem } from "../components/Ecosystem";
-import { NewsSection } from "../components/NewsSection";
+import { DynamicSection } from "../components/DynamicSection";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 import { useDatabase } from "../hooks/useDatabase";
@@ -43,20 +36,13 @@ export function Home() {
 
   const loadHomeProducts = async () => {
     try {
-      // Cargamos todos los productos activos para que cualquier selección en el editor visual funcione
       const products = await supabaseAPI.getProducts();
       const activeProducts = products.filter(p => p.status === 'active');
 
       const productsWithTranslations = await Promise.all(
         activeProducts.map(async (product) => {
-          const translation = await supabaseAPI.getProductTranslation(
-            product.id,
-            language,
-          );
-          const categoryTranslation = await supabaseAPI.getCategoryTranslation(
-            product.category,
-            language,
-          );
+          const translation = await supabaseAPI.getProductTranslation(product.id, language);
+          const categoryTranslation = await supabaseAPI.getCategoryTranslation(product.category, language);
           return {
             ...product,
             translation,
@@ -71,16 +57,16 @@ export function Home() {
     }
   };
 
-
   const defaultHero = {
     title: "Bionanoaxus (BNX)",
-    subtitle: language === 'es' ? "Innovación bionanotecnológica para un mundo mejor" : "Bionanotechnology innovation for a better world",
+    subtitle: language === 'es'
+      ? "Innovación bionanotecnológica para un mundo mejor"
+      : "Bionanotechnology innovation for a better world",
     backgroundImage: "https://sb-jzmdfoptxmqywihyhoty.supabase.co/storage/v1/object/public/site_assets/hero-bg.jpg",
     ctaText: language === 'es' ? "Saber más" : "Learn more",
     ctaLink: "#purpose"
   };
 
-  // Get Hero section if available
   const heroSection = pageContent?.sections.find(s => s.type === "hero");
   const heroContent = (heroSection?.content || defaultHero) as any;
   const seoData = heroContent?.seo || {};
@@ -93,102 +79,27 @@ export function Home() {
         keywords={seoData.metaKeywords}
       />
 
+      {/* Hero siempre primero */}
       <div id="hero">
         <Hero content={heroContent} />
       </div>
 
+      {/* Secciones dinámicas: se renderizan TODAS las secciones guardadas en BD */}
       {pageContent ? (
         <>
-        {pageContent.sections.map((section: Section) => {
-          if (!section.visible || section.type === "hero") return null;
-
-          switch (section.type) {
-            case "trust":
-              return (
-                <div key={section.id} id="trust">
-                  <TrustBar partners={section.content.partners || []} title={section.content.title} subtitle={section.content.subtitle} />
-                </div>
-              );
-            case "features":
-              return (
-                <div key={section.id} id="purpose">
-                  <Purpose purposes={section.content.items} />
-                </div>
-              );
-            case "featured":
-              return (
-                <div key={section.id} id="featured">
-                  <FeaturedProduct content={section.content} />
-                </div>
-              );
-            case "products":
-              {
-                const selectedIds = section.content.selectedProductIds || [];
-                const displayProducts = selectedIds.length > 0
-                  ? homeProducts.filter(p => selectedIds.includes(p.id))
-                  : homeProducts.filter(p => p.featured).slice(0, 3);
-
-                return (
-                  <div key={section.id} id="products">
-                    <Products
-                      products={displayProducts}
-                      title={section.content.title}
-                      subtitle={section.content.subtitle}
-                      ctaText={section.content.ctaText}
-                      ctaLink={section.content.ctaLink}
-                    />
-                  </div>
-                );
-              }
-            case "timeline":
-              return (
-                <div key={section.id} id="timeline">
-                  <Timeline 
-                    milestones={section.content.milestones}
-                    title={section.content.title}
-                    subtitle={section.content.subtitle}
-                    description={section.content.description}
-                  />
-                </div>
-              );
-            case "team":
-              return (
-                <div key={section.id} id="team">
-                  <Leadership
-                    members={section.content.members}
-                    title={section.content.title}
-                    subtitle={section.content.subtitle}
-                  />
-                </div>
-              );
-
-            case "news":
-              return (
-                <div key={section.id} id="news">
-                  <NewsSection 
-                    title={section.content.title} 
-                    subtitle={section.content.subtitle} 
-                  />
-                </div>
-              );
-            case "ecosystem":
-              return (
-                <div key={section.id} id="ecosystem">
-                  <div id="allies">
-                    <Ecosystem 
-                      title={section.content.title} 
-                      subtitle={section.content.subtitle} 
-                      items={section.content.items}
-                    />
-                  </div>
-                </div>
-              );
-            default:
-              return null;
-          }
-        })}
+          {pageContent.sections
+            .filter((s: Section) => s.visible && s.type !== "hero")
+            .map((section: Section) => (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                products={homeProducts}
+                language={language}
+              />
+            ))}
         </>
       ) : (
+        /* Skeleton de carga */
         <div className="py-20 bg-white">
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid md:grid-cols-3 gap-10">

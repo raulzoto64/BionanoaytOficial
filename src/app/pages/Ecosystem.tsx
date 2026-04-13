@@ -19,11 +19,9 @@ import {
 import { ContentCard } from "../components/ContentCard";
 import { useDatabase } from "../hooks/useDatabase";
 import { SEO } from "../components/SEO";
-import { Hero } from "../components/Hero";
 import { TrustBar } from "../components/TrustBar";
+import { DynamicSection } from "../components/DynamicSection";
 
-
-import { StatsCards } from "../components/StatsCards"; // I assume this exists or I'll create it if needed, actually I'll use inline for simple stats if not.
 
 // ── Componente de Catálogo de Miembros ──────────────────────────────────────
 function EcosystemCatalog({ language }: { language: string }) {
@@ -269,7 +267,13 @@ export function EcosystemPage() {
             );
 
           default:
-            return null;
+            return (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                language={language}
+              />
+            );
         }
       })}
     </div>

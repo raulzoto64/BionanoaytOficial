@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PageContent, Section, supabaseAPI } from "../data/supabase";
+import { DynamicSection } from "../components/DynamicSection";
 import {
   FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
   AlertTriangle, ChevronDown, ChevronUp, Quote, CheckCircle,
@@ -446,7 +447,13 @@ export function Process() {
             );
 
           default:
-            return null;
+            return (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                language={language}
+              />
+            );
         }
       })}
     </div>

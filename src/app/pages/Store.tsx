@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { PageContent, Section, supabaseAPI } from "../data/supabase";
+import { PageContent, Section, supabaseAPI, Product, ProductTranslation } from "../data/supabase";
+import { DynamicSection } from "../components/DynamicSection";
 import { ensureExternalLink } from "../utils/url";
 import {
   FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
@@ -681,7 +682,13 @@ export function Store() {
             );
 
           default:
-            return null;
+            return (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                language={language}
+              />
+            );
         }
       })}
     </div>

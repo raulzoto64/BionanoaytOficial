@@ -556,11 +556,18 @@ export const supabaseAPI = {
       .single();
 
     if (error) {
-      console.error('Error saving page content:', error);
+      console.error('❌ ERROR guardando en Supabase:', error);
+      console.error('   pageId:', pageId, 'language:', language, 'sections count:', sections.length);
       throw new Error(error.message);
     }
 
-    console.log(`✅ Page content saved: ${pageId} (${language}) - ${sections.length} sections`);
+    // Verificar que Supabase devolvió los datos guardados
+    const savedSections = content?.sections || [];
+    console.log(`✅ GUARDADO EN BD: ${pageId} (${language})`);
+    console.log(`   Secciones enviadas: ${sections.length} →`, sections.map(s => `${s.id}(${s.type})`));
+    console.log(`   Secciones confirmadas por BD: ${savedSections.length} →`, savedSections.map((s: any) => `${s.id}(${s.type})`));
+    console.log(`   page_id en respuesta:`, content?.page_id);
+
 
     // Invalidar caché agresivamente: ambos idiomas + variantes
     supabaseAPI._invalidateCache(`page-content-${pageId}-es`);
@@ -1388,13 +1395,16 @@ export const supabaseAPI = {
       // Verificar si el caché tiene menos de 2 minutos
       const cacheEntry = supabaseAPI._cache[cacheKey];
       if (cacheEntry && (Date.now() - cacheEntry.timestamp < 2 * 60 * 1000)) {
+        console.log(`📦 CACHÉ HIT: ${cacheKey} (${cached?.sections?.length || 0} secciones, edad: ${Math.round((Date.now() - cacheEntry.timestamp)/1000)}s)`);
         return cached;
       }
       // Si tiene más de 2 min, borrar y re-fetch
+      console.log(`⏰ CACHÉ EXPIRADO: ${cacheKey}, re-fetching...`);
       supabaseAPI._invalidateCache(cacheKey);
     }
     
     return supabaseAPI._fetchWithCache(cacheKey, async () => {
+      console.log(`🌐 FETCH BD: Cargando ${pageId} (${language}) desde Supabase...`);
       const { data: content, error } = await supabase
         .from("page_contents")
         .select("*")
@@ -1405,7 +1415,9 @@ export const supabaseAPI = {
 
 
       if (error || !content) {
+        console.log(`⚠️ No se encontró contenido para ${pageId} (${language}):`, error?.message || 'sin datos');
         return null;
+
       }
 
       // Si el idioma es inglés, usar las imágenes del contenido en español
@@ -1490,8 +1502,9 @@ export const supabaseAPI = {
           });
         }
       }
+      console.log(`✅ CARGADO DE BD: ${pageId} (${language}) → ${content.sections?.length || 0} secciones:`, content.sections?.map((s: any) => `${s.id}(${s.type})`));
       return content;
-    }, false); // persist=false: no guardar en localStorage, solo memoria
+    }); // usar caché con persistencia por defecto
   },
 
   // ==========================================
