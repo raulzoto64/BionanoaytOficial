@@ -168,13 +168,18 @@ export function AdminVisualEditor() {
     if (!page) return;
     setSaving(true);
     try {
+      console.log(`📤 Saving page ${page.id}...`);
+      console.log(`   ES sections: ${sectionsES.length}`, sectionsES.map(s => `${s.id}(${s.type})`));
+      console.log(`   EN sections: ${sectionsEN.length}`, sectionsEN.map(s => `${s.id}(${s.type})`));
+      
       await Promise.all([
         supabaseAPI.updatePageContent(page.id, 'es', sectionsES),
         supabaseAPI.updatePageContent(page.id, 'en', sectionsEN)
       ]);
       toast.success('Cambios publicados con éxito');
     } catch (error) {
-      toast.error('Error al guardar');
+      console.error('❌ Error saving:', error);
+      toast.error('Error al guardar: ' + (error as Error).message);
     } finally {
       setSaving(false);
     }
@@ -187,6 +192,50 @@ export function AdminVisualEditor() {
     if (lang === 'en' || lang === 'both') {
       setSectionsEN(prev => prev.map(s => s.id === sectionId ? { ...s, content } : s));
     }
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+    setSectionsES(prev => prev.filter(s => s.id !== sectionId));
+    setSectionsEN(prev => prev.filter(s => s.id !== sectionId));
+    if (activeSectionId === sectionId) setActiveSectionId(null);
+  };
+
+  const handleMoveSection = (sectionId: string, direction: 'up' | 'down') => {
+    const move = (prev: Section[]) => {
+      const idx = prev.findIndex(s => s.id === sectionId);
+      if (idx === -1) return prev;
+      
+      const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= prev.length) return prev;
+      
+      const newArr = [...prev];
+      [newArr[idx], newArr[newIdx]] = [newArr[newIdx], newArr[idx]];
+      
+      // Update order
+      return newArr.map((s, i) => ({ ...s, order: i * 10 }));
+    };
+
+    setSectionsES(prev => move(prev));
+    setSectionsEN(prev => move(prev));
+  };
+
+  const handleAddSection = (type: string) => {
+    const newId = `${type}-${Date.now()}`;
+    const newSection: Section = {
+      id: newId,
+      type: type as any,
+      order: sectionsES.length * 10,
+      visible: true,
+      content: {
+        title: 'Nueva Sección',
+        subtitle: 'Descripción de ejemplo para la nueva sección.',
+        items: []
+      }
+    };
+
+    setSectionsES(prev => [...prev, newSection]);
+    setSectionsEN(prev => [...prev, newSection]);
+    setActiveSectionId(newId);
   };
 
   const handleViewLive = () => {
@@ -237,6 +286,7 @@ export function AdminVisualEditor() {
             activeSectionES={activeSectionES}
             activeSectionEN={activeSectionEN}
             handleUpdateSection={handleUpdateSection}
+            onAddSection={handleAddSection}
             allProducts={allProducts}
             allEcosystemMembers={allEcosystemMembers}
             pageSlug={page?.slug}
@@ -257,6 +307,9 @@ export function AdminVisualEditor() {
             allCategories={allCategories}
             allBlogPosts={allBlogPosts}
             pageSlug={page.slug}
+            onDeleteSection={handleDeleteSection}
+            onMoveSectionUp={(id) => handleMoveSection(id, 'up')}
+            onMoveSectionDown={(id) => handleMoveSection(id, 'down')}
           />
         </div>
 

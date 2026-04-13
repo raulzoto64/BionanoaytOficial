@@ -550,26 +550,42 @@ export const supabaseAPI = {
           language,
           sections,
         },
-        { onConflict: "page_id, language" } // ESTO ES CLAVE
+        { onConflict: "page_id, language" }
       )
       .select()
       .single();
 
     if (error) {
+      console.error('Error saving page content:', error);
       throw new Error(error.message);
     }
 
-    // Invalidar caché para asegurar que la próxima carga obtenga datos frescos
-    supabaseAPI._invalidateCache(`page-content-${pageId}-${language}`);
+    console.log(`✅ Page content saved: ${pageId} (${language}) - ${sections.length} sections`);
 
-    // Si estamos en el navegador, disparar eventos para notificar a los componentes
+    // Invalidar caché agresivamente: ambos idiomas + variantes
+    supabaseAPI._invalidateCache(`page-content-${pageId}-es`);
+    supabaseAPI._invalidateCache(`page-content-${pageId}-en`);
+    
+    // También limpiar cualquier caché persistente con el prefijo de la página
     if (typeof window !== 'undefined') {
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes(pageId)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+      } catch (e) { /* ignore */ }
+      
       window.dispatchEvent(new CustomEvent('database-updated', { detail: { key: `page-content-${pageId}-${language}` } }));
       window.dispatchEvent(new CustomEvent('cache-updated', { detail: { key: `page-content-${pageId}-${language}`, data: content } }));
     }
 
     return content;
   },
+
 
   updatePage: async (id: string, data: Partial<Page>): Promise<Page> => {
     const { data: page, error } = await supabase
@@ -1364,6 +1380,20 @@ export const supabaseAPI = {
     language: "es" | "en",
   ): Promise<PageContent | null> => {
     const cacheKey = `page-content-${pageId}-${language}`;
+    
+    // Usar caché en memoria + localStorage, pero con TTL corto (2 min)
+    // La invalidación en updatePageContent limpia todo al publicar
+    const cached = supabaseAPI._getFromCache(cacheKey, true);
+    if (cached) {
+      // Verificar si el caché tiene menos de 2 minutos
+      const cacheEntry = supabaseAPI._cache[cacheKey];
+      if (cacheEntry && (Date.now() - cacheEntry.timestamp < 2 * 60 * 1000)) {
+        return cached;
+      }
+      // Si tiene más de 2 min, borrar y re-fetch
+      supabaseAPI._invalidateCache(cacheKey);
+    }
+    
     return supabaseAPI._fetchWithCache(cacheKey, async () => {
       const { data: content, error } = await supabase
         .from("page_contents")
@@ -1371,6 +1401,8 @@ export const supabaseAPI = {
         .eq("page_id", pageId)
         .eq("language", language)
         .single();
+
+
 
       if (error || !content) {
         return null;
@@ -1459,7 +1491,7 @@ export const supabaseAPI = {
         }
       }
       return content;
-    });
+    }, false); // persist=false: no guardar en localStorage, solo memoria
   },
 
   // ==========================================

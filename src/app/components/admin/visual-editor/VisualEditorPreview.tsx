@@ -23,7 +23,10 @@ import {
   Apple,
   HeartPulse,
   Shirt,
-  Warehouse
+  Warehouse,
+  ArrowUp,
+  ArrowDown,
+  Trash2
 } from 'lucide-react';
 import { FlipCards } from '../../FlipCards';
 import { FeaturedProduct } from '../../FeaturedProduct';
@@ -78,55 +81,111 @@ interface VisualEditorPreviewProps {
   availableProducts?: Product[];
   availableBlogPosts?: any[];
   pageSlug?: string;
+  onDeleteSection?: (id: string) => void;
+  onMoveSectionUp?: (id: string) => void;
+  onMoveSectionDown?: (id: string) => void;
+}
+
+interface EditableBlockProps {
+  sectionId: string;
+  activeSectionId: string | null;
+  onClick: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
+  index: number;
+  totalSections: number;
+  children: React.ReactNode;
+  label?: string;
 }
 
 function EditableBlock({ 
   sectionId, 
   activeSectionId, 
   onClick, 
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  index,
+  totalSections,
   children, 
   label = "Sección" 
-}: { 
-  sectionId: string; 
-  activeSectionId: string | null; 
-  onClick: (id: string) => void; 
-  children: React.ReactNode;
-  label?: string;
-}) {
+}: EditableBlockProps) {
   const isActive = activeSectionId === sectionId;
   
   return (
     <div 
-      className={`relative group cursor-pointer transition-all duration-200 border-2 ${
-        isActive 
-          ? 'border-[#19FF00] z-10 shadow-[0_0_0_4px_rgba(25,255,0,0.1)]' 
-          : 'border-transparent hover:border-[#1C5D15]/50'
+      className={`relative group transition-all duration-300 ${
+        isActive ? 'ring-2 ring-[#19FF00] ring-offset-0 z-40' : 'hover:ring-2 hover:ring-[#19FF00]/30 ring-offset-0'
       }`}
       onClick={(e) => {
         e.stopPropagation();
         onClick(sectionId);
       }}
     >
-      {/* Etiqueta flotante */}
-      <div 
-        className={`absolute -top-6 left-0 bg-[#1C5D15] text-[#19FF00] text-xs font-bold px-2 py-1 rounded-t-md transition-opacity duration-200 ${
-          isActive || 'opacity-0 group-hover:opacity-100'
-        }`}
-        style={{ zIndex: 20 }}
-      >
-        {label}
+      {/* Label and Control Toolbar */}
+      <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full px-4 py-1.5 bg-[#1C5D15] text-white text-[10px] font-black uppercase tracking-widest rounded-t-xl transition-all duration-300 z-[51] flex items-center gap-3 shadow-lg ${
+        isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
+      }`}>
+        <span>{label}</span>
+        
+        <div className="flex items-center gap-1 border-l border-white/20 pl-3 ml-1">
+          {/* Move Up */}
+          <button 
+            disabled={index === 0}
+            onClick={(e) => { e.stopPropagation(); onMoveUp?.(sectionId); }}
+            className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
+            title="Mover arriba"
+          >
+            <ArrowUp size={14} />
+          </button>
+          
+          {/* Move Down */}
+          <button 
+            disabled={index === totalSections - 1}
+            onClick={(e) => { e.stopPropagation(); onMoveDown?.(sectionId); }}
+            className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
+            title="Mover abajo"
+          >
+            <ArrowDown size={14} />
+          </button>
+          
+          {/* Delete */}
+          <button 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              if(window.confirm('¿Estás seguro de eliminar esta sección?')) {
+                onDelete?.(sectionId);
+              }
+            }}
+            className="p-1 hover:text-red-400 transition-colors ml-1"
+            title="Eliminar sección"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
 
-      <div className={isActive ? '' : 'pointer-events-none'}>
+      {/* Actual Content Area */}
+      <div className={`${isActive ? 'opacity-100' : 'opacity-90 group-hover:opacity-100'} transition-opacity`}>
         {children}
       </div>
-      
+
+      {/* Edit Indicator Overlay (Non-active) */}
       {!isActive && (
-        <div className="absolute inset-0 z-10" />
+        <div className="absolute inset-0 bg-[#19FF00]/0 group-hover:bg-[#19FF00]/5 pointer-events-none transition-colors duration-300 flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+            <div className="bg-white/95 backdrop-blur-sm text-[#1C5D15] px-4 py-2 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 border border-[#1C5D15]/10">
+              <Zap size={12} className="text-[#19FF00] fill-[#19FF00]" />
+              Click para editar
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
+
 
 function FaqPreviewItem({ item }: { item: any }) {
   return (
@@ -151,44 +210,77 @@ export function VisualEditorPreview({
   availableEcosystemMembers = [],
   availableProducts = [],
   availableBlogPosts = [],
-  pageSlug = ''
+  pageSlug = '',
+  onDeleteSection,
+  onMoveSectionUp,
+  onMoveSectionDown
 }: VisualEditorPreviewProps) {
 
   const renderSectionComponent = (section: Section) => {
     switch (section.type) {
       case 'hero':
-        return (
-          <section className="relative h-[600px] flex items-center justify-center overflow-hidden bg-[#1C5D15]">
-            {section.content.backgroundImage && (
-              <img 
-                src={section.content.backgroundImage} 
-                className="absolute inset-0 w-full h-full object-cover opacity-40"
-                alt="Hero background"
-              />
-            )}
-            <div className="relative z-10 text-center px-6 max-w-4xl">
-              <h1 className="text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
-                {section.content.title}
-              </h1>
+        {
+
+          const isEcosystem = pageSlug?.includes('ecosystem');
+          if (isEcosystem) {
+            return (
+              <section className="relative h-[300px] flex items-center justify-center overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('${section.content.backgroundImage}')` }}
+                >
+                  <div className="absolute inset-0 bg-[#1C5D15]/85"></div>
+                </div>
+                <div className="relative z-10 max-w-6xl mx-auto px-5 text-center text-white">
+                  <h1 className="text-3xl md:text-5xl font-black mb-3">
+                    {section.content.title}
+                  </h1>
+                  <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto leading-relaxed">
+                    {section.content.subtitle}
+                  </p>
+                </div>
+              </section>
+            );
+          }
+
+          return (
+            <section 
+              className="relative flex items-center justify-center overflow-hidden"
+              style={section.content.height ? { height: section.content.height, minHeight: 'auto' } : { minHeight: '100vh' }}
+            >
               <div 
-                className="text-xl text-white/90 mb-10 leading-relaxed font-medium"
-                dangerouslySetInnerHTML={{ __html: section.content.subtitle }}
-              />
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {section.content.ctaText && (
-                  <button className="bg-[#19FF00] text-[#1C5D15] px-8 py-4 rounded-full font-black uppercase tracking-wider hover:scale-105 transition-transform">
-                    {section.content.ctaText}
-                  </button>
-                )}
-                {section.content.secondaryCtaText && (
-                  <button className="bg-white/10 backdrop-blur-md text-white border-2 border-white/20 px-8 py-4 rounded-full font-black uppercase tracking-wider hover:bg-white/20 transition-all">
-                    {section.content.secondaryCtaText}
-                  </button>
-                )}
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{
+                  backgroundImage: `url('${section.content.backgroundImage}')`,
+                }}
+              >
+                <div className="absolute inset-0 bg-[#1C5D15]/85"></div>
               </div>
-            </div>
-          </section>
-        );
+              <div className="relative z-10 max-w-6xl mx-auto px-5 text-center text-white">
+                <h1 className={`${section.content.height ? 'text-3xl md:text-4xl mb-3' : 'text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6'} leading-tight`}>
+                  {section.content.title}
+                </h1>
+                <div 
+                  className={`${section.content.height ? 'text-lg md:text-xl mb-4' : 'text-xl md:text-2xl mb-10'} max-w-3xl mx-auto opacity-95 [&_p]:m-0`}
+                  dangerouslySetInnerHTML={{ __html: section.content.subtitle || '' }}
+                />
+                
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  {section.content.ctaText && (
+                    <div className="bg-[#19FF00] text-[#1C5D15] px-10 py-3 rounded-full font-bold uppercase tracking-wider text-sm">
+                      {section.content.ctaText}
+                    </div>
+                  )}
+                  {section.content.secondaryCtaText && (
+                    <div className="border-2 border-white text-white px-10 py-3 rounded-full font-bold uppercase tracking-wider text-sm">
+                      {section.content.secondaryCtaText}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          );
+        }
 
       case 'features':
         return <Purpose purposes={section.content.items || []} />;
@@ -403,6 +495,9 @@ export function VisualEditorPreview({
           </div>
         );
 
+
+
+
       case 'hero-blog':
         return <HeroBlog content={section.content} />;
 
@@ -478,9 +573,12 @@ export function VisualEditorPreview({
         return <NewsSection title={section.content.title} subtitle={section.content.subtitle} />;
 
       case 'stats':
-        return (
-          <section className="py-16 bg-gradient-to-br from-[#1C5D15] to-[#0d3a0a] text-white">
-            <div className="max-w-6xl mx-auto px-6 text-center">
+        {
+          const isEcosystem = pageSlug?.includes('ecosystem');
+          return (
+            <section className={`${isEcosystem ? 'py-8' : 'py-16'} bg-gradient-to-br from-[#1C5D15] to-[#0d3a0a] text-white`}>
+              <div className="max-w-6xl mx-auto px-6 text-center">
+
               {section.content.title && <h2 className="text-3xl font-bold text-white mb-2">{section.content.title}</h2>}
               {section.content.subtitle && <p className="text-white/80 mb-10">{section.content.subtitle}</p>}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -491,10 +589,13 @@ export function VisualEditorPreview({
                     {stat.description && <p className="text-white/60 text-xs mt-1">{stat.description}</p>}
                   </div>
                 ))}
+
+                </div>
               </div>
-            </div>
-          </section>
-        );
+            </section>
+          );
+        }
+
 
       case 'bento':
         return (
@@ -643,28 +744,58 @@ export function VisualEditorPreview({
         return <FlipCards items={section.content.items || []} />;
 
       case 'category-filter':
-        return (
-          <section className="py-20 bg-[#629960]/5 border-y border-[#E8F0E2]">
-            <div className="max-w-7xl mx-auto px-6">
-              {section.content.title && (
-                <div className="text-center mb-10">
-                  <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
-                  {section.content.subtitle && <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>}
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2.5 justify-center mt-6">
-                <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#1C5D15] text-white">
-                  Todas las Categorías
-                </span>
-                {availableCategories.map((category) => (
-                  <span key={category.id} className="px-3 py-1.5 rounded-full text-xs font-medium bg-[#F7F9CE] text-[#1C5D15]">
-                    {category.name}
+        {
+          const displayMembers = availableEcosystemMembers.slice(0, 3); // Mostrar algunos de ejemplo
+          return (
+            <section className="py-20 bg-[#629960]/5 border-y border-[#E8F0E2]">
+              <div className="max-w-7xl mx-auto px-6">
+                {section.content.title && (
+                  <div className="text-center mb-12">
+                    <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
+                    {section.content.subtitle && <p className="text-[#629960] text-lg max-w-2xl mx-auto">{section.content.subtitle}</p>}
+                  </div>
+                )}
+                
+                {/* Visualización del Filtro */}
+                <div className="flex flex-wrap gap-2.5 justify-center mb-12">
+                  <span className="px-5 py-2 rounded-full text-xs font-bold bg-[#1C5D15] text-white shadow-lg">
+                    Todas las Categorías
                   </span>
-                ))}
+                  {(availableCategories || []).slice(0, 5).map((category) => (
+                    <span key={category.id} className="px-5 py-2 rounded-full text-xs font-bold bg-white text-[#1C5D15] border border-[#1C5D15]/10 hover:border-[#19FF00] transition-colors">
+                      {category.name}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Grid de Miembros (Previsualización) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {displayMembers.map((member) => (
+                    <div key={member.id} className="bg-white rounded-3xl p-6 shadow-sm border border-[#1C5D15]/5">
+                      <div className="h-40 bg-gray-50 rounded-2xl mb-4 overflow-hidden">
+                        {member.image ? (
+                          <img src={member.image} alt="" className="w-full h-full object-cover opacity-80" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[#1C5D15]/20">
+                            <Globe size={48} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded w-fit mb-2">
+                        {member.sector || "Miembro"}
+                      </div>
+                      <h3 className="text-lg font-bold text-[#1C5D15] mb-2 truncate">
+                        {member.translation?.name || member.slug}
+                      </h3>
+                      <div className="w-full h-1 bg-[#F7F9CE] rounded-full"></div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
-        );
+            </section>
+          );
+        }
+
 
 
       case 'clientes':
@@ -777,17 +908,28 @@ export function VisualEditorPreview({
 
   return (
     <div className="space-y-0">
-      {sections.map((section) => (
-        <EditableBlock
-          key={section.id}
-          sectionId={section.id}
-          activeSectionId={activeSectionId}
-          onClick={onSectionClick}
-          label={section.type.toUpperCase()}
-        >
-          {renderSectionComponent(section)}
-        </EditableBlock>
-      ))}
+      {sections.map((section, index) => {
+        const component = renderSectionComponent(section);
+        if (!component) return null;
+
+        return (
+          <EditableBlock
+            key={section.id}
+            sectionId={section.id}
+            activeSectionId={activeSectionId}
+            onClick={onSectionClick}
+            onDelete={onDeleteSection}
+            onMoveUp={onMoveSectionUp}
+            onMoveDown={onMoveSectionDown}
+            index={index}
+            totalSections={sections.length}
+            label={section.type.toUpperCase()}
+          >
+            {component}
+          </EditableBlock>
+        );
+      })}
     </div>
   );
 }
+

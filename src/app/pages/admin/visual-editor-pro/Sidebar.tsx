@@ -1,6 +1,14 @@
-import { Globe, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useState } from 'react';
+import { Globe, PanelLeftClose, PanelLeftOpen, Plus, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, X } from 'lucide-react';
 import { Section } from '../../../data/supabase';
 import { VisualEditorSidebar } from '../../../components/admin/visual-editor/VisualEditorSidebar';
+
+// Helper component for dynamic icons
+const Icon = ({ name, className }: { name: string, className?: string }) => {
+  const icons: any = { Layout, BarChart, Users, Globe, ShoppingBag, Newspaper, HelpCircle, Zap, Type };
+  const Comp = icons[name] || Globe;
+  return <Comp className={className} />;
+};
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -8,6 +16,7 @@ interface SidebarProps {
   activeSectionES: Section | null;
   activeSectionEN: Section | null;
   handleUpdateSection: (sectionId: string, content: any, lang?: 'es' | 'en' | 'both') => void;
+  onAddSection?: (type: string) => void;
   allProducts: any[];
   allEcosystemMembers: any[];
   pageSlug?: string;
@@ -19,10 +28,25 @@ export function Sidebar({
   activeSectionES,
   activeSectionEN,
   handleUpdateSection,
+  onAddSection,
   allProducts,
   allEcosystemMembers,
   pageSlug
 }: SidebarProps) {
+  const [showAddMenu, setShowAddMenu] = useState(false);
+
+  const sectionTypes = [
+    { type: 'hero', label: 'Banner Principal', icon: 'Layout' },
+    { type: 'stats', label: 'Estadísticas', icon: 'BarChart' },
+    { type: 'category-filter', label: 'Directorio Ecosistema', icon: 'Users' },
+    { type: 'ecosystem', label: 'Nuestra Red (Features)', icon: 'Globe' },
+    { type: 'products', label: 'Catálogo de Productos', icon: 'ShoppingBag' },
+    { type: 'news', label: 'Noticias Actuales', icon: 'Newspaper' },
+    { type: 'faq', label: 'Preguntas Frecuentes', icon: 'HelpCircle' },
+    { type: 'cta', label: 'Llamado a la Acción', icon: 'Zap' },
+    { type: 'text', label: 'Bloque de Texto', icon: 'Type' },
+  ];
+
   return (
     <>
       <button
@@ -39,12 +63,47 @@ export function Sidebar({
       <aside className={`${sidebarOpen ? 'w-[400px]' : 'w-0'} bg-white border-r flex-shrink-0 flex flex-col h-full overflow-hidden shadow-2xl relative z-10 transition-all duration-300 ease-out`}>
         <div className="p-4 border-b bg-gray-50/80 flex items-center justify-between">
           <div>
-            <h2 className="font-black text-[#1C5D15] text-xs uppercase tracking-widest">Configuración</h2>
-            <p className="text-[10px] text-[#629960] font-medium">Personaliza el bloque seleccionado</p>
+            <h2 className="font-black text-[#1C5D15] text-xs uppercase tracking-widest leading-none mb-1">Configuración</h2>
+            <p className="text-[9px] text-[#629960] font-bold uppercase tracking-tighter">Personaliza tu contenido</p>
           </div>
+          
+          <button 
+            onClick={() => setShowAddMenu(!showAddMenu)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${
+              showAddMenu 
+                ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                : 'bg-[#19FF00] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-[#19FF00]'
+            }`}
+          >
+            {showAddMenu ? <X size={12} /> : <Plus size={12} />}
+            {showAddMenu ? 'Cerrar' : 'Añadir'}
+          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-white custom-scrollbar">
+        <div className="flex-1 overflow-y-auto bg-white custom-scrollbar relative">
+          {/* Add Menu Overlay */}
+          {showAddMenu && (
+            <div className="absolute inset-0 bg-white z-50 p-6 flex flex-col animate-in fade-in slide-in-from-top-4 duration-300">
+              <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-6">¿Qué deseas añadir?</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {sectionTypes.map((item) => (
+                  <button
+                    key={item.type}
+                    onClick={() => {
+                      onAddSection?.(item.type);
+                      setShowAddMenu(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-4 rounded-3xl border-2 border-[#F7F9CE] hover:border-[#19FF00] hover:bg-[#F7F9CE]/20 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-[#19FF00]/10 rounded-2xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                      <Icon name={item.icon} className="w-5 h-5 text-[#1C5D15]" />
+                    </div>
+                    <span className="text-[10px] font-bold text-[#1C5D15] text-center leading-tight">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {activeSectionES && activeSectionEN ? (
             <VisualEditorSidebar
               sectionES={activeSectionES}

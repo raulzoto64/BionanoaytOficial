@@ -18,6 +18,9 @@ interface DeviceCanvasProps {
   allCategories: any[];
   allBlogPosts: any[];
   pageSlug?: string;
+  onDeleteSection?: (id: string) => void;
+  onMoveSectionUp?: (id: string) => void;
+  onMoveSectionDown?: (id: string) => void;
 }
 
 export function DeviceCanvas({
@@ -35,6 +38,9 @@ export function DeviceCanvas({
   allCategories,
   allBlogPosts,
   pageSlug,
+  onDeleteSection,
+  onMoveSectionUp,
+  onMoveSectionDown,
 }: DeviceCanvasProps) {
   return (
     <main className="flex-1 bg-[#222] overflow-y-auto flex items-start justify-center p-8 lg:p-12 custom-scrollbar-dark relative">
@@ -91,6 +97,9 @@ export function DeviceCanvas({
                       availableCategories={allCategories}
                       availableBlogPosts={allBlogPosts}
                       pageSlug={pageSlug}
+                      onDeleteSection={onDeleteSection}
+                      onMoveSectionUp={onMoveSectionUp}
+                      onMoveSectionDown={onMoveSectionDown}
                     />
                   </div>
                   <div className="pointer-events-none opacity-90 saturate-50 mt-auto shrink-0 z-40 bg-white">

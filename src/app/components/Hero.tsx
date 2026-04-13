@@ -6,7 +6,10 @@ interface HeroProps {
 
 export function Hero({ content }: HeroProps) {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section 
+      className="relative flex items-center justify-center overflow-hidden"
+      style={content.height ? { height: content.height, minHeight: 'auto' } : { minHeight: '100vh' }}
+    >
       {/* Preload/Discovery Image - invisible but helps browser prioritize */}
       <img 
         src={content.backgroundImage} 
@@ -29,14 +32,15 @@ export function Hero({ content }: HeroProps) {
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-5 lg:px-6 text-center text-white">
-        <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6 leading-tight">
+        <h1 className={`${content.height ? 'text-3xl md:text-4xl mb-3' : 'text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6'} leading-tight`}>
           {content.title}
         </h1>
         <div 
-          className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-95 [&_p]:m-0"
+          className={`${content.height ? 'text-lg md:text-xl mb-4' : 'text-xl md:text-2xl mb-10'} max-w-3xl mx-auto opacity-95 [&_p]:m-0`}
           dangerouslySetInnerHTML={{ __html: content.subtitle || '' }}
         />
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+
           {/* Primary Button */}
           {content.ctaText && (
             <Button 

@@ -2,14 +2,14 @@
 
 import { useLanguage } from "../contexts/LanguageContext";
 import { useState, useEffect } from "react";
-import { 
-  supabaseAPI, 
-  EcosystemMember, 
+import {
+  supabaseAPI,
+  EcosystemMember,
   EcosystemMemberTranslation,
   PageContent,
   Section
 } from "../data/supabase";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -20,8 +20,9 @@ import { ContentCard } from "../components/ContentCard";
 import { useDatabase } from "../hooks/useDatabase";
 import { SEO } from "../components/SEO";
 import { Hero } from "../components/Hero";
-import { Ecosystem as EcosystemFeatures } from "../components/Ecosystem";
 import { TrustBar } from "../components/TrustBar";
+
+
 import { StatsCards } from "../components/StatsCards"; // I assume this exists or I'll create it if needed, actually I'll use inline for simple stats if not.
 
 // ── Componente de Catálogo de Miembros ──────────────────────────────────────
@@ -106,9 +107,9 @@ function EcosystemCatalog({ language }: { language: string }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredMembers.map((member) => (
-          <ContentCard 
-            key={member.id} 
-            type="ecosystem" 
+          <ContentCard
+            key={member.id}
+            type="ecosystem"
             data={{
               id: member.id,
               slug: member.slug,
@@ -118,7 +119,7 @@ function EcosystemCatalog({ language }: { language: string }) {
                 name: translations[member.id]?.name || 'Miembro',
                 description: translations[member.id]?.description || ''
               }
-            }} 
+            }}
           />
         ))}
       </div>
@@ -131,6 +132,28 @@ function EcosystemCatalog({ language }: { language: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ── Componente Hero Especializado para Ecosistema ───────────────────────────
+function EcosystemBanner({ content }: { content: any }) {
+  return (
+    <section className="relative h-[300px] flex items-center justify-center overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('${content.backgroundImage}')` }}
+      >
+        <div className="absolute inset-0 bg-[#1C5D15]/85"></div>
+      </div>
+      <div className="relative z-10 max-w-6xl mx-auto px-5 text-center text-white">
+        <h1 className="text-3xl md:text-5xl font-black mb-3">
+          {content.title}
+        </h1>
+        <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto leading-relaxed">
+          {content.subtitle}
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -185,7 +208,7 @@ export function EcosystemPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <SEO 
+      <SEO
         title={seoData.metaTitle || (language === 'es' ? 'Ecosistema - BionanoAyT' : 'Ecosystem - BionanoAyT')}
         description={seoData.metaDescription}
         keywords={seoData.metaKeywords}
@@ -196,26 +219,15 @@ export function EcosystemPage() {
 
         switch (section.type) {
           case 'hero':
-            return <Hero key={section.id} content={section.content} />;
-
-          case 'ecosystem':
-            return (
-              <section key={section.id} className="py-20 bg-white">
-                <EcosystemFeatures 
-                  title={section.content.title}
-                  subtitle={section.content.subtitle}
-                  items={section.content.items}
-                />
-              </section>
-            );
+            return <EcosystemBanner key={section.id} content={section.content} />;
 
           case 'trust':
             return (
               <section key={section.id} className="py-16 bg-[#F7F9CE]/30">
-                <TrustBar 
-                  partners={section.content.partners || []} 
-                  title={section.content.title} 
-                  subtitle={section.content.subtitle} 
+                <TrustBar
+                  partners={section.content.partners || []}
+                  title={section.content.title}
+                  subtitle={section.content.subtitle}
                 />
               </section>
             );
@@ -237,10 +249,11 @@ export function EcosystemPage() {
 
           case 'stats':
             return (
-              <section key={section.id} className="py-20 bg-[#1C5D15] text-white overflow-hidden relative">
+              <section key={section.id} className="py-8 bg-[#1C5D15] text-white overflow-hidden relative">
+
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#19FF00] rounded-full blur-[120px] opacity-20 -mr-32 -mt-32"></div>
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#19FF00] rounded-full blur-[120px] opacity-10 -ml-32 -mb-32"></div>
-                
+
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
                     {section.content.stats?.map((stat: any, idx: number) => (
