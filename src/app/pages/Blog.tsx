@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { supabaseAPI, BlogPostTranslation, PageWithContent } from '../data/supabase';
+import { supabaseAPI, BlogPostTranslation, PageContent } from '../data/supabase';
 import { HeroBlog } from '../components/HeroBlog';
 import { BlogPostsSection } from '../components/BlogPostsSection';
 

@@ -573,7 +573,7 @@ function SectionEditor({
             {/* Campos comunes a múltiples secciones */}
             {(section.type === 'hero' || section.type === 'text' ||
               section.type === 'team' || section.type === 'featured' ||
-              section.type === 'trust') && (
+              section.type === 'trust' || section.type === 'features') && (
               <>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
