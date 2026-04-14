@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { supabaseAPI, BlogPostTranslation } from '../data/supabase';
 import { Link } from 'react-router';
 import { ContentCard } from './ContentCard';
+import { newsPreloadCache } from '../data/BackgroundPreload';
 
 interface PostWithTranslation {
   id: string;
@@ -30,15 +31,35 @@ interface NewsSectionProps {
   isEditor?: boolean;
 }
 
+// Caché global para evitar recargas (mismo patrón que Ecosystem.tsx)
+let newsSectionCache: {
+  posts: PostWithTranslation[];
+  language: string;
+} | null = null;
+
 export function NewsSection({ title, subtitle, ctaText, ctaLink, isEditor = false }: NewsSectionProps) {
   const { language } = useLanguage();
-  const [featuredPosts, setFeaturedPosts] = useState<PostWithTranslation[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Inicialización instantánea desde caché
+  const [featuredPosts, setFeaturedPosts] = useState<PostWithTranslation[]>(() => 
+    newsPreloadCache && newsPreloadCache.language === language ? newsPreloadCache.posts : []
+  );
+  const [loading, setLoading] = useState(() => 
+    newsPreloadCache && newsPreloadCache.language === language ? false : true
+  );
 
 
 
   useEffect(() => {
     const loadFeaturedPosts = async () => {
+      // Usar caché si está disponible para este idioma
+      if (newsPreloadCache && newsPreloadCache.language === language) {
+        setFeaturedPosts(newsPreloadCache.posts);
+        setLoading(false);
+        console.log('[NewsSection] Cargado desde caché (instantáneo)');
+        return;
+      }
+
       try {
         const allPosts = await supabaseAPI.getBlogPosts('published');
         const featured = allPosts.filter(post => post.featured).slice(0, 5);
@@ -65,6 +86,9 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, isEditor = fals
           });
         }
 
+        // Guardar en caché centralizado
+        const { setNewsPreloadCache } = await import('../data/BackgroundPreload');
+        setNewsPreloadCache({ posts: postsWithTranslations, language });
         setFeaturedPosts(postsWithTranslations);
       } catch (error) {
         console.error('Error loading featured blog posts:', error);

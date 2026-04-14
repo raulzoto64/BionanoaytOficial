@@ -23,6 +23,20 @@ export function EcosystemMemberDetail() {
     }
   }, [slug, language]);
 
+  // Manejar el guardado del contexto para el botón atrás del navegador (Solo para Home)
+  useEffect(() => {
+    const from = (location.state as any)?.from;
+    const sectionId = (location.state as any)?.sectionId;
+    
+    if (from === 'home') {
+      console.log('[EcosystemDetail] Detected navigation from Home. Saving state:', { from, sectionId });
+      sessionStorage.setItem('bx_return_from', from);
+      if (sectionId) {
+        sessionStorage.setItem('bx_return_section', sectionId);
+      }
+    }
+  }, [location.state]);
+
 
 
   const handleBack = () => {

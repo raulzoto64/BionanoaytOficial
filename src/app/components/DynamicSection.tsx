@@ -156,6 +156,7 @@ export function DynamicSection({ section, products = [], language = 'es', index 
               title={section.content.title} 
               subtitle={section.content.subtitle} 
               items={section.content.items}
+              sectionId={section.id}
             />
           </div>
         </div>
@@ -378,10 +379,16 @@ export function DynamicSection({ section, products = [], language = 'es', index 
   };
 
   // Envolver el resultado de la seccion en el Lazy Loader.
-  // Solo forzamos que las primeras dos (0 y 1) se carguen siempre (o si es hero) para no dar flasheo
+  // Forzamos carga inmediata para: primeras 2 secciones, hero, ecosystem, news y products
+  // porque tienen datos dinámicos que afectan la altura total de la página (scroll restoration)
+  const shouldForceLoad = index < 2 || 
+                        section.type === 'ecosystem' || 
+                        section.type === 'news' || 
+                        section.type === 'products';
+  
   return (
     <div id={section.id} key={section.id} style={{ scrollMarginTop: '80px' }}>
-      <LazySectionWrapper sectionType={section.type} forceVisible={index < 2}>
+      <LazySectionWrapper sectionType={section.type} forceVisible={shouldForceLoad}>
         {renderSectionContent()}
       </LazySectionWrapper>
     </div>

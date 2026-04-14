@@ -1,7 +1,7 @@
 import { Outlet } from "react-router";
 import { Navigation } from "./Navigation";
 import { Toaster } from "./ui/sonner";
-import { LanguageProvider } from "../contexts/LanguageContext";
+import { LanguageProvider, useLanguage } from "../contexts/LanguageContext";
 import { Footer } from "./Footer";
 import { ScrollToTop } from "./ScrollToTop";
 import { useEffect } from "react";
@@ -14,22 +14,30 @@ const defaultContactInfo = {
   location: "Bogotá, Colombia"
 };
 
-export function Layout() {
+function LayoutInner() {
+  const { language } = useLanguage();
+  
   useEffect(() => {
-    BackgroundPreload.start();
-  }, []);
+    BackgroundPreload.start(language);
+  }, [language]);
 
+  return (
+    <div className="min-h-screen overflow-x-hidden max-w-[100vw] text-pretty">
+      <Navigation />
+      <div className="pt-20">
+        <Outlet />
+      </div>
+      <Footer contactInfo={defaultContactInfo} />
+      <Toaster />
+    </div>
+  );
+}
+
+export function Layout() {
   return (
     <LanguageProvider>
       <ScrollToTop />
-      <div className="min-h-screen overflow-x-hidden max-w-[100vw] text-pretty">
-        <Navigation />
-        <div className="pt-20">
-          <Outlet />
-        </div>
-        <Footer contactInfo={defaultContactInfo} />
-        <Toaster />
-      </div>
+      <LayoutInner />
     </LanguageProvider>
   );
 }

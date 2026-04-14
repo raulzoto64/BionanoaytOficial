@@ -14,10 +14,12 @@ import {
   CarouselDots,
   type CarouselApi 
 } from "../components/ui/carousel";
+import { ecosystemPreloadCache } from "../data/BackgroundPreload";
 
 interface EcosystemProps {
   title?: string;
   subtitle?: string;
+  sectionId?: string; // Nuevo: ID de la sección para el scroll
   items?: Array<{
     title?: string;
     label?: string;
@@ -27,11 +29,19 @@ interface EcosystemProps {
   }>;
 }
 
-export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
+export function Ecosystem({ title, subtitle, items, sectionId }: EcosystemProps) {
   const { language } = useLanguage();
-  const [members, setMembers] = useState<EcosystemMember[]>([]);
-  const [translations, setTranslations] = useState<Record<string, EcosystemMemberTranslation>>({});
-  const [loading, setLoading] = useState(true);
+  
+  // Inicialización instantánea desde caché si existe
+  const [members, setMembers] = useState<EcosystemMember[]>(() => 
+    ecosystemPreloadCache && ecosystemPreloadCache.language === language ? ecosystemPreloadCache.members : []
+  );
+  const [translations, setTranslations] = useState<Record<string, EcosystemMemberTranslation>>(() => 
+    ecosystemPreloadCache && ecosystemPreloadCache.language === language ? ecosystemPreloadCache.translations : {}
+  );
+  const [loading, setLoading] = useState(() => 
+    ecosystemPreloadCache && ecosystemPreloadCache.language === language ? false : true
+  );
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
@@ -46,11 +56,22 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
   }, [language]);
 
   const loadMembers = async () => {
+    // 1. Primero verificamos el caché del preloader (llenado en segundo plano al entrar a la Home)
+    // 1. Verificamos el caché del preloader (centralizado)
+    const { ecosystemPreloadCache } = await import('../data/BackgroundPreload');
+    if (ecosystemPreloadCache && ecosystemPreloadCache.language === language) {
+      setMembers(ecosystemPreloadCache.members);
+      setTranslations(ecosystemPreloadCache.translations);
+      setLoading(false);
+      console.log('[Ecosystem] Cargado desde caché del preloader (instantáneo)');
+      return;
+    }
+
+    // 2. Si no hay caché, cargamos de la base de datos
     setLoading(true);
     try {
       const ecosystemMembers = await supabaseAPI.getEcosystemMembers();
-      setMembers(ecosystemMembers);
-
+      
       const translationPromises = ecosystemMembers.map(async (member) => {
         const translation = await supabaseAPI.getEcosystemMemberTranslation(member.id, language);
         return { id: member.id, translation };
@@ -62,6 +83,15 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
         translationMap[id] = translation;
       });
 
+      // Actualizar el caché centralizado (para que sea instantáneo en el próximo render)
+      const { setEcosystemPreloadCache } = await import('../data/BackgroundPreload');
+      setEcosystemPreloadCache({
+        members: ecosystemMembers,
+        translations: translationMap,
+        language
+      });
+
+      setMembers(ecosystemMembers);
       setTranslations(translationMap);
     } catch (error) {
       console.error('Error al cargar miembros del ecosistema:', error);
@@ -73,16 +103,20 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
   // Estado de carga optimizado con menor padding
   if (loading) {
     return (
-      <section className="py-12 md:py-16 bg-[#629960]/5">
+      <section className="py-10 md:py-14 bg-[#629960]/5 overflow-hidden">
         <div className="max-w-6xl mx-auto px-5 lg:px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <div className="h-8 bg-[#1C5D15]/10 rounded w-32 animate-pulse" />
-              <div className="h-12 bg-[#1C5D15]/10 rounded w-64 animate-pulse" />
+              <div className="h-8 bg-[#1C5D15]/10 rounded-full w-32 animate-pulse" />
+              <div className="h-12 bg-[#1C5D15]/10 rounded-xl w-64 animate-pulse" />
+              <div className="space-y-3">
+                <div className="h-4 bg-[#629960]/10 rounded w-full animate-pulse" />
+                <div className="h-4 bg-[#629960]/10 rounded w-5/6 animate-pulse" />
+              </div>
             </div>
-            <div className="space-y-4">
-              <div className="h-[180px] bg-white rounded-xl animate-pulse" />
-              <div className="h-[180px] bg-white rounded-xl animate-pulse" />
+            {/* Skeleton que imita el carrusel para mantener la altura constante */}
+            <div className="h-[480px] w-full max-w-[450px] bg-white/50 rounded-2xl border-2 border-dashed border-[#1C5D15]/10 flex items-center justify-center">
+               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1C5D15]"></div>
             </div>
           </div>
         </div>
@@ -164,7 +198,11 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
                       <Link 
                         id={`member-${member.id}`}
                         to={member.slug ? `/ecosystem/${member.slug}` : '#'}
+                        state={{ from: 'home', sectionId }}
                         className="block h-full group"
+                        onClick={() => {
+                          console.log('[EcosystemCard] Clicked member, saving state:', { from: 'home', sectionId });
+                        }}
                       >
                         <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#629960]/10 group-hover:border-[#19FF00] flex flex-col h-full mx-1">
                           <div className="flex items-center gap-4 mb-3">

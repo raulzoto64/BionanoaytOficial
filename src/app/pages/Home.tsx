@@ -40,24 +40,22 @@ export function Home() {
     console.log('[Home] Restoration check:', { from, sectionId, navigationType, hasElement: sectionId ? !!document.getElementById(sectionId) : false });
 
     if (sectionId && (from === 'home' || !from)) {
+      // Con el caché activo, el Ecosistema carga instantáneamente
+      // Un solo scroll a 400ms es suficiente para todos los casos
       const timer = setTimeout(() => {
-        console.log('[Home] Attempting scroll to element id:', sectionId);
         const element = document.getElementById(sectionId);
         if (element) {
-          console.log('[Home] Element FOUND, scrolling with offset...');
-          const headerOffset = -600; 
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
+          const headerOffset = sectionId.includes('ecosystem') ? 80 : -600;
+          const scrollTo = elementTop - headerOffset;
           
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth"
-          });
-
+          console.log('[Home-DEBUG] Scroll a sección:', sectionId, '→ pos:', elementTop, 'offset:', headerOffset, '→ final:', scrollTo);
+          window.scrollTo({ top: scrollTo, behavior: 'smooth' });
+          
           sessionStorage.removeItem('bx_return_from');
           sessionStorage.removeItem('bx_return_section');
         } else {
-          console.log('[Home] Element NOT FOUND. All IDs in page:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+          console.log('[Home-DEBUG] Elemento no encontrado:', sectionId);
         }
       }, 400);
       return () => clearTimeout(timer);
