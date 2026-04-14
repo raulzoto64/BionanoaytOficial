@@ -3,6 +3,7 @@
 import { useLanguage } from '../contexts/LanguageContext';
 import { Link } from 'react-router';
 
+
 // Types for Blog/News Post
 interface BlogPostData {
   id: string;
@@ -49,6 +50,7 @@ export function ContentCard({ type, data }: ContentCardProps) {
     
     return (
       <article 
+        id={`post-${post.id}`}
         className="h-[450px] bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-[#629960]/10 hover:border-[#19FF00] flex flex-col group overflow-hidden w-full max-w-none mx-0"
       >
         {/* Image */}
@@ -106,6 +108,7 @@ export function ContentCard({ type, data }: ContentCardProps) {
           <div className="mt-auto">
             <Link 
               to={`/blog/${post.slug}`}
+              state={{ from: 'blog', sectionId: `post-${post.id}` }}
               className="text-[#1C5D15] text-sm font-semibold flex items-center gap-1 hover:text-[#19FF00] transition-colors"
             >
               {language === 'es' ? 'Leer más' : 'Read more'}

@@ -44,8 +44,10 @@ function FaqItem({ item }: { item: { question: string; answer: string } }) {
 }
 
 export function Process() {
-  const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const { language } = useLanguage();
+  const [pageContent, setPageContent] = useState<PageContent | null>(() => 
+    supabaseAPI.getCachedData(`page-content-page-process-${language}`)
+  );
 
   useEffect(() => { loadPageContent(); }, [language]);
 
@@ -53,6 +55,7 @@ export function Process() {
     try {
       const content = await supabaseAPI.getPageContent('page-process', language);
       setPageContent(content);
+      supabaseAPI._saveToCache(`page-content-page-process-${language}`, content);
     } catch (error) {}
   };
 
@@ -78,7 +81,7 @@ export function Process() {
         keywords={seoData.metaKeywords}
       />
 
-      {pageContent.sections.map((section: Section) => {
+      {pageContent.sections.map((section: Section, index: number) => {
         if (!section.visible) return null;
 
         switch (section.type) {
@@ -452,6 +455,7 @@ export function Process() {
                 key={section.id}
                 section={section}
                 language={language}
+                index={index}
               />
             );
         }

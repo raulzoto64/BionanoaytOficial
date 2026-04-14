@@ -40,8 +40,10 @@ function FaqItem({ item }: { item: { question: string; answer: string } }) {
 }
 
 export function Technology() {
-  const [pageContent, setPageContent] = useState<PageContent | null>(null);
   const { language } = useLanguage();
+  const [pageContent, setPageContent] = useState<PageContent | null>(() => 
+    supabaseAPI.getCachedData(`page-content-page-technology-${language}`)
+  );
 
   useEffect(() => {
     loadPageContent();
@@ -51,6 +53,7 @@ export function Technology() {
     try {
       const content = await supabaseAPI.getPageContent('page-technology', language);
       setPageContent(content);
+      supabaseAPI._saveToCache(`page-content-page-technology-${language}`, content);
     } catch (error) {}
   };
 
@@ -75,7 +78,7 @@ export function Technology() {
         description={seoData.metaDescription}
         keywords={seoData.metaKeywords}
       />
-      {pageContent.sections.map((section: Section) => {
+      {pageContent.sections.map((section: Section, index: number) => {
         if (!section.visible) return null;
 
         switch (section.type) {
@@ -306,6 +309,7 @@ export function Technology() {
                 key={section.id}
                 section={section}
                 language={language}
+                index={index}
               />
             );
         }

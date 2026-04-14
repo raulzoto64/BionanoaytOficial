@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { PageContent, Section, supabaseAPI, Product, ProductTranslation } from "../data/supabase";
 import { DynamicSection } from "../components/DynamicSection";
 import { ensureExternalLink } from "../utils/url";
+import { Link } from "react-router";
 import {
   FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
   AlertTriangle, ChevronDown, ChevronUp, Quote, CheckCircle,
@@ -50,13 +51,13 @@ function StarRating({ rating }: { rating: number }) {
 
 // ── Componente de producto para la sección products ────────────────────────
 function ProductCard({ product, index }: { product: any; index: number }) {
-  const navigate = useNavigate();
   const rating = index % 2 === 0 ? 5 : 4.5; // Alternar entre 5 y 4.5 estrellas
 
   return (
-    <div
-      onClick={() => navigate(`/products/${product.slug}`)}
-      className="cursor-pointer bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
+    <Link
+      to={`/products/${product.slug}`}
+      state={{ from: 'store' }}
+      className="cursor-pointer bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group block"
     >
       <div className="h-44 overflow-hidden bg-[#F7F9CE]">
         <img
@@ -76,24 +77,32 @@ function ProductCard({ product, index }: { product: any; index: number }) {
           <span className="text-sm font-bold text-[#19FF00]">Ver detalle</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
 export function Store() {
-  const [pageContent, setPageContent] = useState<PageContent | null>(null);
-  const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [ecosystemMembers, setEcosystemMembers] = useState<any[]>([]);
+  const { language } = useLanguage();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [pageContent, setPageContent] = useState<PageContent | null>(() => 
+    supabaseAPI.getCachedData(`page-content-page-store-${language}`)
+  );
+  const [products, setProducts] = useState<any[]>(() => 
+    supabaseAPI.getCachedData(`store-products-ready-${language}`) || []
+  );
+  const [categories, setCategories] = useState<any[]>(() => 
+    supabaseAPI.getCachedData(`store-categories-ready-${language}`) || []
+  );
+  const [ecosystemMembers, setEcosystemMembers] = useState<any[]>(() => 
+    supabaseAPI.getCachedData(`store-members-ready-${language}`) || []
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   // Estados para el popup de partners (movidos AFUERA del map)
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [isScrolled, setIsScrolled] = useState(false);
-  
-  const { language } = useLanguage();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const loadPageContent = async () => {
     try {
@@ -123,6 +132,7 @@ export function Store() {
         })
       );
       setProducts(productsWithDetails.filter((product) => product.status === 'active'));
+      supabaseAPI._saveToCache(`store-products-ready-${language}`, productsWithDetails.filter((product) => product.status === 'active'));
     } catch (error) {
       console.error('Error loading products:', error);
     }
@@ -141,6 +151,7 @@ export function Store() {
         })
       );
       setCategories(categoriesWithTranslations);
+      supabaseAPI._saveToCache(`store-categories-ready-${language}`, categoriesWithTranslations);
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -159,6 +170,7 @@ export function Store() {
         })
       );
       setEcosystemMembers(membersWithTranslations.filter(m => m.status === 'active'));
+      supabaseAPI._saveToCache(`store-members-ready-${language}`, membersWithTranslations.filter(m => m.status === 'active'));
     } catch (error) {
       console.error('Error loading ecosystem members:', error);
     }
@@ -170,6 +182,26 @@ export function Store() {
     loadCategories();
     loadEcosystemMembers();
   }, [language]);
+
+  // Restaurar scroll si regresamos de un producto
+  useEffect(() => {
+    if (!pageContent) return;
+
+    const from = sessionStorage.getItem('bx_return_from');
+    
+    if (from === 'store') {
+      const timer = setTimeout(() => {
+        const element = document.getElementById("products");
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Limpiar una vez restaurado
+          sessionStorage.removeItem('bx_return_from');
+          sessionStorage.removeItem('bx_return_section');
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [pageContent]);
 
   useEffect(() => {
     const categoryParam = searchParams.get('category');
@@ -218,7 +250,7 @@ export function Store() {
 
       {pageContent.sections
         .filter((section: Section) => section.visible)
-        .map((section: Section) => {
+        .map((section: Section, index: number) => {
           switch (section.type) {
             // ── 1. HERO ──────────────────────────────────────────────────────
           case 'hero':
@@ -687,6 +719,7 @@ export function Store() {
                 key={section.id}
                 section={section}
                 language={language}
+                index={index}
               />
             );
         }

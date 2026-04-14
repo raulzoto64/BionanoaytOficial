@@ -10,21 +10,27 @@ export function Navigation() {
   const navigate = useNavigate();
 
   const scrollToSection = (sectionId: string) => {
-    // Si ya estamos en la home, hacer scroll directamente
-    if (window.location.pathname === "/") {
+    const handleScroll = () => {
       const element = document.getElementById(sectionId);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
+        // En Home usamos el desplazamiento profundo que le gusta al usuario (-600)
+        // En otras páginas usamos el ajuste estándar al ras del menú (80)
+        const isHome = window.location.pathname === "/";
+        const headerOffset = isHome ? -600 : 80; 
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
       }
+    };
+
+    if (window.location.pathname === "/") {
+      handleScroll();
     } else {
-      // Si no, navegar a home y luego hacer scroll
       navigate("/");
-      setTimeout(() => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 300);
+      setTimeout(handleScroll, 600); // 600ms para asegurar carga de secciones en Home
     }
   };
 
@@ -49,10 +55,10 @@ export function Navigation() {
         </div>
 
         {/* Mobile Menu */}
-        <MobileMenu 
-          isOpen={mobileMenuOpen} 
-          onClose={() => setMobileMenuOpen(false)} 
-          scrollToSection={scrollToSection} 
+        <MobileMenu
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          scrollToSection={scrollToSection}
         />
       </div>
     </nav>

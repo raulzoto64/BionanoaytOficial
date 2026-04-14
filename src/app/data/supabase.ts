@@ -326,9 +326,13 @@ export const supabaseAPI = {
   // CACHÉ DE DATOS (Para navegación instantánea)
   // ==========================================
   _cache: {} as Record<string, { data: any; timestamp: number }>,
-  _cacheTTL: 10 * 60 * 1000, // 10 minutos para considerar datos "frescos"
+  _cacheTTL: 24 * 60 * 60 * 1000, // 24 horas para retener los datos localmente sin re-descargar
   _persistPrefix: "bionano_cache_",
 
+  getCachedData: (key: string, persist: boolean = true) => {
+    return supabaseAPI._getFromCache(key, persist);
+  },
+  
   _getFromCache: (key: string, persist: boolean = true) => {
     // 1. Intentar desde memoria (más rápido)
     const cached = supabaseAPI._cache[key];
@@ -594,6 +598,18 @@ export const supabaseAPI = {
   },
 
 
+  createPage: async (data: Omit<Page, "id" | "created_at" | "updated_at">): Promise<Page> => {
+    const { data: page, error } = await supabase
+      .from("pages")
+      .insert([data])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    supabaseAPI._invalidateCache("pages");
+    return page;
+  },
+
   updatePage: async (id: string, data: Partial<Page>): Promise<Page> => {
     const { data: page, error } = await supabase
       .from("pages")
@@ -604,6 +620,16 @@ export const supabaseAPI = {
 
     if (error) throw new Error(error.message);
     return page;
+  },
+
+  deletePage: async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from("pages")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw new Error(error.message);
+    supabaseAPI._invalidateCache("pages");
   },
 
   // ==========================================
@@ -1387,21 +1413,9 @@ export const supabaseAPI = {
     language: "es" | "en",
   ): Promise<PageContent | null> => {
     const cacheKey = `page-content-${pageId}-${language}`;
-    
-    // Usar caché en memoria + localStorage, pero con TTL corto (2 min)
-    // La invalidación en updatePageContent limpia todo al publicar
-    const cached = supabaseAPI._getFromCache(cacheKey, true);
-    if (cached) {
-      // Verificar si el caché tiene menos de 2 minutos
-      const cacheEntry = supabaseAPI._cache[cacheKey];
-      if (cacheEntry && (Date.now() - cacheEntry.timestamp < 2 * 60 * 1000)) {
-        console.log(`📦 CACHÉ HIT: ${cacheKey} (${cached?.sections?.length || 0} secciones, edad: ${Math.round((Date.now() - cacheEntry.timestamp)/1000)}s)`);
-        return cached;
-      }
-      // Si tiene más de 2 min, borrar y re-fetch
-      console.log(`⏰ CACHÉ EXPIRADO: ${cacheKey}, re-fetching...`);
-      supabaseAPI._invalidateCache(cacheKey);
-    }
+    // Usar el motor de caché nativo, pasará directo a _fetchWithCache que maneja el localStorage.
+    // Devolvemos el cache local instantáneamente para navegación rápida, y opcionalmente
+    // podríamos usar revalidateOnCache=true para actualizar por detrás si hiciera falta.
     
     return supabaseAPI._fetchWithCache(cacheKey, async () => {
       console.log(`🌐 FETCH BD: Cargando ${pageId} (${language}) desde Supabase...`);

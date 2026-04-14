@@ -58,7 +58,9 @@ function EcosystemCatalog({ language }: { language: string }) {
       });
 
       setTranslations(translationMap);
+      console.log('[EcosystemCatalog] Members and translations LOADED:', ecosystemMembers.length);
     } catch (error) {
+      console.error('[EcosystemCatalog] Error loading members:', error);
     } finally {
       setLoading(false);
     }
@@ -166,6 +168,8 @@ export function EcosystemPage() {
     loadPageContent();
   }, [language, updateTrigger]);
 
+
+
   const loadPageContent = async () => {
     setLoading(true);
     try {
@@ -212,7 +216,7 @@ export function EcosystemPage() {
         keywords={seoData.metaKeywords}
       />
 
-      {pageContent.sections.map((section: Section) => {
+      {pageContent.sections.map((section: Section, index: number) => {
         if (!section.visible) return null;
 
         switch (section.type) {
@@ -232,7 +236,7 @@ export function EcosystemPage() {
 
           case 'category-filter': // Usamos este tipo para el catálogo de miembros
             return (
-              <section key={section.id} className="py-20 bg-[#629960]/5">
+              <section id="ecosystem-catalog" key={section.id} className="py-20 bg-[#629960]/5">
                 <div className="max-w-7xl mx-auto px-6">
                   {section.content.title && (
                     <div className="text-center mb-16">
@@ -272,6 +276,7 @@ export function EcosystemPage() {
                 key={section.id}
                 section={section}
                 language={language}
+                index={index}
               />
             );
         }

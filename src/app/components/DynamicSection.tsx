@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { Section } from '../data/supabase';
 import { Hero } from './Hero';
 import { TrustBar } from './TrustBar';
@@ -19,20 +20,54 @@ import { BlogPostsSection } from './BlogPostsSection';
 // automáticamente en TODAS las páginas públicas.
 // ══════════════════════════════════════════════════════════════
 
+// Wrapper para Lazy Loading: solo carga cuando está por entrar en pantalla
+function LazySectionWrapper({ children, sectionType, forceVisible }: { children: React.ReactNode, sectionType: string, forceVisible: boolean }) {
+  // Siempre forzamos hero o lo visible. Para el resto, inicia falso.
+  const [isVisible, setIsVisible] = useState(forceVisible || sectionType === 'hero');
+  const domRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isVisible) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setIsVisible(true);
+        if (domRef.current) observer.unobserve(domRef.current);
+      }
+    }, { rootMargin: '800px 0px' }); // Cargar 800px ANTES de que aparezca
+
+    if (domRef.current) {
+      observer.observe(domRef.current);
+    }
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  if (!isVisible) {
+    // Placeholder mínimo esperando lazy load
+    return <div ref={domRef} className="w-full min-h-[300px] flex items-center justify-center opacity-0"><span className="hidden">Loading {sectionType}...</span></div>;
+  }
+
+  return <>{children}</>;
+}
+
+
 interface DynamicSectionProps {
   section: Section;
   products?: any[];
   language?: string;
+  index?: number;
 }
 
-export function DynamicSection({ section, products = [], language = 'es' }: DynamicSectionProps) {
+export function DynamicSection({ section, products = [], language = 'es', index = 0 }: DynamicSectionProps) {
   if (!section.visible) return null;
 
-  switch (section.type) {
+  // Renderizar la seccion por tipo
+  const renderSectionContent = () => {
+    switch (section.type) {
     // ── HERO ─────────────────────────────────────
     case 'hero':
       return (
-        <div key={section.id} id="hero">
+        <div key={section.id}>
           <Hero content={section.content} />
         </div>
       );
@@ -40,7 +75,7 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
     // ── TRUST BAR ────────────────────────────────
     case 'trust':
       return (
-        <div key={section.id} id="trust">
+        <div key={section.id}>
           <TrustBar 
             partners={section.content.partners || []} 
             title={section.content.title} 
@@ -52,7 +87,7 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
     // ── FEATURES / PURPOSE ──────────────────────
     case 'features':
       return (
-        <div key={section.id} id="purpose">
+        <div key={section.id}>
           <Purpose purposes={section.content.items} />
         </div>
       );
@@ -60,7 +95,7 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
     // ── FEATURED PRODUCT ────────────────────────
     case 'featured':
       return (
-        <div key={section.id} id="featured">
+        <div key={section.id}>
           <FeaturedProduct content={section.content} />
         </div>
       );
@@ -74,13 +109,14 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
           : products.filter(p => p.featured).slice(0, 3);
 
         return (
-          <div key={section.id} id="products">
+          <div key={section.id}>
             <Products
               products={displayProducts}
               title={section.content.title}
               subtitle={section.content.subtitle}
               ctaText={section.content.ctaText}
               ctaLink={section.content.ctaLink}
+              sectionId={section.id}
             />
           </div>
         );
@@ -89,7 +125,7 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
     // ── TIMELINE ─────────────────────────────────
     case 'timeline':
       return (
-        <div key={section.id} id="timeline">
+        <div key={section.id} id={section.id}>
           <Timeline 
             milestones={section.content.milestones}
             title={section.content.title}
@@ -102,7 +138,7 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
     // ── TEAM / LEADERSHIP ───────────────────────
     case 'team':
       return (
-        <div key={section.id} id="team">
+        <div key={section.id}>
           <Leadership
             members={section.content.members}
             title={section.content.title}
@@ -114,7 +150,7 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
     // ── ECOSYSTEM ────────────────────────────────
     case 'ecosystem':
       return (
-        <div key={section.id} id="ecosystem">
+        <div key={section.id} id={section.id}>
           <div id="allies">
             <Ecosystem 
               title={section.content.title} 
@@ -128,7 +164,7 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
     // ── NEWS ─────────────────────────────────────
     case 'news':
       return (
-        <div key={section.id} id="news">
+        <div key={section.id} id={section.id}>
           <NewsSection 
             title={section.content.title} 
             subtitle={section.content.subtitle} 
@@ -339,4 +375,15 @@ export function DynamicSection({ section, products = [], language = 'es' }: Dyna
       console.warn(`⚠️ Tipo de sección desconocido: "${section.type}" (id: ${section.id})`);
       return null;
   }
+  };
+
+  // Envolver el resultado de la seccion en el Lazy Loader.
+  // Solo forzamos que las primeras dos (0 y 1) se carguen siempre (o si es hero) para no dar flasheo
+  return (
+    <div id={section.id} key={section.id} style={{ scrollMarginTop: '80px' }}>
+      <LazySectionWrapper sectionType={section.type} forceVisible={index < 2}>
+        {renderSectionContent()}
+      </LazySectionWrapper>
+    </div>
+  );
 }

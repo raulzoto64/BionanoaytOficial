@@ -36,6 +36,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
+    HydrateFallback: () => (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#F7F9CE]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1C5D15]"></div>
+      </div>
+    ),
     children: [
       {
         index: true,
@@ -98,6 +103,11 @@ export const router = createBrowserRouter([
   {
     path: "admin",
     lazy: AdminLayout,
+    HydrateFallback: () => (
+      <div className="flex h-screen w-screen items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1C5D15]"></div>
+      </div>
+    ),
     children: [
       {
         index: true,

@@ -24,11 +24,17 @@ interface PostWithTranslation {
 
 export function Blog() {
   const { language } = useLanguage();
-  const [posts, setPosts] = useState<PostWithTranslation[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<PostWithTranslation[]>([]);
+  const [posts, setPosts] = useState<PostWithTranslation[]>(() => 
+    supabaseAPI.getCachedData(`blog-posts-ready-${language}`) || []
+  );
+  const [filteredPosts, setFilteredPosts] = useState<PostWithTranslation[]>(() => 
+    supabaseAPI.getCachedData(`blog-posts-ready-${language}`) || []
+  );
   const [activeFilter, setActiveFilter] = useState<'all' | 'news' | 'article'>('all');
-  const [pageData, setPageData] = useState<PageContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [pageData, setPageData] = useState<PageContent | null>(() => 
+    supabaseAPI.getCachedData(`page-content-page-blog-${language}`)
+  );
+  const [loading, setLoading] = useState(!pageData);
 
   // --- RENDERIZADOR DE SECCIONES ---
   const renderSection = (section: any) => {
@@ -115,6 +121,10 @@ export function Blog() {
 
         setPosts(postsWithTranslations);
         setFilteredPosts(postsWithTranslations);
+        
+        // Guardar en caché para carga instantánea
+        supabaseAPI._saveToCache(`blog-posts-ready-${language}`, postsWithTranslations);
+        supabaseAPI._saveToCache(`page-content-page-blog-${language}`, pageContent);
       } catch (error) {
         console.error("Error cargando datos del blog:", error);
       } finally {

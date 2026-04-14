@@ -344,13 +344,62 @@ export function AdminContent() {
     );
   }
 
+  const handleCreatePage = async () => {
+    const slug = prompt('Ingresa el slug de la nueva página (ej: about, services):');
+    if (!slug) return;
+
+    // Validar que el slug no exista
+    const existingPages = pagesData.filter(p => p.slug === slug.toLowerCase().replace(/\s+/g, '-'));
+    if (existingPages.length > 0) {
+      toast.error('Ya existe una página con ese slug');
+      return;
+    }
+
+    try {
+      await supabaseAPI.createPage({
+        slug: slug.toLowerCase().replace(/\s+/g, '-'),
+        type: 'custom',
+        status: 'draft'
+      });
+      toast.success('Página creada exitosamente');
+      loadPages();
+    } catch (error) {
+      toast.error('Error al crear la página');
+    }
+  };
+
+  const handleDeletePage = (page: Page) => {
+    confirmDialog({
+      title: 'Eliminar Página',
+      message: `¿Estás seguro de que deseas eliminar la página "${page.slug}"? Esta acción no se puede deshacer.`,
+      onConfirm: async () => {
+        try {
+          await supabaseAPI.deletePage(page.id);
+          toast.success('Página eliminada exitosamente');
+          loadPages();
+        } catch (error) {
+          toast.error('Error al eliminar la página');
+        }
+      }
+    });
+  };
+
   // Vista de lista de páginas
   return (
     <div className="p-4 md:p-6">
       <ConfirmModal {...confirmModalProps} />
-      <div className="mb-8">
-        <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Contenido</h2>
-        <p className="text-[#629960]">Administra el contenido de todas las páginas del sitio</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl text-[#1C5D15] mb-2">Gestión de Contenido</h2>
+          <p className="text-[#629960]">Administra el contenido de todas las páginas del sitio</p>
+        </div>
+        <Button
+          onClick={handleCreatePage}
+          className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#629960] hover:text-white shadow-md transition-all active:scale-95"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Crear Nueva Página
+        </Button>
       </div>
 
       {/* Pages Grid */}
@@ -383,15 +432,29 @@ export function AdminContent() {
                   {page.status === 'published' ? 'Publicado' : 'Borrador'}
                 </Badge>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-[#1C5D15] text-[#1C5D15]"
-                  onClick={() => handleEditPage(page)}
-                >
-                  <Globe className="w-4 h-4 mr-2" />
-                  Editar Contenido
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-[#1C5D15] text-[#1C5D15]"
+                    onClick={() => handleEditPage(page)}
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                  
+                  {/* Solo permitir eliminar páginas custom, no system */}
+                  {page.type === 'custom' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-red-500 text-red-500 hover:bg-red-50"
+                      onClick={() => handleDeletePage(page)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </Card>

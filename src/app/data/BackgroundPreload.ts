@@ -19,29 +19,16 @@ export const BackgroundPreload = {
   },
 
   _performPreload: async () => {
-    console.log("[CACHE] Iniciando precarga de datos en segundo plano...");
+    console.log("[CACHE] Iniciando precarga de traducciones críticas en segundo plano...");
     
     try {
-      // 1. Cargar traducciones generales (necesarias para el menú y traducciones estáticas)
+      // SOLO cargar traducciones generales y settings en background para proteger el rendimiento general
       await supabaseAPI.getTranslations();
-      
-      // 2. Cargar configuraciones del sitio
       await supabaseAPI.getSiteSettings();
+      // SE SUPRIMIÓ la precarga agresiva de todas las páginas de la base de datos a petición del usuario
+      // para evitar bloqueos masivos y saturación.
 
-      // 3. Cargar datos de páginas comunes (para que la navegación sea instantánea)
-      const commonPages = ["page-store", "page-technology", "page-process", "page-ecosystem"];
-      
-      for (const pageId of commonPages) {
-        // Precargar en ambos idiomas si es posible, o al menos en el actual
-        await supabaseAPI.getPageContent(pageId, "es");
-        await supabaseAPI.getPageContent(pageId, "en");
-      }
-
-      // 4. Cargar lista de productos y categorías
-      await supabaseAPI.getProducts();
-      await supabaseAPI.getCategories();
-
-      console.log("[CACHE] Precarga completada exitosamente.");
+      console.log("[CACHE] Precarga crítica completada.");
     } catch (error) {
       console.warn("[CACHE] Error durante la precarga:", error);
     }

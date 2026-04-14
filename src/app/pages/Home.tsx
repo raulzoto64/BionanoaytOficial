@@ -11,19 +11,58 @@ import { DynamicSection } from "../components/DynamicSection";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 import { useDatabase } from "../hooks/useDatabase";
+import { useNavigationType } from "react-router";
 
 export function Home() {
-  const [pageContent, setPageContent] = useState<PageContent | null>(null);
-  const [homeProducts, setHomeProducts] = useState<
-    (Product & { translation: ProductTranslation; categoryName: string })[]
-  >([]);
   const { language } = useLanguage();
   const { updateTrigger } = useDatabase();
+  const navigationType = useNavigationType();
+  
+  const [pageContent, setPageContent] = useState<PageContent | null>(() => 
+    supabaseAPI.getCachedData(`page-content-page-home-${language}`)
+  );
+  const [homeProducts, setHomeProducts] = useState<
+    (Product & { translation: ProductTranslation; categoryName: string })[]
+  >(() => supabaseAPI.getCachedData(`home-products-ready-${language}`) || []);
 
   useEffect(() => {
     loadPageContent();
     loadHomeProducts();
   }, [language, updateTrigger]);
+
+  // Restaurar scroll si regresamos de un producto (específicamente cuando el contenido ya cargó)
+  useEffect(() => {
+    if (!pageContent) return;
+
+    const from = sessionStorage.getItem('bx_return_from');
+    const sectionId = sessionStorage.getItem('bx_return_section');
+    
+    console.log('[Home] Restoration check:', { from, sectionId, navigationType, hasElement: sectionId ? !!document.getElementById(sectionId) : false });
+
+    if (sectionId && (from === 'home' || !from)) {
+      const timer = setTimeout(() => {
+        console.log('[Home] Attempting scroll to element id:', sectionId);
+        const element = document.getElementById(sectionId);
+        if (element) {
+          console.log('[Home] Element FOUND, scrolling with offset...');
+          const headerOffset = -600; 
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+          });
+
+          sessionStorage.removeItem('bx_return_from');
+          sessionStorage.removeItem('bx_return_section');
+        } else {
+          console.log('[Home] Element NOT FOUND. All IDs in page:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [pageContent, navigationType]);
 
   const loadPageContent = async () => {
     try {
@@ -52,6 +91,8 @@ export function Home() {
       );
 
       setHomeProducts(productsWithTranslations);
+      // Guardar el resultado procesado para carga instantánea la próxima vez
+      supabaseAPI._saveToCache(`home-products-ready-${language}`, productsWithTranslations);
     } catch (error) {
       console.error("Error loading home products:", error);
     }
@@ -89,12 +130,13 @@ export function Home() {
         <>
           {pageContent.sections
             .filter((s: Section) => s.visible && s.type !== "hero")
-            .map((section: Section) => (
+            .map((section: Section, index: number) => (
               <DynamicSection
                 key={section.id}
                 section={section}
                 products={homeProducts}
                 language={language}
+                index={index}
               />
             ))}
         </>

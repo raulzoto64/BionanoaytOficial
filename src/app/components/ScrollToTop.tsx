@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigationType } from "react-router";
 
 export function ScrollToTop() {
   const { pathname } = useLocation();
+  const navigationType = useNavigationType();
 
   useEffect(() => {
-    // Scroll inmediato
+    // Scroll inmediato al tope en cualquier navegación (incluyendo botón atrás)
     window.scrollTo(0, 0);
     
     // Forzado con pequeño delay para contrarrestar autofocus de otros componentes
@@ -14,7 +15,7 @@ export function ScrollToTop() {
     }, 100);
     
     return () => clearTimeout(timeout);
-  }, [pathname]);
+  }, [pathname, navigationType]);
 
   return null;
 }

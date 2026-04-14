@@ -23,17 +23,13 @@ export function EcosystemMemberDetail() {
     }
   }, [slug, language]);
 
+
+
   const handleBack = () => {
     if (location.key !== 'default') {
       navigate(-1);
     } else {
-      navigate("/");
-      setTimeout(() => {
-        const element = document.getElementById("ecosystem");
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 500);
+      navigate("/ecosystem");
     }
   };
 
@@ -95,7 +91,7 @@ export function EcosystemMemberDetail() {
               className="flex items-center gap-2 text-white hover:text-[#19FF00] transition-colors mb-4"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>Volver al inicio</span>
+              <span>Volver al Ecosistema</span>
             </button>
             <h1 className="text-4xl md:text-5xl mb-2">{translation?.name || 'Miembro'}</h1>
             <p className="text-[#19FF00] text-lg">{member.sector}</p>

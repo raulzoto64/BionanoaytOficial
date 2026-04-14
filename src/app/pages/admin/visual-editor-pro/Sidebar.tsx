@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Globe, PanelLeftClose, PanelLeftOpen, Plus, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, X } from 'lucide-react';
+import { Globe, PanelLeftClose, PanelLeftOpen, Plus, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, X, Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare, FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare } from 'lucide-react';
 import { Section } from '../../../data/supabase';
 import { VisualEditorSidebar } from '../../../components/admin/visual-editor/VisualEditorSidebar';
 
 // Helper component for dynamic icons
 const Icon = ({ name, className }: { name: string, className?: string }) => {
-  const icons: any = { Layout, BarChart, Users, Globe, ShoppingBag, Newspaper, HelpCircle, Zap, Type };
+  const icons: any = { 
+  Layout, BarChart, Users, Globe, ShoppingBag, Newspaper, HelpCircle, Zap, Type,
+  Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare,
+  FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare
+};
   const Comp = icons[name] || Globe;
   return <Comp className={className} />;
 };
@@ -36,6 +40,7 @@ export function Sidebar({
   const [showAddMenu, setShowAddMenu] = useState(false);
 
   const sectionTypes = [
+    // SECCIONES ORIGINALES
     { type: 'hero', label: 'Banner Principal', icon: 'Layout' },
     { type: 'stats', label: 'Estadísticas', icon: 'BarChart' },
     { type: 'category-filter', label: 'Directorio Ecosistema', icon: 'Users' },
@@ -45,6 +50,24 @@ export function Sidebar({
     { type: 'faq', label: 'Preguntas Frecuentes', icon: 'HelpCircle' },
     { type: 'cta', label: 'Llamado a la Acción', icon: 'Zap' },
     { type: 'text', label: 'Bloque de Texto', icon: 'Type' },
+    
+    // SECCIONES ADICIONALES IMPLEMENTADAS
+    { type: 'hero-blog', label: 'Hero Blog', icon: 'FileText' },
+    { type: 'bento', label: 'Bento / Por Qué Elegirnos', icon: 'Layers' },
+    { type: 'quote', label: 'Cita / Testimonio', icon: 'Quote' },
+    { type: 'timeline', label: 'Línea de Tiempo', icon: 'Clock' },
+    { type: 'history', label: 'Historia de la Empresa', icon: 'History' },
+    { type: 'features', label: 'Características / Propósitos', icon: 'Star' },
+    { type: 'trust', label: 'Aliados / Confianza', icon: 'Handshake' },
+    { type: 'featured', label: 'Destacados', icon: 'Award' },
+    { type: 'team', label: 'Equipo', icon: 'UsersRound' },
+    { type: 'problems', label: 'Problemas que Solucionamos', icon: 'Target' },
+    { type: 'sectors', label: 'Sectores / Industrias', icon: 'FolderKanban' },
+    { type: 'certifications', label: 'Certificaciones', icon: 'BadgeCheck' },
+    { type: 'flipcards', label: 'Tarjetas Giratorias', icon: 'Sparkles' },
+    { type: 'clientes', label: 'Logos de Clientes', icon: 'CheckSquare' },
+    { type: 'custom', label: 'Sección Personalizada', icon: 'MessageSquare' },
+    { type: 'blog', label: 'Sección de Blog', icon: 'Newspaper' },
   ];
 
   return (

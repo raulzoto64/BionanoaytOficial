@@ -162,6 +162,7 @@ export function Ecosystem({ title, subtitle, items }: EcosystemProps) {
                   return (
                     <CarouselItem key={member.id} className={isMobile ? "pl-2 basis-[85%] sm:basis-1/2 focus:outline-none" : "basis-1/2 md:basis-[48%]"}>
                       <Link 
+                        id={`member-${member.id}`}
                         to={member.slug ? `/ecosystem/${member.slug}` : '#'}
                         className="block h-full group"
                       >

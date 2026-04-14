@@ -19,9 +19,10 @@ interface ProductsProps {
   subtitle: string;
   ctaText?: string;
   ctaLink?: string;
+  sectionId?: string;
 }
 
-export function Products({ products, title, subtitle, ctaText, ctaLink }: ProductsProps) {
+export function Products({ products, title, subtitle, ctaText, ctaLink, sectionId }: ProductsProps) {
   const { t } = useLanguage();
   
   // Limit to 3 featured products
@@ -72,6 +73,7 @@ export function Products({ products, title, subtitle, ctaText, ctaLink }: Produc
             <Link
               key={product.id}
               to={`/products/${product.slug}`}
+              state={{ from: 'home', sectionId }}
               className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#629960]/20 hover:border-[#19FF00] group relative flex flex-col"
             >
               {product.featured && (
