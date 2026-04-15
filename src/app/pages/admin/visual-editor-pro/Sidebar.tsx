@@ -81,13 +81,12 @@ export function Sidebar({
     <>
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className={`absolute z-[999] transition-all duration-300 ease-out bg-white shadow-xl rounded-lg p-2 hover:bg-gray-50 hover:shadow-2xl ${sidebarOpen
-            ? 'left-[356px] top-[72px]'
-            : 'left-4 top-[72px]'
+        className={`absolute z-[999] transition-all duration-300 ease-out bg-white shadow-xl rounded-lg p-2 hover:bg-gray-50 hover:shadow-2xl left-4 top-[16px] ${
+            sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
-        title="Alternar panel de configuración"
+        title="Abrir panel de configuración"
       >
-        {sidebarOpen ? <PanelLeftClose className="w-5 h-5 text-[#1C5D15]" /> : <PanelLeftOpen className="w-5 h-5 text-[#1C5D15]" />}
+        <PanelLeftOpen className="w-5 h-5 text-[#1C5D15]" />
       </button>
 
       <aside className={`${sidebarOpen ? 'w-[400px]' : 'w-0'} bg-white border-r flex-shrink-0 flex flex-col h-full overflow-hidden shadow-2xl relative z-10 transition-all duration-300 ease-out`}>
@@ -97,6 +96,13 @@ export function Sidebar({
               <h2 className="font-black text-[#1C5D15] text-xs uppercase tracking-widest leading-none mb-1">Editor Visual</h2>
               <p className="text-[9px] text-[#629960] font-bold uppercase tracking-tighter">Personaliza tu contenido</p>
             </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+              title="Cerrar panel"
+            >
+              <PanelLeftClose className="w-4 h-4 text-[#1C5D15]" />
+            </button>
           </div>
 
           {/* TABS MENU HORIZONTAL COMO ELEMENTOR */}

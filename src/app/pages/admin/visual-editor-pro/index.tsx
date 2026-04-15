@@ -41,6 +41,17 @@ export function AdminVisualEditor() {
   const [allBlogPosts, setAllBlogPosts] = useState<any[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
+  // Escuchar evento para deseleccionar todas las secciones
+  useEffect(() => {
+    const handleDeselectSection = () => {
+      setActiveSectionId(null);
+      console.log('[EDITOR] Todas las secciones desactivadas');
+    };
+
+    window.addEventListener('editor:deselect-section', handleDeselectSection);
+    return () => window.removeEventListener('editor:deselect-section', handleDeselectSection);
+  }, []);
+
   useEffect(() => {
     if (id) {
       loadPageData(id);

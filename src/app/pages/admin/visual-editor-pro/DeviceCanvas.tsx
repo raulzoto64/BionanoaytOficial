@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { PreviewFrame } from './PreviewFrame';
 import { VisualEditorPreview } from '../../../components/admin/visual-editor/VisualEditorPreview';
 import { Navigation } from '../../../components/Navigation';
 import { Footer } from '../../../components/Footer';
+import { Loader2 } from 'lucide-react';
 
 interface DeviceCanvasProps {
   deviceView: 'desktop' | 'tablet' | 'mobile';
@@ -42,6 +44,16 @@ export function DeviceCanvas({
   onMoveSectionUp,
   onMoveSectionDown,
 }: DeviceCanvasProps) {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Solucion al FLASH SIN CSS: Esperamos a que el navegador termine de pintar todo
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsHydrated(true);
+    }, 250);
+    
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <main className="flex-1 bg-[#222] overflow-y-auto flex items-start justify-center p-8 lg:p-12 custom-scrollbar-dark relative">
       <div className="relative group w-full flex justify-center py-10 min-h-screen items-start">
@@ -81,7 +93,15 @@ export function DeviceCanvas({
               </div>
             )}
 
-            <div className="h-full overflow-y-auto custom-scrollbar-content">
+            <div className="h-full overflow-y-auto custom-scrollbar-content relative">
+              {/* Overlay de carga que oculta el flash feo sin CSS */}
+              <div className={`absolute inset-0 bg-white z-[9999] flex items-center justify-center transition-all duration-500 ${isHydrated ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 text-[#1C5D15] animate-spin" />
+                  <span className="text-xs uppercase tracking-widest text-[#1C5D15]/60 font-bold">Preparando vista</span>
+                </div>
+              </div>
+
               <PreviewFrame>
                 <div className="min-h-screen relative flex flex-col overflow-x-hidden">
                   <div className="pointer-events-none opacity-90 saturate-50 z-50">
