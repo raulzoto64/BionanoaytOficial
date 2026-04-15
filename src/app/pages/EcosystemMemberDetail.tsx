@@ -40,11 +40,7 @@ export function EcosystemMemberDetail() {
 
 
   const handleBack = () => {
-    if (location.key !== 'default') {
-      navigate(-1);
-    } else {
-      navigate("/ecosystem");
-    }
+    navigate("/ecosystem");
   };
 
   const loadMember = async () => {

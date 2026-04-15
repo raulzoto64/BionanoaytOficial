@@ -1,193 +1,159 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate, useLocation } from 'react-router';
-import { useLanguage } from '../contexts/LanguageContext';
-import { supabaseAPI, BlogPost as BlogPostType, BlogPostTranslation } from '../data/supabase';
-import '../../styles/blog-content.css';
+import { useEffect, useState } from "react";
+import {
+  PageContent,
+  Section,
+  supabaseAPI,
+  Product,
+  ProductTranslation,
+} from "../data/supabase";
+import { Hero } from "../components/Hero";
+import { DynamicSection } from "../components/DynamicSection";
+import { useLanguage } from "../contexts/LanguageContext";
+import { SEO } from "../components/SEO";
+import { useDatabase } from "../hooks/useDatabase";
+import { useNavigationType } from "react-router";
 
-export function BlogPost() {
-  const { slug } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { language, t } = useLanguage();
-  const [post, setPost] = useState<BlogPostType | null>(null);
-  const [translation, setTranslation] = useState<BlogPostTranslation | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [categoryName, setCategoryName] = useState<string>('Sin categoría');
+export function Home() {
+  const { language } = useLanguage();
+  const { updateTrigger } = useDatabase();
+  const navigationType = useNavigationType();
+  
+  const [pageContent, setPageContent] = useState<PageContent | null>(() => 
+    supabaseAPI.getCachedData(`page-content-page-home-${language}`)
+  );
+  const [homeProducts, setHomeProducts] = useState<
+    (Product & { translation: ProductTranslation; categoryName: string })[]
+  >(() => supabaseAPI.getCachedData(`home-products-ready-${language}`) || []);
 
-  const handleBack = () => {
-    if (location.key !== 'default') {
-      navigate(-1);
-    } else {
-      navigate('/blog');
+  useEffect(() => {
+    loadPageContent();
+    loadHomeProducts();
+  }, [language, updateTrigger]);
+
+  // Restaurar scroll si regresamos de un producto (específicamente cuando el contenido ya cargó)
+  useEffect(() => {
+    if (!pageContent) return;
+
+    const from = sessionStorage.getItem('bx_return_from');
+    const sectionId = sessionStorage.getItem('bx_return_section');
+    
+    console.log('[Home] Restoration check:', { from, sectionId, navigationType, hasElement: sectionId ? !!document.getElementById(sectionId) : false });
+
+    if (sectionId && (from === 'home' || !from)) {
+      // Con el caché activo, el Ecosistema carga instantáneamente
+      // Un solo scroll a 400ms es suficiente para todos los casos
+      const timer = setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
+          const headerOffset = sectionId.includes('ecosystem') ? 80 : -600;
+          const scrollTo = elementTop - headerOffset;
+          
+          console.log('[Home-DEBUG] Scroll a sección:', sectionId, '→ pos:', elementTop, 'offset:', headerOffset, '→ final:', scrollTo);
+          window.scrollTo({ top: scrollTo, behavior: 'smooth' });
+          
+          sessionStorage.removeItem('bx_return_from');
+          sessionStorage.removeItem('bx_return_section');
+        } else {
+          console.log('[Home-DEBUG] Elemento no encontrado:', sectionId);
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [pageContent, navigationType]);
+
+  const loadPageContent = async () => {
+    try {
+      const content = await supabaseAPI.getPageContent("page-home", language);
+      setPageContent(content);
+    } catch (error) {
+      console.error("Error loading home page content:", error);
     }
   };
 
-  useEffect(() => {
-    const loadPost = async () => {
-      if (!slug) return;
+  const loadHomeProducts = async () => {
+    try {
+      const products = await supabaseAPI.getProducts();
+      const activeProducts = products.filter(p => p.status === 'active');
 
-      try {
-        // Get post by slug
-        const postData = await supabaseAPI.getBlogPostBySlug(slug);
-        if (!postData) {
-          setError('Post not found');
-          setLoading(false);
-          return;
-        }
+      const productsWithTranslations = await Promise.all(
+        activeProducts.map(async (product) => {
+          const translation = await supabaseAPI.getProductTranslation(product.id, language);
+          const categoryTranslation = await supabaseAPI.getCategoryTranslation(product.category, language);
+          return {
+            ...product,
+            translation,
+            categoryName: categoryTranslation?.name || product.category,
+          } as (Product & { translation: ProductTranslation; categoryName: string });
+        }),
+      );
 
-        setPost(postData);
+      setHomeProducts(productsWithTranslations);
+      // Guardar el resultado procesado para carga instantánea la próxima vez
+      supabaseAPI._saveToCache(`home-products-ready-${language}`, productsWithTranslations);
+    } catch (error) {
+      console.error("Error loading home products:", error);
+    }
+  };
 
-        // Get translation
-        const postTranslation = await supabaseAPI.getBlogPostTranslation(postData.id, language);
-        setTranslation(postTranslation);
+  const defaultHero = {
+    title: "Bionanoaxus (BNX)",
+    subtitle: language === 'es'
+      ? "Innovación bionanotecnológica para un mundo mejor"
+      : "Bionanotechnology innovation for a better world",
+    backgroundImage: "https://sb-jzmdfoptxmqywihyhoty.supabase.co/storage/v1/object/public/site_assets/hero-bg.jpg",
+    ctaText: language === 'es' ? "Saber más" : "Learn more",
+    ctaLink: "#purpose"
+  };
 
-        // Get category for this post
-        const relations = await supabaseAPI.getBlogPostCategories(postData.id);
-        if (relations.length > 0) {
-          const category = await supabaseAPI.getBlogCategoryById(relations[0].category_id);
-          if (category) {
-            const categoryTranslation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
-            setCategoryName(categoryTranslation.name || category.slug);
-          }
-        }
-      } catch (error) {
-        setError('Error loading post');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPost();
-  }, [slug, language]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1C5D15]"></div>
-          <p className="mt-4 text-[#629960]">{language === 'es' ? 'Cargando artículo...' : 'Loading article...'}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !post || !translation) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-[#1C5D15] mb-4">
-            {language === 'es' ? 'Artículo no encontrado' : 'Article not found'}
-          </h1>
-          <p className="text-[#629960] mb-8">
-            {language === 'es' ? 'Lo sentimos, el artículo que buscas no existe o ha sido eliminado.' : 'Sorry, the article you are looking for does not exist or has been removed.'}
-          </p>
-          <button 
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1C5D15] text-white rounded-lg hover:bg-[#629960] transition-colors border-none cursor-pointer"
-          >
-            {language === 'es' ? 'Volver' : 'Back'}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const heroSection = pageContent?.sections.find(s => s.type === "hero");
+  const heroContent = (heroSection?.content || defaultHero) as any;
+  const seoData = heroContent?.seo || {};
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Back Button */}
-        <button 
-          onClick={handleBack}
-          className="inline-flex items-center gap-2 text-[#629960] hover:text-[#1C5D15] transition-colors mb-8 bg-transparent border-none cursor-pointer p-0"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          {language === 'es' ? 'Volver' : 'Back'}
-        </button>
+    <>
+      <SEO
+        title={seoData.metaTitle || "BionanoAyT"}
+        description={seoData.metaDescription || ""}
+        keywords={seoData.metaKeywords}
+      />
 
-        {/* Article Header */}
-        <article className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {post.cover_image && (
-            <div className="relative h-80 overflow-hidden">
-              <img 
-                src={post.cover_image} 
-                alt={translation.title} 
-                className="w-full h-full object-cover"
+      {/* Hero siempre primero */}
+      <div id="hero">
+        <Hero content={heroContent} />
+      </div>
+
+      {/* Secciones dinámicas: se renderizan TODAS las secciones guardadas en BD */}
+      {pageContent ? (
+        <>
+          {pageContent.sections
+            .filter((s: Section) => s.visible && s.type !== "hero")
+            .map((section: Section, index: number) => (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                products={homeProducts}
+                language={language}
+                index={index}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-            </div>
-          )}
-
-          <div className="p-8">
-            {/* Article Meta */}
-            <div className="flex flex-wrap items-center gap-4 mb-6">
-            <span className="px-3 py-1 bg-[#19FF00]/20 text-[#1C5D15] text-sm font-medium rounded-full">
-                {categoryName}
-              </span>
-              <span className="text-sm text-[#629960]">
-                {new Date(post.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </span>
-              <span className="text-sm text-[#629960]">
-                {language === 'es' ? 'Por' : 'By'} {post.author}
-              </span>
-            </div>
-
-            {/* Article Title */}
-            <h1 className="text-3xl md:text-4xl font-bold text-[#1C5D15] mb-6">
-              {translation.title}
-            </h1>
-
-            {/* Article Excerpt */}
-            <div className="border-l-4 border-[#19FF00] pl-6 py-2 mb-8 bg-[#F0F9F0]">
-              <p className="text-lg text-[#629960] italic">
-                {translation.excerpt}
-              </p>
-            </div>
-
-            {/* Article Content */}
-            <div 
-              className="blog-content text-[#629960]"
-              dangerouslySetInnerHTML={{ __html: translation.content }}
-            />
-
-            {/* Share Section */}
-            <div className="mt-12 pt-8 border-t border-[#629960]/20">
-              <div className="flex items-center justify-between">
-                <div className="text-[#629960]">
-                  {language === 'es' ? 'Compartir artículo:' : 'Share article:'}
+            ))}
+        </>
+      ) : (
+        /* Skeleton de carga */
+        <div className="py-20 bg-white">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="grid md:grid-cols-3 gap-10">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="text-center">
+                  <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-[#F7F9CE] animate-pulse"></div>
+                  <div className="h-6 bg-[#1C5D15]/20 rounded-lg mb-4 animate-pulse"></div>
+                  <div className="h-16 bg-[#629960]/20 rounded-lg animate-pulse"></div>
                 </div>
-                <div className="flex gap-4">
-                  {/* Social sharing buttons can be added here */}
-                  <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#629960] text-white hover:bg-[#1C5D15] transition-colors">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                    </svg>
-                  </button>
-                  <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#629960] text-white hover:bg-[#1C5D15] transition-colors">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
-                    </svg>
-                  </button>
-                  <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#629960] text-white hover:bg-[#1C5D15] transition-colors">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </article>
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }

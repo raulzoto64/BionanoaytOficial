@@ -43,32 +43,7 @@ export function ProductDetail() {
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 640);
 
   const handleBack = () => {
-    const from = (location.state as any)?.from;
-    const sectionId = (location.state as any)?.sectionId;
-
-    if (from === 'home') {
-      navigate("/", { replace: true });
-      if (sectionId) {
-        setTimeout(() => {
-          const element = document.getElementById(sectionId);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }, 100);
-      }
-    } else if (from === 'store') {
-      navigate("/store", { replace: true });
-      setTimeout(() => {
-        const element = document.getElementById("products");
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
-    } else if (location.key !== 'default') {
-      navigate(-1);
-    } else {
-      navigate("/store");
-    }
+    navigate("/store");
   };
 
   // Manejar el guardado del contexto para el botón atrás del navegador

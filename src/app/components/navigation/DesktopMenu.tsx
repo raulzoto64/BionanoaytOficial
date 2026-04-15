@@ -51,19 +51,19 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
           {t("nav.about")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>
-          <DropdownMenuItem onClick={() => scrollToSection("purpose")}>
+          <DropdownMenuItem onClick={() => scrollToSection("home-purpose")}>
             {language === "es" ? "Propósito empresarial" : "Business purpose"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => scrollToSection("featured")}>
+          <DropdownMenuItem onClick={() => scrollToSection("home-featured")}>
             {language === "es" ? "Producto estrella" : "Star product"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => scrollToSection("products")}>
+          <DropdownMenuItem onClick={() => scrollToSection("home-products")}>
             {t("nav.products_catalog")}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => scrollToSection("timeline")}>
+          <DropdownMenuItem onClick={() => scrollToSection("home-timeline")}>
             {language === "es" ? "Trayectoria" : "Timeline"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => scrollToSection("team")}>
+          <DropdownMenuItem onClick={() => scrollToSection("home-team")}>
             {language === "es" ? "Equipo de trabajo" : "Work team"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => scrollToSection("allies")}>

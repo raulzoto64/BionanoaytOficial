@@ -13,12 +13,11 @@ export function Navigation() {
     const handleScroll = () => {
       const element = document.getElementById(sectionId);
       if (element) {
-        // En Home usamos el desplazamiento profundo que le gusta al usuario (-600)
-        // En otras páginas usamos el ajuste estándar al ras del menú (80)
         const isHome = window.location.pathname === "/";
-        const headerOffset = isHome ? -600 : 80; 
+        const headerOffset = isHome ? 80 : 80; 
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
         window.scrollTo({
           top: offsetPosition,
           behavior: "smooth"
@@ -30,7 +29,7 @@ export function Navigation() {
       handleScroll();
     } else {
       navigate("/");
-      setTimeout(handleScroll, 600); // 600ms para asegurar carga de secciones en Home
+      setTimeout(handleScroll, 800);
     }
   };
 

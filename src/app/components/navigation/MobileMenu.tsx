@@ -32,7 +32,7 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
         <button 
           className="hover:text-[#19FF00] transition-colors text-left"
           onClick={() => {
-            scrollToSection("purpose");
+            scrollToSection("home-purpose");
             onClose();
           }}
         >
@@ -41,7 +41,7 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
         <button 
           className="hover:text-[#19FF00] transition-colors text-left"
           onClick={() => {
-            scrollToSection("team");
+            scrollToSection("home-team");
             onClose();
           }}
         >
@@ -50,7 +50,7 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
         <button 
           className="hover:text-[#19FF00] transition-colors text-left"
           onClick={() => {
-            scrollToSection("ecosystem");
+            scrollToSection("home-ecosystem");
             onClose();
           }}
         >
@@ -59,7 +59,7 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
         <button 
           className="hover:text-[#19FF00] transition-colors text-left"
           onClick={() => {
-            scrollToSection("products");
+            scrollToSection("home-products");
             onClose();
           }}
         >
@@ -86,6 +86,15 @@ export function MobileMenu({ isOpen, onClose, scrollToSection }: MobileMenuProps
         >
           {t("nav.store")}
         </Link>
+        <button 
+          className="hover:text-[#19FF00] transition-colors text-left"
+          onClick={() => {
+            scrollToSection("contact");
+            onClose();
+          }}
+        >
+          {language === 'es' ? 'Contáctanos' : 'Contact us'}
+        </button>
         <Link 
           to="/cart" 
           className="hover:text-[#19FF00] transition-colors flex items-center justify-between"
