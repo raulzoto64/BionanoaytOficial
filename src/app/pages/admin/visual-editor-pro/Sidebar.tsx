@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Globe, PanelLeftClose, PanelLeftOpen, Plus, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, X, Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare, FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare } from 'lucide-react';
 import { Section } from '../../../data/supabase';
 import { VisualEditorSidebar } from '../../../components/admin/visual-editor/VisualEditorSidebar';
@@ -37,7 +37,14 @@ export function Sidebar({
   allEcosystemMembers,
   pageSlug
 }: SidebarProps) {
-  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState<'sections' | 'config'>('sections');
+
+  // Auto cambiar a pestaña configuracion cuando seleccionas una seccion
+  useEffect(() => {
+    if (activeSectionES) {
+      setActiveTab('config');
+    }
+  }, [activeSectionES]);
 
   const sectionTypes = [
     // SECCIONES ORIGINALES
@@ -84,37 +91,57 @@ export function Sidebar({
       </button>
 
       <aside className={`${sidebarOpen ? 'w-[400px]' : 'w-0'} bg-white border-r flex-shrink-0 flex flex-col h-full overflow-hidden shadow-2xl relative z-10 transition-all duration-300 ease-out`}>
-        <div className="p-4 border-b bg-gray-50/80 flex items-center justify-between">
-          <div>
-            <h2 className="font-black text-[#1C5D15] text-xs uppercase tracking-widest leading-none mb-1">Configuración</h2>
-            <p className="text-[9px] text-[#629960] font-bold uppercase tracking-tighter">Personaliza tu contenido</p>
+        <div className="p-4 border-b bg-gray-50/80">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="font-black text-[#1C5D15] text-xs uppercase tracking-widest leading-none mb-1">Editor Visual</h2>
+              <p className="text-[9px] text-[#629960] font-bold uppercase tracking-tighter">Personaliza tu contenido</p>
+            </div>
           </div>
-          
-          <button 
-            onClick={() => setShowAddMenu(!showAddMenu)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${
-              showAddMenu 
-                ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                : 'bg-[#19FF00] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-[#19FF00]'
-            }`}
-          >
-            {showAddMenu ? <X size={12} /> : <Plus size={12} />}
-            {showAddMenu ? 'Cerrar' : 'Añadir'}
-          </button>
+
+          {/* TABS MENU HORIZONTAL COMO ELEMENTOR */}
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => {
+                setActiveTab('sections');
+                // Reset forzar completamente para que se pueda volver a seleccionar la misma seccion
+                window.dispatchEvent(new CustomEvent('editor:deselect-section'));
+                console.log('[EDITOR] Seccion deseleccionada automaticamente al ir a pestaña Secciones');
+              }}
+              className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${
+                activeTab === 'sections' 
+                  ? 'bg-white text-[#1C5D15] shadow-sm' 
+                  : 'text-gray-500 hover:text-[#1C5D15]'
+              }`}
+            >
+              📋 Secciones
+            </button>
+            <button
+              onClick={() => setActiveTab('config')}
+              className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${
+                activeTab === 'config' 
+                  ? 'bg-white text-[#1C5D15] shadow-sm' 
+                  : 'text-gray-500 hover:text-[#1C5D15]'
+              }`}
+            >
+              ⚙️ Configuración
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-white custom-scrollbar relative">
-          {/* Add Menu Overlay */}
-          {showAddMenu && (
-            <div className="absolute inset-0 bg-white z-50 p-6 flex flex-col animate-in fade-in slide-in-from-top-4 duration-300">
-              <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-6">¿Qué deseas añadir?</h3>
+        <div className="flex-1 overflow-y-auto bg-white custom-scrollbar">
+          
+          {/* TAB SECCIONES - GRID PERMANENTE CON TODOS LOS ICONOS */}
+          {activeTab === 'sections' && (
+            <div className="p-4">
+              <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-4">Añadir nueva sección</h3>
               <div className="grid grid-cols-2 gap-3">
                 {sectionTypes.map((item) => (
                   <button
                     key={item.type}
                     onClick={() => {
                       onAddSection?.(item.type);
-                      setShowAddMenu(false);
+                      setActiveTab('config');
                     }}
                     className="flex flex-col items-center justify-center p-4 rounded-3xl border-2 border-[#F7F9CE] hover:border-[#19FF00] hover:bg-[#F7F9CE]/20 transition-all group"
                   >
@@ -127,26 +154,33 @@ export function Sidebar({
               </div>
             </div>
           )}
-          {activeSectionES && activeSectionEN ? (
-            <VisualEditorSidebar
-              sectionES={activeSectionES}
-              sectionEN={activeSectionEN}
-              onUpdateSection={handleUpdateSection}
-              availableProducts={allProducts}
-              availableEcosystemMembers={allEcosystemMembers}
-              pageSlug={pageSlug}
-            />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center p-10 select-none">
-              <div className="w-20 h-20 bg-[#F7F9CE] rounded-full flex items-center justify-center mb-6 animate-bounce">
-                <Globe className="w-10 h-10 text-[#1C5D15]" />
-              </div>
-              <h3 className="text-[#1C5D15] font-black uppercase text-sm mb-2">Editor en Vivo</h3>
-              <p className="text-xs text-[#629960] leading-relaxed">
-                Toca cualquier elemento del sitio en el panel derecho para editar sus propiedades, textos e imágenes de forma visual.
-              </p>
-            </div>
+
+          {/* TAB CONFIGURACION */}
+          {activeTab === 'config' && (
+            <>
+              {activeSectionES && activeSectionEN ? (
+                <VisualEditorSidebar
+                  sectionES={activeSectionES}
+                  sectionEN={activeSectionEN}
+                  onUpdateSection={handleUpdateSection}
+                  availableProducts={allProducts}
+                  availableEcosystemMembers={allEcosystemMembers}
+                  pageSlug={pageSlug}
+                />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-10 select-none">
+                  <div className="w-20 h-20 bg-[#F7F9CE] rounded-full flex items-center justify-center mb-6">
+                    <Globe className="w-10 h-10 text-[#1C5D15]" />
+                  </div>
+                  <h3 className="text-[#1C5D15] font-black uppercase text-sm mb-2">Selecciona una sección</h3>
+                  <p className="text-xs text-[#629960] leading-relaxed">
+                    Toca cualquier elemento del sitio en el panel derecho para editar sus propiedades.
+                  </p>
+                </div>
+              )}
+            </>
           )}
+
         </div>
       </aside>
     </>

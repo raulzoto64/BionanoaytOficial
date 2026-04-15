@@ -118,10 +118,10 @@ export function Home() {
         keywords={seoData.metaKeywords}
       />
 
-      {/* Hero siempre primero */}
-      <div id="hero">
-        <Hero content={heroContent} />
-      </div>
+        {/* Hero siempre primero */}
+        <div id="hero" style={{ minHeight: '100vh', overflow: 'hidden' }}>
+          <Hero content={heroContent} />
+        </div>
 
       {/* Secciones dinámicas: se renderizan TODAS las secciones guardadas en BD */}
       {pageContent ? (
