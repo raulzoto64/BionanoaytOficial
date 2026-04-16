@@ -387,7 +387,12 @@ export function DynamicSection({ section, products = [], language = 'es', index 
                         section.type === 'products';
   
   return (
-    <div id={section.id} key={section.id} style={{ scrollMarginTop: '80px' }}>
+    <div 
+      id={section.id} 
+      data-section-type={section.type}
+      key={section.id} 
+      style={{ scrollMarginTop: '80px' }}
+    >
       <LazySectionWrapper sectionType={section.type} forceVisible={shouldForceLoad}>
         {renderSectionContent()}
       </LazySectionWrapper>

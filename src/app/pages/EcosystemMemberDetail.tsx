@@ -96,13 +96,22 @@ export function EcosystemMemberDetail() {
         {/* Header */}
         <div className="bg-[#1C5D15] text-white py-8">
           <div className="max-w-6xl mx-auto px-6">
-            <button 
-              onClick={handleBack}
-              className="flex items-center gap-2 text-white hover:text-[#19FF00] transition-colors mb-4"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Volver al Ecosistema</span>
-            </button>
+             <div className="flex flex-wrap items-center gap-3 mb-4">
+               <Button 
+                 onClick={handleBack}
+                 className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15]"
+               >
+                 <ArrowLeft className="w-4 h-4 mr-2" />
+                 Ver el ecosistema completo
+               </Button>
+
+               <Button 
+                 onClick={() => navigate("/store")}
+                 className="bg-white/10 text-white hover:bg-white hover:text-[#1C5D15]"
+               >
+                 Ir a la Tienda
+               </Button>
+             </div>
             <h1 className="text-4xl md:text-5xl mb-2">{translation?.name || 'Miembro'}</h1>
             <p className="text-[#19FF00] text-lg">{member.sector}</p>
             <Badge className={member.status === 'active' ? 'bg-[#19FF00] text-[#1C5D15]' : 'bg-gray-400 text-white'}>

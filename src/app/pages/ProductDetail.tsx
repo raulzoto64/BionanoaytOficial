@@ -250,14 +250,25 @@ export function ProductDetail() {
       {/* Back Button */}
       <div className="bg-[#1C5D15] py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            className="text-white hover:text-[#19FF00] hover:bg-transparent"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {language === 'es' ? 'Volver' : 'Back'}
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15]"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Ver todos los productos
+            </Button>
+
+            <Button
+              onClick={() => {
+                navigate("/");
+                sessionStorage.setItem('bx_return_section', 'products');
+              }}
+              className="bg-white/10 text-white hover:bg-white hover:text-[#1C5D15]"
+            >
+              Ver en Home
+            </Button>
+          </div>
         </div>
       </div>
 

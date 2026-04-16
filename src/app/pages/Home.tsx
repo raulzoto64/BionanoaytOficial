@@ -25,42 +25,95 @@ export function Home() {
     (Product & { translation: ProductTranslation; categoryName: string })[]
   >(() => supabaseAPI.getCachedData(`home-products-ready-${language}`) || []);
 
+  // Sistema de Renderizado Progresivo Temporal
+  const [renderedSectionsCount, setRenderedSectionsCount] = useState(0);
+  const startTime = performance.now();
+
+  // ✅ Renderizado Progresivo Inteligente
+  useEffect(() => {
+    // Si NO tenemos datos cargados aun: no hacemos nada
+    if (!pageContent || homeProducts.length === 0) return;
+
+    console.log(`\n🚀 [HOME-PROGRESSIVE] Iniciando renderizado progresivo`, {
+      tiempoDesdeInicio: `${Math.round(performance.now() - startTime)}ms`,
+      totalSecciones: pageContent.sections.filter(s => s.visible && s.type !== "hero").length,
+      productosCargados: homeProducts.length
+    });
+
+    const totalSections = pageContent.sections.filter(s => s.visible && s.type !== "hero").length;
+    let current = 0;
+
+    // ✅ SI TENEMOS CACHE: MOSTRAMOS TODO INMEDIATAMENTE
+    if (navigationType === 'POP' || navigationType === 'PUSH') {
+      console.log(`✅ [HOME-CACHE] Regresando, mostrando TODO instantaneamente 0ms`);
+      setRenderedSectionsCount(totalSections);
+      return;
+    }
+
+    // ✅ PRIMERA CARGA: Mostramos 2 secciones inmediatamente
+    setRenderedSectionsCount(2);
+    console.log(`✅ [HOME] Secciones 0 y 1 mostradas en ${Math.round(performance.now() - startTime)}ms`);
+    
+    // ✅ El resto se van agregando una cada 75ms en segundo plano
+    const interval = setInterval(() => {
+      current++;
+      const next = Math.min(2 + current, totalSections);
+      
+      setRenderedSectionsCount(next);
+      console.log(`✅ [HOME] Seccion ${next-1} mostrada en ${Math.round(performance.now() - startTime)}ms`);
+      
+      if (next >= totalSections) {
+        clearInterval(interval);
+        console.log(`🏁 [HOME] Renderizado completo total: ${Math.round(performance.now() - startTime)}ms\n`);
+      }
+    }, 75);
+
+    return () => clearInterval(interval);
+  }, [pageContent, homeProducts, navigationType]);
+
+  // ✅ Scroll automatico SOLO cuando viene explicitamente desde el boton Ver en Home
+  useEffect(() => {
+    const sectionId = sessionStorage.getItem('bx_return_section');
+
+    if (!pageContent || !sectionId) return;
+
+    // ✅ BUSCAMOS LA SECCION INMEDIATAMENTE, NO ESPERAMOS A TODAS
+    // Empezamos a chequear cada 40ms hasta que aparezca en el DOM
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
+      attempts++;
+      const element = document.querySelector(`[data-section-type="${sectionId}"]`);
+
+      if (element || attempts > 25) {
+        clearInterval(checkInterval);
+        
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const absoluteTop = rect.top + window.pageYOffset;
+          
+          // ✅ Esperamos a que React Router termine de restaurar el scroll
+          setTimeout(() => {
+            window.scrollTo({
+              top: absoluteTop,
+              behavior: 'smooth'
+            });
+          }, 200);
+        }
+        
+        // Limpiar siempre despues de intentar
+        sessionStorage.removeItem('bx_return_section');
+        sessionStorage.removeItem('bx_return_from');
+      }
+    }, 40);
+
+  }, [pageContent]);
+
   useEffect(() => {
     loadPageContent();
     loadHomeProducts();
   }, [language, updateTrigger]);
 
-  // Restaurar scroll si regresamos de un producto (específicamente cuando el contenido ya cargó)
-  useEffect(() => {
-    if (!pageContent) return;
 
-    const from = sessionStorage.getItem('bx_return_from');
-    const sectionId = sessionStorage.getItem('bx_return_section');
-    
-    console.log('[Home] Restoration check:', { from, sectionId, navigationType, hasElement: sectionId ? !!document.getElementById(sectionId) : false });
-
-    if (sectionId && (from === 'home' || !from)) {
-      // Con el caché activo, el Ecosistema carga instantáneamente
-      // Un solo scroll a 400ms es suficiente para todos los casos
-      const timer = setTimeout(() => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-          const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
-          const headerOffset = sectionId.includes('ecosystem') ? 80 : -600;
-          const scrollTo = elementTop - headerOffset;
-          
-          console.log('[Home-DEBUG] Scroll a sección:', sectionId, '→ pos:', elementTop, 'offset:', headerOffset, '→ final:', scrollTo);
-          window.scrollTo({ top: scrollTo, behavior: 'smooth' });
-          
-          sessionStorage.removeItem('bx_return_from');
-          sessionStorage.removeItem('bx_return_section');
-        } else {
-          console.log('[Home-DEBUG] Elemento no encontrado:', sectionId);
-        }
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [pageContent, navigationType]);
 
   const loadPageContent = async () => {
     try {
@@ -128,6 +181,7 @@ export function Home() {
         <>
           {pageContent.sections
             .filter((s: Section) => s.visible && s.type !== "hero")
+            .filter((section: Section, index: number) => index < renderedSectionsCount)
             .map((section: Section, index: number) => (
               <DynamicSection
                 key={section.id}
