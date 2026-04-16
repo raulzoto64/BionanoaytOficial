@@ -6,6 +6,9 @@ import { Footer } from "./Footer";
 import { ScrollToTop } from "./ScrollToTop";
 import { useEffect } from "react";
 import { BackgroundPreload } from "../data/BackgroundPreload";
+import { ExitIntentPopup } from "./popups/ExitIntentPopup";
+import { useExitIntent } from "./popups/hooks/useExitIntent";
+import { supabase, supabaseAPI } from "../data/supabase";
 
 // Default contact information in case page content doesn't provide it
 const defaultContactInfo = {
@@ -16,10 +19,29 @@ const defaultContactInfo = {
 
 function LayoutInner() {
   const { language } = useLanguage();
+  const { showPopup, setShowPopup } = useExitIntent();
   
   useEffect(() => {
     BackgroundPreload.start(language);
   }, [language]);
+
+  const handleSubmitPopup = async (data: any) => {
+    console.log('📩 Popup formulario enviado:', data);
+    const { error } = await supabase
+      .from('leads')
+      .insert({
+        ...data,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_anonymous: true
+      });
+    
+    if (error) {
+      console.error('❌ Error guardando lead:', error);
+    } else {
+      console.log('✅ Lead guardado correctamente en BD');
+    }
+  };
 
   return (
     <div className="min-h-screen overflow-x-hidden max-w-[100vw] text-pretty">
@@ -29,6 +51,13 @@ function LayoutInner() {
       </div>
       <Footer contactInfo={defaultContactInfo} />
       <Toaster />
+
+      {/* ✅ Exit Intent Popup GLOBAL - Ahora SI sale en TODAS las páginas */}
+      <ExitIntentPopup 
+        isOpen={showPopup} 
+        onClose={() => setShowPopup(false)}
+        onSubmit={handleSubmitPopup}
+      />
     </div>
   );
 }

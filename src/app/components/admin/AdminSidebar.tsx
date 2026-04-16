@@ -19,7 +19,8 @@ import {
   Footprints,
   Home,
   LogOut,
-  Bell
+  Bell,
+  UserPlus
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
@@ -60,6 +61,7 @@ export function AdminSidebar() {
     { path: '/admin/products', icon: Package, label: 'Productos' },
     { path: '/admin/prices', icon: DollarSign, label: 'Precios' },
     { path: '/admin/categories', icon: FolderTree, label: 'Categorías' },
+    { path: '/admin/leads', icon: UserPlus, label: 'Leads / Contactos' },
     { path: '/admin/translations', icon: Languages, label: 'Traducciones' },
     { path: '/admin/settings', icon: Settings, label: 'Configuración' },
   ];

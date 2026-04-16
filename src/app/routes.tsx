@@ -28,6 +28,7 @@ const AdminUsers = () => import("./pages/admin/AdminUsers").then(m => ({ Compone
 const AdminEcosystem = () => import("./pages/admin/AdminEcosystem").then(m => ({ Component: m.AdminEcosystem }));
 const AdminLegalPages = () => import("./pages/admin/AdminLegalPages").then(m => ({ Component: m.AdminLegalPages }));
 const AdminFooterSettings = () => import("./pages/admin/AdminFooterSettings").then(m => ({ Component: m.AdminFooterSettings }));
+const AdminLeads = () => import("./pages/admin/leads").then(m => ({ Component: m.default }));
 const EcosystemMemberDetail = () => import("./pages/EcosystemMemberDetail").then(m => ({ Component: m.EcosystemMemberDetail }));
 const EcosystemPage = () => import("./pages/Ecosystem").then(m => ({ Component: m.EcosystemPage }));
 const LegalPage = () => import("./pages/LegalPage").then(m => ({ Component: m.LegalPage }));
@@ -157,6 +158,10 @@ export const router = createBrowserRouter([
       {
         path: "footer",
         lazy: AdminFooterSettings,
+      },
+      {
+        path: "leads",
+        lazy: AdminLeads,
       },
     ],
   },

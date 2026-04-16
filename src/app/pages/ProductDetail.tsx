@@ -266,7 +266,7 @@ export function ProductDetail() {
               }}
               className="bg-white/10 text-white hover:bg-white hover:text-[#1C5D15]"
             >
-              Ver en Home
+              Volver a la Home
             </Button>
           </div>
         </div>

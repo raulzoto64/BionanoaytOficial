@@ -88,16 +88,18 @@ export function Home() {
         clearInterval(checkInterval);
         
         if (element) {
-          const rect = element.getBoundingClientRect();
-          const absoluteTop = rect.top + window.pageYOffset;
-          
-          // ✅ Esperamos a que React Router termine de restaurar el scroll
-          setTimeout(() => {
-            window.scrollTo({
-              top: absoluteTop,
-              behavior: 'smooth'
-            });
-          }, 200);
+            const rect = element.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+            const offset = isMobile ? 1100 : 600;
+            const absoluteTop = rect.top + window.pageYOffset + offset;
+            
+            // ✅ Esperamos a que React Router termine de restaurar el scroll
+            setTimeout(() => {
+              window.scrollTo({
+                top: absoluteTop,
+                behavior: 'smooth'
+              });
+            }, 200);
         }
         
         // Limpiar siempre despues de intentar

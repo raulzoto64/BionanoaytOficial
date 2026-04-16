@@ -2107,7 +2107,7 @@ export const supabaseAPI = {
 
     if (error) {
       // Si la fila no existe, intentamos crearla
-      if (error.code === 'PGRST116') {
+      if (error.code === "PGRST116") {
         const { data: newSettings, error: insertError } = await supabase
           .from("footer_settings")
           .insert([{ id: "footer-001", ...data }])
@@ -2126,4 +2126,20 @@ export const supabaseAPI = {
     return settings;
   },
 
+  mergeVisitorLeadsWithUser: async (visitorId: string, userId: string): Promise<void> => {
+    if (!supabaseAPI.isValidUUID(visitorId) || !supabaseAPI.isValidUUID(userId)) return;
+
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({ user_id: userId, is_anonymous: false })
+        .eq("visitor_id", visitorId);
+
+      if (error) {
+        console.error("Error al migrar leads de visitante a usuario:", error);
+      }
+    } catch (err) {
+      console.error("Excepción en mergeVisitorLeadsWithUser:", err);
+    }
+  },
 };
