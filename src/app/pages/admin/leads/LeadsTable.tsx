@@ -34,14 +34,18 @@ export function LeadsTable() {
   const [selectedLead, setSelectedLead] = useState<LeadItem | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  // ✅ DEBOUNCE: Esperar 500ms despues de que el usuario deje de escribir
   useEffect(() => {
-    fetchLeads();
+    const timer = setTimeout(() => {
+      fetchLeads();
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [search, statusFilter]);
 
   const fetchLeads = async () => {
     console.log('🔄 [DEBUG] Fetching leads...');
     try {
-      setLoading(true);
       let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
 
       if (search) {
@@ -62,8 +66,6 @@ export function LeadsTable() {
       }
     } catch (err) {
       setError("Error al cargar los leads");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -334,7 +336,7 @@ export function LeadsTable() {
 
       {/* Modal Detalle Lead */}
       {showModal && selectedLead && (
-        <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50 p-4 backdrop-blur-[0.5px]" onClick={() => setShowModal(false)}>
+        <div className="fixed inset-0 bg-green-900/30 flex items-center justify-center z-50 p-4 backdrop-blur-[4px]" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header Modal */}
             <div className="flex justify-between items-center p-4 border-b">

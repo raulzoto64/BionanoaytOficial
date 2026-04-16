@@ -12,31 +12,45 @@ export function useExitIntent() {
     }
 
     console.log('🔄 [EXIT INTENT] Listener instalado correctamente');
+    
+    let canShowPopup = false;
+    console.log('⏳ [EXIT INTENT] BLOQUEADO los primeros 10 segundos, no saldrá NADA');
 
-    // ✅ TEMPORIZADOR: 10 SEGUNDOS AUTOMÁTICO
-    const timerId = setTimeout(() => {
+    // ✅ MÍNIMO 10 SEGUNDOS DE BLOQUEO ABSOLUTO
+    const unlockTimer = setTimeout(() => {
+      canShowPopup = true;
+      console.log('✅ [EXIT INTENT] Ya pasaron 10s - Ahora SI puede aparecer');
+    }, 10 * 1000);
+
+    // ✅ TEMPORIZADOR: 30 SEGUNDOS AUTOMÁTICO
+    const autoShowTimer = setTimeout(() => {
       if (!hasShown) {
-        console.log('⏱️ [EXIT INTENT] Tiempo cumplido (10s) - Mostrando popup automaticamente');
+        console.log('⏱️ [EXIT INTENT] Tiempo cumplido (30s) - Mostrando popup automaticamente');
         setShowPopup(true);
         setHasShown(true);
         sessionStorage.setItem('exit_intent_shown', 'true');
       }
-    }, 10 * 1000);
+    }, 30 * 1000);
 
     const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY < 10 && !hasShown) {
+      if (e.clientY < 10 && !hasShown && canShowPopup) {
         console.log('👋 [EXIT INTENT] Intento de SALIDA detectado! Mostrando popup', e.clientY);
-        clearTimeout(timerId);
+        clearTimeout(autoShowTimer);
         setShowPopup(true);
         setHasShown(true);
         sessionStorage.setItem('exit_intent_shown', 'true');
+      }
+
+      if (e.clientY < 10 && !canShowPopup) {
+        console.log('❌ [EXIT INTENT] Intento de salida detectado PERO TODAVÍA NO PASARON 10s - BLOQUEADO');
       }
     };
 
     document.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
-      clearTimeout(timerId);
+      clearTimeout(unlockTimer);
+      clearTimeout(autoShowTimer);
       document.removeEventListener('mouseleave', handleMouseLeave);
       console.log('🔚 [EXIT INTENT] Listeners eliminados');
     };

@@ -42,7 +42,7 @@ export function ExitIntentPopup({ isOpen, onClose, onSubmit }: ExitIntentPopupPr
 
   if (showThankYou) {
     return (
-      <PopupBase isOpen={true} onClose={onClose}>
+      <PopupBase isOpen={isOpen} onClose={onClose}>
         <ThankYouStep
           title="¡Gracias por tu interés!"
           message="Hemos recibido tu solicitud. Te enviaremos el informe a tu correo en breve."

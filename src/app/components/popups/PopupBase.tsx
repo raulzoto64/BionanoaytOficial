@@ -32,9 +32,9 @@ export function PopupBase({ isOpen, onClose, children }: PopupBaseProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Overlay fondo */}
+      {/* Overlay fondo - Transparente como pediste */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-green-900/20 backdrop-blur-[1px]"
         onClick={onClose}
       />
 

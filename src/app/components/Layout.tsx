@@ -33,7 +33,10 @@ function LayoutInner() {
         ...data,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        is_anonymous: true
+        is_anonymous: true,
+        page_url: window.location.href,
+        referrer: document.referrer,
+        visitor_id: localStorage.getItem('guest_id')
       });
     
     if (error) {
