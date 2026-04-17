@@ -264,7 +264,7 @@ export function VisualEditorSidebar({
                        }}
                        className="mb-1"
                      />
-                      {isListOpen['cta-popup'] !== false && (
+                       {isListOpen['cta-popup'] === true && (
                       <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
                         {AVAILABLE_POPUPS
                           .filter(p => p.label.toLowerCase().includes((searchFilters['cta-popup'] || '').toLowerCase()))
@@ -292,7 +292,9 @@ export function VisualEditorSidebar({
                    <div className="relative">
                      <Input
                        placeholder="🔍 Buscar página..."
-                       value={searchFilters['cta-route'] || ''}
+value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
+                         AVAILABLE_ROUTES.find(r => r.value === sectionES.content.ctaLink)?.label || ''
+                       )}
                        onFocus={() => setIsListOpen(prev => ({ ...prev, 'cta-route': true }))}
                        onChange={(e) => {
                          // ✅ SOLO actualizamos el filtro de busqueda, NO guardamos nada aun
@@ -302,18 +304,22 @@ export function VisualEditorSidebar({
                        }}
                        className="mb-1"
                      />
-                      {isListOpen['cta-route'] !== false && (
-                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
+                       {isListOpen['cta-route'] === true && (
+                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50">
                         {AVAILABLE_ROUTES
                           .filter(r => r.label.toLowerCase().includes((searchFilters['cta-route'] || '').toLowerCase()))
                           .map(route => (
                             <div 
                               key={route.value}
-                              onClick={() => {
-                                console.log('✅ Seleccionado pagina:', route.value);
-                                handleContentChange('ctaLink', route.value, getFieldLang('hero-cta'));
-                                setSearchFilters(prev => ({ ...prev, 'cta-route': '' }));
+                            onClick={() => {
+                                console.log('✅ [SELECCION] Click en ruta:', route.value, route.label);
+                                // 1. Guardar el valor (ruta) en la base de datos
+                                handleContentChange('ctaLink', route.value, 'both');
+                                // 2. Mostrar el label en el input
+                                setSearchFilters(prev => ({ ...prev, 'cta-route': route.label }));
+                                // 3. Cerrar la lista
                                 setIsListOpen(prev => ({ ...prev, 'cta-route': false }));
+                                console.log('✅ [SELECCION] isListOpen despues:', isListOpen['cta-route']);
                               }}
                               className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
                                 sectionES.content.ctaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
@@ -472,8 +478,10 @@ export function VisualEditorSidebar({
                     size="sm"
                     className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
                     onClick={() => {
-                      const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
-                      const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                      const newListES = [...(sectionES.content.items || [])];
+                      const newListEN = [...(sectionEN.content.items || [])];
+                      newListES.splice(idx, 1);
+                      newListEN.splice(idx, 1);
                       handleContentChange("items", newListES, 'es');
                       handleContentChange("items", newListEN, 'en');
                     }}
@@ -529,18 +537,20 @@ export function VisualEditorSidebar({
                       </div>
                     </div>
 
-                    <Input
-                      placeholder="Título"
-                      value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx].title : sectionEN.content.items[idx].title) || ""}
-                      onChange={(e) => {
-                        const lang = getFieldLang(fKey);
-                        const target = lang === 'es' ? sectionES : sectionEN;
-                        const newList = [...target.content.items];
-                        newList[idx].title = e.target.value;
-                        handleContentChange("items", newList, lang);
-                      }}
-                      className="text-xs h-9"
-                    />
+                     <Input
+                       placeholder="🔍 Buscar popup..."
+                       value={searchFilters['cta-popup'] || (
+                         AVAILABLE_POPUPS.find(p => p.value === sectionES.content.ctaLink)?.label || ''
+                       )}
+                       onFocus={() => setIsListOpen(prev => ({ ...prev, 'cta-popup': true }))}
+                       onChange={(e) => {
+                         // ✅ SOLO actualizamos el filtro de busqueda, NO guardamos nada aun
+                         setSearchFilters(prev => ({ ...prev, 'cta-popup': e.target.value }));
+                         setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
+                         console.log('🔍 Buscando popup:', e.target.value);
+                       }}
+                       className="mb-1"
+                     />
 
                     <RichTextEditor
                       placeholder="Descripción"
@@ -733,8 +743,8 @@ export function VisualEditorSidebar({
                     size="sm"
                     className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     onClick={() => {
-                      const newES = (sectionES.content.milestones || []).filter((_: any, i: number) => i !== idx);
-                      const newEN = (sectionEN.content.milestones || []).filter((_: any, i: number) => i !== idx);
+                      const newES = sectionES.content.milestones.filter((_: any, i: number) => i !== idx);
+                      const newEN = sectionEN.content.milestones.filter((_: any, i: number) => i !== idx);
                       handleContentChange("milestones", newES, 'es');
                       handleContentChange("milestones", newEN, 'en');
                     }}
@@ -822,13 +832,15 @@ export function VisualEditorSidebar({
               onClick={() => {
                 const currentES = sectionES.content.milestones || [];
                 const currentEN = sectionEN.content.milestones || [];
-                const sample = currentES[0] || sectionEN.content.milestones?.[0] || {};
-                let newItem: any = { year: "", title: "", description: "", icon: "Lightbulb" };
-                if (sample.step !== undefined) {
-                  newItem = { step: "", title: "", desc: "" };
-                } else if (sample.phase !== undefined) {
-                  newItem = { phase: "", time: "", desc: "" };
-                }
+                const sample = currentES[0] || {};
+                const isYear = sample.year !== undefined;
+                const isStep = sample.step !== undefined;
+                const isPhase = sample.phase !== undefined;
+                const newItem = isStep 
+                  ? { step: `${currentES.length + 1}`, title: "", desc: "" }
+                  : isPhase 
+                    ? { phase: "", time: "" }
+                    : { year: "", title: "", description: "", icon: "Lightbulb" };
                 handleContentChange("milestones", [...currentES, { ...newItem }], 'es');
                 handleContentChange("milestones", [...currentEN, { ...newItem }], 'en');
               }}
