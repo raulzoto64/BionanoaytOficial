@@ -1,10 +1,28 @@
 import { Button } from "./ui/button";
+import { useNavigate } from 'react-router-dom';
 
 interface HeroProps {
   content: Record<string, any>;
 }
 
+// ✅ Helper Universal para manejar TODOS los tipos de acciones
+const handleAction = (type: string, value: string, navigate: any) => {
+  if (!value) return;
+
+  if (type === 'route' || (!type && value.startsWith('/'))) {
+    // RUTA INTERNA
+    navigate(value);
+  } else if (type === 'popup') {
+    // ABRIR POPUP
+    window.dispatchEvent(new CustomEvent('popup:open', { detail: { popupId: value } }));
+  } else {
+    // URL EXTERNA (por defecto)
+    window.open(value, '_blank');
+  }
+};
+
 export function Hero({ content }: HeroProps) {
+  const navigate = useNavigate();
   return (
     <section 
       className="relative flex items-center justify-center overflow-hidden"
@@ -41,36 +59,28 @@ export function Hero({ content }: HeroProps) {
         />
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
 
-          {/* Primary Button */}
-          {content.ctaText && (
-            <Button 
-              size="lg"
-              className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-10 py-4 text-base shadow-xl hover:shadow-[#19FF00]/20 rounded-full uppercase font-bold tracking-wider h-12"
-              asChild
-            >
-              {content.ctaLink ? (
-                <a href={content.ctaLink}>{content.ctaText}</a>
-              ) : (
-                <span>{content.ctaText}</span>
-              )}
-            </Button>
-          )}
+           {/* Primary Button */}
+           {content.ctaText && (
+             <Button 
+               size="lg"
+               className="bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-10 py-4 text-base shadow-xl hover:shadow-[#19FF00]/20 rounded-full uppercase font-bold tracking-wider h-12"
+               onClick={() => handleAction(content.ctaActionType, content.ctaLink, navigate)}
+             >
+               {content.ctaText}
+             </Button>
+           )}
 
-          {/* Secondary Button */}
-          {content.secondaryCtaText && (
-            <Button 
-              size="lg"
-              variant="outline"
-              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-10 py-4 text-base rounded-full uppercase font-bold tracking-wider h-12"
-              asChild
-            >
-              {content.secondaryCtaLink ? (
-                <a href={content.secondaryCtaLink}>{content.secondaryCtaText}</a>
-              ) : (
-                <span>{content.secondaryCtaText}</span>
-              )}
-            </Button>
-          )}
+           {/* Secondary Button */}
+           {content.secondaryCtaText && (
+             <Button 
+               size="lg"
+               variant="outline"
+               className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 px-10 py-4 text-base rounded-full uppercase font-bold tracking-wider h-12"
+               onClick={() => handleAction(content.secondaryCtaActionType, content.secondaryCtaLink, navigate)}
+             >
+               {content.secondaryCtaText}
+             </Button>
+           )}
         </div>
       </div>
     </section>

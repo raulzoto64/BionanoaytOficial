@@ -66,6 +66,8 @@ export function LeadsTable() {
       }
     } catch (err) {
       setError("Error al cargar los leads");
+    } finally {
+      setLoading(false);
     }
   };
 

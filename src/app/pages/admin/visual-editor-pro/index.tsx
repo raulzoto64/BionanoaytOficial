@@ -198,10 +198,10 @@ export function AdminVisualEditor() {
 
   const handleUpdateSection = (sectionId: string, content: any, lang: 'es' | 'en' | 'both' = 'both') => {
     if (lang === 'es' || lang === 'both') {
-      setSectionsES(prev => prev.map(s => s.id === sectionId ? { ...s, content } : s));
+      setSectionsES(prev => prev.map(s => s.id === sectionId ? { ...s, content: { ...s.content, ...content } } : s));
     }
     if (lang === 'en' || lang === 'both') {
-      setSectionsEN(prev => prev.map(s => s.id === sectionId ? { ...s, content } : s));
+      setSectionsEN(prev => prev.map(s => s.id === sectionId ? { ...s, content: { ...s.content, ...content } } : s));
     }
   };
 

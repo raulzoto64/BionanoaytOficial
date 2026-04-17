@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Section } from '../../../data/supabase';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
@@ -32,17 +32,58 @@ export function VisualEditorSidebar({
   pageSlug = ''
 }: VisualEditorSidebarProps) {
   const [fieldLangs, setFieldLangs] = useState<Record<string, 'es' | 'en'>>({});
+  const [searchFilters, setSearchFilters] = useState<Record<string, string>>({});
+  
+  // ✅ ESTADO LOCAL INMEDIATO - SOLUCION DEFINITIVA PARA REACT
+  const [ctaType, setCtaType] = useState<string | null>(null);
+  const [ctaType2, setCtaType2] = useState<string | null>(null);
+  
+  // ✅ Controlar si las listas estan abiertas o cerradas
+  const [isListOpen, setIsListOpen] = useState<Record<string, boolean>>({});
+
+  // ✅ SINCRONIZAR VALOR REAL CUANDO LLEGA DEL PADRE
+  React.useEffect(() => {
+    setCtaType(sectionES.content.ctaActionType ?? null);
+    setCtaType2(sectionES.content.secondaryCtaActionType ?? null);
+  }, [sectionES.content.ctaActionType, sectionES.content.secondaryCtaActionType]);
+
+  // Lista completa de rutas y popups disponibles
+  const AVAILABLE_ROUTES = [
+    { value: '/', label: '🏠 Página Principal (Home)' },
+    { value: '/store', label: '🛒 Tienda / Productos' },
+    { value: '/blog', label: '📰 Blog / Noticias' },
+    { value: '/technology', label: '🔬 Tecnología' },
+    { value: '/ecosystem', label: '🤝 Ecosistema' },
+    { value: '/about-us', label: '📖 Sobre Nosotros' },
+    { value: '/contact', label: '📞 Contacto' },
+  ];
+
+  const AVAILABLE_POPUPS = [
+    { value: 'exit-intent', label: '📩 Popup de Salida (Exit Intent)' },
+    { value: 'cotizacion', label: '📋 Formulario Cotización' },
+    { value: 'contacto', label: '✉️ Formulario de Contacto' },
+  ];
 
   if (!sectionES || !sectionEN) {
     return null;
   }
 
   const handleContentChange = (field: string, value: any, lang: 'es' | 'en' | 'both') => {
+    console.log(`🔵 [DEBUG VISUAL EDITOR] handleContentChange:`, {
+      field,
+      value,
+      lang,
+      previousValue_es: sectionES.content[field],
+      previousValue_en: sectionEN.content[field]
+    });
+    
     if (lang === 'both') {
+      console.log(`   ↳ Guardando en AMBOS idiomas ES + EN`);
       onUpdateSection(sectionES.id, { ...sectionES.content, [field]: value }, 'es');
       onUpdateSection(sectionEN.id, { ...sectionEN.content, [field]: value }, 'en');
     } else {
       const target = lang === 'es' ? sectionES : sectionEN;
+      console.log(`   ↳ Guardando solo en idioma: ${lang.toUpperCase()}`);
       onUpdateSection(target.id, { ...target.content, [field]: value }, lang);
     }
   };
@@ -170,35 +211,230 @@ export function VisualEditorSidebar({
 
           <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-5">
             <div className="grid gap-4">
-              <div className="space-y-3">
-                <LanguageToggle fieldKey="hero-cta" label="Botón Primario" />
-                <Input
-                  placeholder="Texto"
-                  value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ''}
-                  onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('hero-cta'))}
-                />
-                <Input
-                  placeholder="Enlace URL"
-                  value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ''}
-                  onChange={(e) => handleContentChange('ctaLink', e.target.value, getFieldLang('hero-cta'))}
-                />
-              </div>
+               <div className="space-y-3">
+                 <LanguageToggle fieldKey="hero-cta" label="Botón Primario" />
+                 <Input
+                   placeholder="Texto"
+                   value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ''}
+                   onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('hero-cta'))}
+                 />
+                 
+                   {/* ✅ SELECTOR TIPO DE ACCIÓN */}
+                 <div className="mb-1">
+                   <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1 block">Acción al hacer click</Label>
+                   <select
+                     className="w-full text-[11px] h-8 border rounded-md bg-white px-2"
+                     value={ctaType ?? sectionES.content.ctaActionType ?? 'url'}
+                     onChange={(e) => {
+                       console.log('✅ [FINAL FIX] Cambiando tipo de accion a:', e.target.value);
+                       // ✅ 1. ACTUALIZAR PRIMERO EL ESTADO LOCAL - SE RENDERIZA INMEDIATAMENTE
+                       setCtaType(e.target.value);
+                       // ✅ 2. DESPUES ENVIAR AL PADRE
+                       handleContentChange('ctaActionType', e.target.value, 'both');
+                       // Poner valor por defecto segun el tipo seleccionado
+                       let defaultValue = '';
+                       if (e.target.value === 'route') defaultValue = '/';
+                       if (e.target.value === 'popup') defaultValue = 'exit-intent';
+                       handleContentChange('ctaLink', defaultValue, 'both');
+                     }}
+                   >
+                     <option value="url">🌐 URL Externa</option>
+                     <option value="route">📍 Página / Ruta Interna</option>
+                     <option value="popup">📩 Abrir Popup</option>
+                   </select>
+                   {/* 🐛 DEBUG LOG */}
+                   <div className="text-[8px] text-gray-400 mt-1 font-mono">
+                     Valor actual: {sectionES.content.ctaActionType ?? 'url'} | ctaLink: {sectionES.content.ctaLink}
+                   </div>
+                 </div>
+
+                 {/* ✅ CAMPO DINAMICO SEGUN TIPO SELECCIONADO */}
+                 {(ctaType ?? sectionES.content.ctaActionType) === 'popup' ? (
+                   // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
+                   <div className="relative">
+                     <Input
+                       placeholder="🔍 Buscar popup..."
+                       value={searchFilters['cta-popup'] || ''}
+                       onFocus={() => setIsListOpen(prev => ({ ...prev, 'cta-popup': true }))}
+                       onChange={(e) => {
+                         // ✅ SOLO actualizamos el filtro de busqueda, NO guardamos nada aun
+                         setSearchFilters(prev => ({ ...prev, 'cta-popup': e.target.value }));
+                         setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
+                         console.log('🔍 Buscando popup:', e.target.value);
+                       }}
+                       className="mb-1"
+                     />
+                      {isListOpen['cta-popup'] !== false && (
+                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
+                        {AVAILABLE_POPUPS
+                          .filter(p => p.label.toLowerCase().includes((searchFilters['cta-popup'] || '').toLowerCase()))
+                          .map(popup => (
+                            <div 
+                              key={popup.value}
+                              onClick={() => {
+                                console.log('✅ Seleccionado popup:', popup.value);
+                                handleContentChange('ctaLink', popup.value, getFieldLang('hero-cta'));
+                                setSearchFilters(prev => ({ ...prev, 'cta-popup': '' }));
+                                setIsListOpen(prev => ({ ...prev, 'cta-popup': false }));
+                              }}
+                              className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
+                                sectionES.content.ctaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
+                              }`}
+                            >
+                              {popup.label}
+                            </div>
+                          ))}
+                      </div>
+                      )}
+                    </div>
+                 ) : (ctaType ?? sectionES.content.ctaActionType) === 'route' ? (
+                   // ✅ BUSCADOR AUTOCOMPLETADO DE RUTAS
+                   <div className="relative">
+                     <Input
+                       placeholder="🔍 Buscar página..."
+                       value={searchFilters['cta-route'] || ''}
+                       onFocus={() => setIsListOpen(prev => ({ ...prev, 'cta-route': true }))}
+                       onChange={(e) => {
+                         // ✅ SOLO actualizamos el filtro de busqueda, NO guardamos nada aun
+                         setSearchFilters(prev => ({ ...prev, 'cta-route': e.target.value }));
+                         setIsListOpen(prev => ({ ...prev, 'cta-route': true }));
+                         console.log('🔍 Buscando pagina:', e.target.value);
+                       }}
+                       className="mb-1"
+                     />
+                      {isListOpen['cta-route'] !== false && (
+                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
+                        {AVAILABLE_ROUTES
+                          .filter(r => r.label.toLowerCase().includes((searchFilters['cta-route'] || '').toLowerCase()))
+                          .map(route => (
+                            <div 
+                              key={route.value}
+                              onClick={() => {
+                                console.log('✅ Seleccionado pagina:', route.value);
+                                handleContentChange('ctaLink', route.value, getFieldLang('hero-cta'));
+                                setSearchFilters(prev => ({ ...prev, 'cta-route': '' }));
+                                setIsListOpen(prev => ({ ...prev, 'cta-route': false }));
+                              }}
+                              className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
+                                sectionES.content.ctaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
+                              }`}
+                            >
+                              {route.label}
+                            </div>
+                          ))}
+                      </div>
+                      )}
+                    </div>
+                 ) : (
+                   <Input
+                     placeholder="https://ejemplo.com"
+                     value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ''}
+                     onChange={(e) => handleContentChange('ctaLink', e.target.value, getFieldLang('hero-cta'))}
+                     className="focus:ring-[#19FF00]/30"
+                   />
+                 )}
+               </div>
 
               <div className="h-px bg-gray-100" />
 
-              <div className="space-y-3">
-                <LanguageToggle fieldKey="hero-cta2" label="Botón Secundario" />
-                <Input
-                  placeholder="Texto"
-                  value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ''}
-                  onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('hero-cta2'))}
-                />
-                <Input
-                  placeholder="Enlace URL"
-                  value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaLink : sectionEN.content.secondaryCtaLink) || ''}
-                  onChange={(e) => handleContentChange('secondaryCtaLink', e.target.value, getFieldLang('hero-cta2'))}
-                />
-              </div>
+               <div className="space-y-3">
+                 <LanguageToggle fieldKey="hero-cta2" label="Botón Secundario" />
+                 <Input
+                   placeholder="Texto"
+                   value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ''}
+                   onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('hero-cta2'))}
+                 />
+                 
+                 {/* ✅ SELECTOR TIPO DE ACCIÓN PARA BOTÓN SECUNDARIO */}
+                 <div className="mb-1">
+                   <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1 block">Acción al hacer click</Label>
+                   <select
+                     className="w-full text-[11px] h-8 border rounded-md bg-white px-2"
+                     value={ctaType2 ?? sectionES.content.secondaryCtaActionType ?? 'url'}
+                     onChange={(e) => {
+                       // ✅ 1. ACTUALIZAR PRIMERO EL ESTADO LOCAL - SE RENDERIZA INMEDIATAMENTE
+                       setCtaType2(e.target.value);
+                       // ✅ 2. DESPUES ENVIAR AL PADRE
+                       handleContentChange('secondaryCtaActionType', e.target.value, 'both');
+                       // Poner valor por defecto segun el tipo seleccionado
+                       let defaultValue = '';
+                       if (e.target.value === 'route') defaultValue = '/';
+                       if (e.target.value === 'popup') defaultValue = 'exit-intent';
+                       handleContentChange('secondaryCtaLink', defaultValue, 'both');
+                     }}
+                   >
+                     <option value="url">🌐 URL Externa</option>
+                     <option value="route">📍 Página / Ruta Interna</option>
+                     <option value="popup">📩 Abrir Popup</option>
+                   </select>
+                 </div>
+
+                 {/* ✅ CAMPO DINAMICO SEGUN TIPO SELECCIONADO */}
+                 {(ctaType2 ?? sectionES.content.secondaryCtaActionType) === 'popup' ? (
+                   // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
+                   <div className="relative">
+                     <Input
+                       placeholder="🔍 Buscar popup..."
+                       value={searchFilters['cta2-popup'] || ''}
+                       onChange={(e) => setSearchFilters(prev => ({ ...prev, 'cta2-popup': e.target.value }))}
+                       className="mb-1"
+                     />
+                     <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
+                       {AVAILABLE_POPUPS
+                         .filter(p => p.label.toLowerCase().includes((searchFilters['cta2-popup'] || '').toLowerCase()))
+                         .map(popup => (
+                           <div 
+                             key={popup.value}
+                             onClick={() => {
+                               handleContentChange('secondaryCtaLink', popup.value, getFieldLang('hero-cta2'));
+                               setSearchFilters(prev => ({ ...prev, 'cta2-popup': '' }));
+                             }}
+                             className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
+                               sectionES.content.secondaryCtaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
+                             }`}
+                           >
+                             {popup.label}
+                           </div>
+                         ))}
+                     </div>
+                   </div>
+                 ) : (ctaType2 ?? sectionES.content.secondaryCtaActionType) === 'route' ? (
+                   // ✅ BUSCADOR AUTOCOMPLETADO DE RUTAS
+                   <div className="relative">
+                     <Input
+                       placeholder="🔍 Buscar página..."
+                       value={searchFilters['cta2-route'] || ''}
+                       onChange={(e) => setSearchFilters(prev => ({ ...prev, 'cta2-route': e.target.value }))}
+                       className="mb-1"
+                     />
+                     <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
+                       {AVAILABLE_ROUTES
+                         .filter(r => r.label.toLowerCase().includes((searchFilters['cta2-route'] || '').toLowerCase()))
+                         .map(route => (
+                           <div 
+                             key={route.value}
+                             onClick={() => {
+                               handleContentChange('secondaryCtaLink', route.value, getFieldLang('hero-cta2'));
+                               setSearchFilters(prev => ({ ...prev, 'cta2-route': '' }));
+                             }}
+                             className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
+                               sectionES.content.secondaryCtaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
+                             }`}
+                           >
+                             {route.label}
+                           </div>
+                         ))}
+                     </div>
+                   </div>
+                 ) : (
+                   <Input
+                     placeholder="https://ejemplo.com"
+                     value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaLink : sectionEN.content.secondaryCtaLink) || ''}
+                     onChange={(e) => handleContentChange('secondaryCtaLink', e.target.value, getFieldLang('hero-cta2'))}
+                     className="focus:ring-[#19FF00]/30"
+                   />
+                 )}
+               </div>
             </div>
           </div>
         </div>
