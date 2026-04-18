@@ -138,6 +138,8 @@ export function AdminPrices() {
     }
 
     try {
+      console.log('💾 [ADMIN/PRICE] Saving price data...', { isNew: isNewPrice, data: editingPrice });
+      
       if (isNewPrice) {
         await supabaseAPI.createPrice({
           product_id: editingPrice.product_id,
@@ -147,15 +149,18 @@ export function AdminPrices() {
           currency: editingPrice.currency,
           packaging: editingPrice.packaging,
         });
+        console.log('✅ [ADMIN/PRICE] Create successful');
         toast.success('Precio agregado correctamente');
       } else {
         await supabaseAPI.updatePrice(editingPrice.id, editingPrice);
+        console.log('✅ [ADMIN/PRICE] Update successful');
         toast.success('Precio actualizado correctamente');
       }
       setDialogOpen(false);
       loadPrices();
-    } catch (error) {
-      toast.error('Error al guardar precio');
+    } catch (error: any) {
+      console.error('❌ [ADMIN/PRICE] Save failed:', error);
+      toast.error(`Error al guardar: ${error.message || 'Error desconocido'}`);
     }
   };
 
@@ -446,6 +451,7 @@ export function AdminPrices() {
                       <SelectValue placeholder="Volumen" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="pequeña">pequeña</SelectItem>
                       <SelectItem value="1">1</SelectItem>
                       <SelectItem value="5">5</SelectItem>
                       <SelectItem value="10">10</SelectItem>

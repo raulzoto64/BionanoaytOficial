@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from "../contexts/LanguageContext";
+import { useLanguage, Language } from "../contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import {
   supabaseAPI,
@@ -24,7 +24,7 @@ import { DynamicSection } from "../components/DynamicSection";
 
 
 // ── Componente de Catálogo de Miembros ──────────────────────────────────────
-function EcosystemCatalog({ language }: { language: string }) {
+function EcosystemCatalog({ language }: { language: Language }) {
   const [members, setMembers] = useState<EcosystemMember[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<EcosystemMember[]>([]);
   const [translations, setTranslations] = useState<Record<string, EcosystemMemberTranslation>>({});

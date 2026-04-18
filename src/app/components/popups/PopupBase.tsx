@@ -39,7 +39,7 @@ export function PopupBase({ isOpen, onClose, children }: PopupBaseProps) {
       />
 
       {/* Contenedor popup */}
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-fadeIn">
+      <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-fadeIn">
         {/* Boton cerrar */}
         <button
           onClick={onClose}

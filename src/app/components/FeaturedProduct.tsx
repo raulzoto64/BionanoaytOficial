@@ -1,5 +1,7 @@
 import { Button } from "./ui/button";
 import { Leaf, Shield, Droplets } from "lucide-react";
+import { useNavigate } from "react-router";
+import { handleAction } from "../utils/actions";
 
 // Elimina etiquetas HTML del texto para evitar que se rendericen como string literal
 function stripHtml(html: string): string {
@@ -18,6 +20,7 @@ interface FeaturedProductProps {
 }
 
 export function FeaturedProduct({ content }: FeaturedProductProps) {
+  const navigate = useNavigate();
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
       case 'Shield':
@@ -76,13 +79,9 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
             <Button 
               size="lg"
               className="mt-4 bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
-              asChild
+              onClick={() => handleAction(content.ctaActionType, content.ctaLink, navigate)}
             >
-              {content.ctaLink ? (
-                <a href={content.ctaLink}>{content.ctaText}</a>
-              ) : (
-                <span>{content.ctaText}</span>
-              )}
+              {content.ctaText}
             </Button>
           </div>
         </div>

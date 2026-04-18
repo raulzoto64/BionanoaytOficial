@@ -78,9 +78,10 @@ export function Technology() {
         description={seoData.metaDescription}
         keywords={seoData.metaKeywords}
       />
+      {/* Secciones dinámicas generadas desde el Editor Visual */}
       {pageContent.sections.map((section: Section, index: number) => {
         if (!section.visible) return null;
-
+        
         switch (section.type) {
           // ── HERO ──────────────────────────────────────────────────────────
           case 'hero':
@@ -315,21 +316,12 @@ export function Technology() {
         }
       })}
 
-      {/* CTA Section */}
-      <section className="py-20 bg-[#1C5D15] text-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-6">¿Interesado en conocer más?</h2>
-          <p className="text-xl text-[#F7F9CE] mb-8">
-            Contáctanos para recibir información técnica detallada de nuestros productos
-          </p>
-          <a
-            href="/#contact"
-            className="inline-block px-8 py-3 bg-[#19FF00] text-[#1C5D15] rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-xl hover:shadow-[#19FF00]/20 font-bold uppercase tracking-wider text-base"
-          >
-            Contactar a nuestro equipo
-          </a>
-        </div>
-      </section>
+      {/* 
+        ✅ CTA ELIMINADO (HARDCODED) 
+        Ahora se maneja como una sección dinámica de tipo 'cta' o 'hero' 
+        dentro del map de arriba. Si necesitas este CTA, añádelo desde 
+        el Editor Visual.
+      */}
     </div>
   );
 }

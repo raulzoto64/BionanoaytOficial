@@ -6,6 +6,7 @@ import { LanguageProvider } from '../contexts/LanguageContext';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { SEO } from '../components/SEO';
 import { useState } from 'react';
+import { NotificationCenter } from '../components/admin/NotificationCenter';
 
 export function AdminLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -51,9 +52,8 @@ export function AdminLayout() {
                 >
                   <Menu className="w-5 h-5" />
                 </Button>
-                <div className="relative bg-white/80 backdrop-blur shadow-sm p-2.5 rounded-xl text-[#1C5D15]">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-2 right-2 w-2.5 h-2.5 border-2 border-white bg-[#19FF00] rounded-full shadow-sm"></span>
+                <div className="relative bg-[#1C5D15] rounded-xl flex items-center justify-center pointer-events-auto">
+                  <NotificationCenter collapsed={true} />
                 </div>
               </div>
             </div>

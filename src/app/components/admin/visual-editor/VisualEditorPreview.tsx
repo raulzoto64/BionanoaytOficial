@@ -28,7 +28,8 @@ import {
   Warehouse,
   ArrowUp,
   ArrowDown,
-  Trash2
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 import { FlipCards } from '../../FlipCards';
 import { FeaturedProduct } from '../../FeaturedProduct';
@@ -40,6 +41,8 @@ import { Purpose } from '../../Purpose';
 import { Ecosystem } from '../../Ecosystem';
 import { HeroBlog } from '../../HeroBlog';
 import { BlogPostsSection } from '../../BlogPostsSection';
+import { useNavigate } from 'react-router';
+import { handleAction } from '../../../utils/actions';
 
 // Mapeo de nombres de iconos a componentes
 const IconMap: Record<string, any> = {
@@ -227,6 +230,7 @@ export function VisualEditorPreview({
   onMoveSectionUp,
   onMoveSectionDown
 }: VisualEditorPreviewProps) {
+  const navigate = useNavigate();
 
   const renderSectionComponent = (section: Section) => {
     switch (section.type) {
@@ -279,13 +283,27 @@ export function VisualEditorPreview({
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   {section.content.ctaText && (
-                    <div className="bg-[#19FF00] text-[#1C5D15] px-10 py-3 rounded-full font-bold uppercase tracking-wider text-sm">
+                    <div 
+                      className="bg-[#19FF00] text-[#1C5D15] px-10 py-3 rounded-full font-bold uppercase tracking-wider text-sm cursor-pointer hover:scale-105 transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAction(section.content.ctaActionType, section.content.ctaLink, navigate);
+                      }}
+                    >
                       {section.content.ctaText}
+                      {(section.content.ctaActionType === 'url' || section.content.ctaActionType === 'route') && <ExternalLink size={12} />}
                     </div>
                   )}
                   {section.content.secondaryCtaText && (
-                    <div className="border-2 border-white text-white px-10 py-3 rounded-full font-bold uppercase tracking-wider text-sm">
+                    <div 
+                      className="border-2 border-white text-white px-10 py-3 rounded-full font-bold uppercase tracking-wider text-sm cursor-pointer hover:bg-white hover:text-[#1C5D15] transition-all active:scale-95 flex items-center gap-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAction(section.content.secondaryCtaActionType, section.content.secondaryCtaLink, navigate);
+                      }}
+                    >
                       {section.content.secondaryCtaText}
+                      {(section.content.secondaryCtaActionType === 'url' || section.content.secondaryCtaActionType === 'route') && <ExternalLink size={12} />}
                     </div>
                   )}
                 </div>
@@ -421,7 +439,10 @@ export function VisualEditorPreview({
                 {/* Botón Final (Solo si no es Store o si tiene CTA) */}
                 {(section.content.ctaText || section.content.ctaLink) && (
                   <div className="flex justify-center mt-12">
-                    <button className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 py-3 uppercase text-sm font-bold tracking-wider">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleAction(section.content.ctaActionType, section.content.ctaLink || (isStore ? '/contact' : '/store'), navigate); }}
+                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 py-3 uppercase text-sm font-bold tracking-wider"
+                    >
                       {section.content.ctaText || (isStore ? 'Contáctanos' : 'Ver Catálogo Completo')}
                     </button>
                   </div>
@@ -441,7 +462,10 @@ export function VisualEditorPreview({
                   <h2 className="text-4xl font-black text-[#1C5D15] mb-2">{section.content.title}</h2>
                   <p className="text-[#629960]">{section.content.subtitle}</p>
                 </div>
-                <button className="text-[#1C5D15] font-black uppercase text-xs tracking-widest border-b-2 border-[#19FF00] pb-1">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleAction('route', '/blog', navigate); }}
+                  className="text-[#1C5D15] font-black uppercase text-xs tracking-widest border-b-2 border-[#19FF00] pb-1 hover:text-[#3AC026] transition-colors"
+                >
                   Ver todo el blog
                 </button>
               </div>
@@ -894,12 +918,18 @@ export function VisualEditorPreview({
               {section.content.subtitle && <p className="text-white/80 text-lg mb-8">{section.content.subtitle}</p>}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {section.content.ctaText && (
-                  <button className="bg-[#19FF00] text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleAction(section.content.ctaActionType, section.content.ctaLink, navigate); }}
+                    className="bg-[#19FF00] text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                  >
                     {section.content.ctaText}
                   </button>
                 )}
                 {section.content.secondaryCtaText && (
-                  <button className="bg-transparent border-2 border-white/30 text-white px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:bg-white/10 transition-all">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleAction(section.content.secondaryCtaActionType, section.content.secondaryCtaLink, navigate); }}
+                    className="bg-transparent border-2 border-white/30 text-white px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:bg-white/10 transition-all"
+                  >
                     {section.content.secondaryCtaText}
                   </button>
                 )}

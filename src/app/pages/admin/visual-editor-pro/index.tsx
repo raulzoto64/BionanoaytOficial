@@ -40,6 +40,28 @@ export function AdminVisualEditor() {
   const [allCategories, setAllCategories] = useState<any[]>([]);
   const [allBlogPosts, setAllBlogPosts] = useState<any[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [allForms, setAllForms] = useState<any[]>([]);
+
+  // Cargar datos necesarios
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [products, members, categories, forms] = await Promise.all([
+          supabaseAPI.getProducts(),
+          supabaseAPI.getEcosystemMembers(),
+          supabaseAPI.getCategories(),
+          supabaseAPI.getForms()
+        ]);
+        setAllProducts(products);
+        setAllEcosystemMembers(members);
+        setAllCategories(categories);
+        setAllForms(forms || []);
+      } catch (error) {
+        console.error("Error cargando datos del editor:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Escuchar evento para deseleccionar todas las secciones
   useEffect(() => {
@@ -56,7 +78,7 @@ export function AdminVisualEditor() {
     if (id) {
       loadPageData(id);
     }
-  }, [id, activeLanguage]); // Re-load metadata if language changes for translations
+  }, [id]); // Solo cargar datos cuando cambia la ID de la página, NO el idioma activo
 
   useEffect(() => {
     if (!isResizing) return;
@@ -183,10 +205,17 @@ export function AdminVisualEditor() {
       console.log(`   ES sections: ${sectionsES.length}`, sectionsES.map(s => `${s.id}(${s.type})`));
       console.log(`   EN sections: ${sectionsEN.length}`, sectionsEN.map(s => `${s.id}(${s.type})`));
       
-      await Promise.all([
+      console.log(`📤 [DATABASE] Enviando a Supabase ES...`, sectionsES);
+      console.log(`📤 [DATABASE] Enviando a Supabase EN...`, sectionsEN);
+      
+      const [resES, resEN] = await Promise.all([
         supabaseAPI.updatePageContent(page.id, 'es', sectionsES),
         supabaseAPI.updatePageContent(page.id, 'en', sectionsEN)
       ]);
+
+      console.log(`✅ [DATABASE] Respuesta Supabase ES:`, resES);
+      console.log(`✅ [DATABASE] Respuesta Supabase EN:`, resEN);
+      
       toast.success('Cambios publicados con éxito');
     } catch (error) {
       console.error('❌ Error saving:', error);
@@ -300,6 +329,7 @@ export function AdminVisualEditor() {
             onAddSection={handleAddSection}
             allProducts={allProducts}
             allEcosystemMembers={allEcosystemMembers}
+            availableForms={allForms}
             pageSlug={page?.slug}
           />
 

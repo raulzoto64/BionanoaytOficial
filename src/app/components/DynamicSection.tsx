@@ -13,6 +13,9 @@ import { StatsCards } from './StatsCards';
 import { FlipCards } from './FlipCards';
 import { HeroBlog } from './HeroBlog';
 import { BlogPostsSection } from './BlogPostsSection';
+import { useNavigate } from 'react-router';
+import { handleAction } from '../utils/actions';
+import { Button } from './ui/button';
 
 // ══════════════════════════════════════════════════════════════
 // RENDERIZADOR UNIVERSAL DE SECCIONES
@@ -59,6 +62,7 @@ interface DynamicSectionProps {
 }
 
 export function DynamicSection({ section, products = [], language = 'es', index = 0 }: DynamicSectionProps) {
+  const navigate = useNavigate();
   if (!section.visible) return null;
 
   // Renderizar la seccion por tipo
@@ -116,6 +120,7 @@ export function DynamicSection({ section, products = [], language = 'es', index 
               subtitle={section.content.subtitle}
               ctaText={section.content.ctaText}
               ctaLink={section.content.ctaLink}
+              ctaActionType={section.content.ctaActionType}
               sectionId={section.id}
             />
           </div>
@@ -168,7 +173,10 @@ export function DynamicSection({ section, products = [], language = 'es', index 
         <div key={section.id} id={section.id}>
           <NewsSection 
             title={section.content.title} 
-            subtitle={section.content.subtitle} 
+            subtitle={section.content.subtitle}
+            ctaText={section.content.ctaText}
+            ctaLink={section.content.ctaLink}
+            ctaActionType={section.content.ctaActionType}
           />
         </div>
       );
@@ -210,9 +218,12 @@ export function DynamicSection({ section, products = [], language = 'es', index 
               {section.content.title && <h2 className="text-3xl font-bold mb-3">{section.content.title}</h2>}
               {section.content.subtitle && <p className="text-white/80 text-lg mb-8">{section.content.subtitle}</p>}
               {section.content.ctaText && (
-                <a href={section.content.ctaLink || '#'} className="inline-block bg-[#19FF00] text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform">
+                <Button 
+                  onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                  className="bg-[#19FF00] text-[#1C5D15] hover:bg-white px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                >
                   {section.content.ctaText}
-                </a>
+                </Button>
               )}
             </div>
           </section>

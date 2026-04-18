@@ -18,6 +18,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 import { useNavigate, useSearchParams } from "react-router";
 import { FlipCards } from "../components/FlipCards";
+import { handleAction } from "../utils/actions";
 
 // ── Mapa de iconos ─────────────────────────────────────────────────────────
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -272,20 +273,20 @@ export function Store() {
                   />
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     {section.content.ctaText && (
-                      <a
-                        href={section.content.ctaLink || '#products'}
+                      <button
+                        onClick={() => handleAction(section.content.ctaType, section.content.ctaLink, navigate)}
                         className="inline-block px-6 py-3 bg-[#19FF00] text-[#1C5D15] font-bold rounded-full hover:bg-white hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-lg uppercase text-sm tracking-wider"
                       >
                         {section.content.ctaText}
-                      </a>
+                      </button>
                     )}
                     {section.content.secondaryCtaText && (
-                      <a
-                        href={section.content.secondaryCtaLink || '#products'}
+                      <button
+                        onClick={() => handleAction(section.content.secondaryCtaType, section.content.secondaryCtaLink, navigate)}
                         className="inline-block px-6 py-3 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase text-sm tracking-wider"
                       >
                         {section.content.secondaryCtaText}
-                      </a>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -681,19 +682,19 @@ export function Store() {
                   <h2 className="text-4xl md:text-5xl font-bold mb-6">{section.content.title}</h2>
                   <p className="text-xl text-white/85 mb-10 max-w-2xl mx-auto leading-relaxed">{section.content.subtitle}</p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a
-                      href={section.content.ctaLink || '/#contact'}
+                    <button
+                      onClick={() => handleAction(section.content.ctaType, section.content.ctaLink || '/#contact', navigate)}
                       className="inline-block px-10 py-4 bg-[#19FF00] text-[#1C5D15] font-bold rounded-full hover:bg-white hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-2xl hover:shadow-[#19FF00]/30 uppercase tracking-wider text-sm"
                     >
                       {section.content.ctaText}
-                    </a>
+                    </button>
                     {section.content.secondaryCtaText && (
-                      <a
-                        href={section.content.secondaryCtaLink || '/store'}
+                      <button
+                        onClick={() => handleAction(section.content.secondaryCtaType, section.content.secondaryCtaLink || '/store', navigate)}
                         className="inline-block px-10 py-4 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm"
                       >
                         {section.content.secondaryCtaText}
-                      </a>
+                      </button>
                     )}
                   </div>
                 </div>

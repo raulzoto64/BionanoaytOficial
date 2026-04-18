@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useLanguage } from "../contexts/LanguageContext";
 import { DatabaseManager } from "../data/DatabaseManager";
 import { FooterSettings } from "../data/supabase";
-import { supabaseAPI, Category} from "../data/supabase";
+import { supabase, supabaseAPI, Category} from "../data/supabase";
 
 interface ContactInfo {
   phone: string;
@@ -68,10 +68,35 @@ export function Footer({ contactInfo }: FooterProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("¡Mensaje enviado! Nos pondremos en contacto pronto.");
-    setFormData({ name: "", email: "", message: "" });
+    
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .insert({
+          ...formData,
+          lead_type: 'Footer Contact',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          is_anonymous: true,
+          page_url: window.location.href,
+          referrer: document.referrer,
+          visitor_id: localStorage.getItem('guest_id'),
+          metadata: { source: 'footer', language }
+        });
+
+      if (error) throw error;
+
+      toast.success(language === 'es' 
+        ? "¡Mensaje enviado! Nos pondremos en contacto pronto."
+        : "Message sent! We will contact you soon.");
+      
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      console.error('Error saving footer lead:', error);
+      toast.error(language === 'es' ? "Error al enviar el mensaje" : "Error sending message");
+    }
   };
 
   const getCurrentYear = () => new Date().getFullYear();

@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabaseAPI, BlogPostTranslation } from '../data/supabase';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { ContentCard } from './ContentCard';
 import { newsPreloadCache } from '../data/BackgroundPreload';
+import { handleAction } from '../utils/actions';
 
 interface PostWithTranslation {
   id: string;
@@ -28,6 +29,7 @@ interface NewsSectionProps {
   subtitle?: string;
   ctaText?: string;
   ctaLink?: string;
+  ctaActionType?: string;
   isEditor?: boolean;
 }
 
@@ -37,8 +39,9 @@ let newsSectionCache: {
   language: string;
 } | null = null;
 
-export function NewsSection({ title, subtitle, ctaText, ctaLink, isEditor = false }: NewsSectionProps) {
+export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, isEditor = false }: NewsSectionProps) {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   
   // Inicialización instantánea desde caché
   const [featuredPosts, setFeaturedPosts] = useState<PostWithTranslation[]>(() => 
@@ -175,15 +178,15 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, isEditor = fals
         </div>
 
         <div className="text-center mt-12">
-          <Link
-            to={ctaLink || "/blog"}
+          <button
+            onClick={() => handleAction(ctaActionType, ctaLink || "/blog", navigate)}
             className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white font-bold rounded-full hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg uppercase text-sm tracking-wider"
           >
             {ctaText || (language === 'es' ? 'Ver todas las noticias' : 'View all news')}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </Link>
+          </button>
         </div>
       </div>
     </section>

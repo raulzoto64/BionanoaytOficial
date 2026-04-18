@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Globe, PanelLeftClose, PanelLeftOpen, Plus, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, X, Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare, FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare } from 'lucide-react';
+import { Globe, PanelLeftClose, PanelLeftOpen, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare, FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare } from 'lucide-react';
 import { Section } from '../../../data/supabase';
 import { VisualEditorSidebar } from '../../../components/admin/visual-editor/VisualEditorSidebar';
 
 // Helper component for dynamic icons
 const Icon = ({ name, className }: { name: string, className?: string }) => {
-  const icons: any = { 
-  Layout, BarChart, Users, Globe, ShoppingBag, Newspaper, HelpCircle, Zap, Type,
-  Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare,
-  FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare
-};
+  const icons: any = {
+    Layout, BarChart, Users, Globe, ShoppingBag, Newspaper, HelpCircle, Zap, Type,
+    Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare,
+    FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare
+  };
   const Comp = icons[name] || Globe;
   return <Comp className={className} />;
 };
@@ -23,6 +23,7 @@ interface SidebarProps {
   onAddSection?: (type: string) => void;
   allProducts: any[];
   allEcosystemMembers: any[];
+  availableForms?: any[];
   pageSlug?: string;
 }
 
@@ -35,6 +36,7 @@ export function Sidebar({
   onAddSection,
   allProducts,
   allEcosystemMembers,
+  availableForms = [],
   pageSlug
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<'sections' | 'config'>('sections');
@@ -57,7 +59,7 @@ export function Sidebar({
     { type: 'faq', label: 'Preguntas Frecuentes', icon: 'HelpCircle' },
     { type: 'cta', label: 'Llamado a la Acción', icon: 'Zap' },
     { type: 'text', label: 'Bloque de Texto', icon: 'Type' },
-    
+
     // SECCIONES ADICIONALES IMPLEMENTADAS
     { type: 'hero-blog', label: 'Hero Blog', icon: 'FileText' },
     { type: 'bento', label: 'Bento / Por Qué Elegirnos', icon: 'Layers' },
@@ -81,8 +83,7 @@ export function Sidebar({
     <>
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className={`absolute z-[999] transition-all duration-300 ease-out bg-white shadow-xl rounded-lg p-2 hover:bg-gray-50 hover:shadow-2xl left-4 top-[16px] ${
-            sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        className={`absolute z-[999] transition-all duration-300 ease-out bg-white shadow-xl rounded-lg p-2 hover:bg-gray-50 hover:shadow-2xl left-4 top-[16px] ${sidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
         title="Abrir panel de configuración"
       >
@@ -114,21 +115,19 @@ export function Sidebar({
                 window.dispatchEvent(new CustomEvent('editor:deselect-section'));
                 console.log('[EDITOR] Seccion deseleccionada automaticamente al ir a pestaña Secciones');
               }}
-              className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${
-                activeTab === 'sections' 
-                  ? 'bg-white text-[#1C5D15] shadow-sm' 
+              className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'sections'
+                  ? 'bg-white text-[#1C5D15] shadow-sm'
                   : 'text-gray-500 hover:text-[#1C5D15]'
-              }`}
+                }`}
             >
               📋 Secciones
             </button>
             <button
               onClick={() => setActiveTab('config')}
-              className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${
-                activeTab === 'config' 
-                  ? 'bg-white text-[#1C5D15] shadow-sm' 
+              className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'config'
+                  ? 'bg-white text-[#1C5D15] shadow-sm'
                   : 'text-gray-500 hover:text-[#1C5D15]'
-              }`}
+                }`}
             >
               ⚙️ Configuración
             </button>
@@ -136,7 +135,7 @@ export function Sidebar({
         </div>
 
         <div className="flex-1 overflow-y-auto bg-white custom-scrollbar">
-          
+
           {/* TAB SECCIONES - GRID PERMANENTE CON TODOS LOS ICONOS */}
           {activeTab === 'sections' && (
             <div className="p-4">
@@ -171,6 +170,7 @@ export function Sidebar({
                   onUpdateSection={handleUpdateSection}
                   availableProducts={allProducts}
                   availableEcosystemMembers={allEcosystemMembers}
+                  availableForms={availableForms}
                   pageSlug={pageSlug}
                 />
               ) : (

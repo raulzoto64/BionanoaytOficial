@@ -29,9 +29,15 @@ const AdminEcosystem = () => import("./pages/admin/AdminEcosystem").then(m => ({
 const AdminLegalPages = () => import("./pages/admin/AdminLegalPages").then(m => ({ Component: m.AdminLegalPages }));
 const AdminFooterSettings = () => import("./pages/admin/AdminFooterSettings").then(m => ({ Component: m.AdminFooterSettings }));
 const AdminLeads = () => import("./pages/admin/leads").then(m => ({ Component: m.default }));
+const AdminForms = () => import("./pages/admin/AdminForms").then(m => ({ Component: m.AdminForms }));
 const EcosystemMemberDetail = () => import("./pages/EcosystemMemberDetail").then(m => ({ Component: m.EcosystemMemberDetail }));
 const EcosystemPage = () => import("./pages/Ecosystem").then(m => ({ Component: m.EcosystemPage }));
 const LegalPage = () => import("./pages/LegalPage").then(m => ({ Component: m.LegalPage }));
+
+const AdminFormEditor = () => import("./pages/admin/AdminFormEditor").then(m => ({ Component: m.AdminFormEditor }));
+const AdminActiveCarts = () => import("./pages/admin/sales/ActiveCarts").then(m => ({ Component: m.ActiveCarts }));
+const AdminCheckoutLeads = () => import("./pages/admin/sales/CheckoutLeads").then(m => ({ Component: m.CheckoutLeads }));
+const AdminAnalytics = () => import("./pages/admin/sales/AnalyticsDashboard").then(m => ({ Component: m.AnalyticsDashboard }));
 
 export const router = createBrowserRouter([
   {
@@ -102,6 +108,10 @@ export const router = createBrowserRouter([
     lazy: AdminVisualEditor,
   },
   {
+    path: "admin/forms/edit/:id",
+    lazy: AdminFormEditor,
+  },
+  {
     path: "admin",
     lazy: AdminLayout,
     HydrateFallback: () => (
@@ -162,6 +172,22 @@ export const router = createBrowserRouter([
       {
         path: "leads",
         lazy: AdminLeads,
+      },
+      {
+        path: "forms",
+        lazy: AdminForms,
+      },
+      {
+        path: "sales/active-carts",
+        lazy: AdminActiveCarts,
+      },
+      {
+        path: "sales/checkout-leads",
+        lazy: AdminCheckoutLeads,
+      },
+      {
+        path: "sales/analytics",
+        lazy: AdminAnalytics,
       },
     ],
   },

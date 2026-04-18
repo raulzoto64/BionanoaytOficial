@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
+import { useNavigate } from "react-router";
+import { handleAction } from "../utils/actions";
 
 // ── Mapa de iconos ─────────────────────────────────────────────────────────
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -45,6 +47,7 @@ function FaqItem({ item }: { item: { question: string; answer: string } }) {
 
 export function Process() {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const [pageContent, setPageContent] = useState<PageContent | null>(() => 
     supabaseAPI.getCachedData(`page-content-page-process-${language}`)
   );
@@ -107,20 +110,20 @@ export function Process() {
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     {section.content.ctaText && (
-                      <a
-                        href={section.content.ctaLink || '#process-steps'}
+                      <button
+                        onClick={() => handleAction(section.content.ctaType, section.content.ctaLink || '#process-steps', navigate)}
                         className="inline-block px-8 py-3 bg-[#19FF00] text-[#1C5D15] font-bold rounded-full hover:bg-white hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-xl uppercase tracking-wider text-sm"
                       >
                         {section.content.ctaText}
-                      </a>
+                      </button>
                     )}
                     {section.content.secondaryCtaText && (
-                      <a
-                        href={section.content.secondaryCtaLink || '/store'}
+                      <button
+                        onClick={() => handleAction(section.content.secondaryCtaType, section.content.secondaryCtaLink || '/store', navigate)}
                         className="inline-block px-8 py-3 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm"
                       >
                         {section.content.secondaryCtaText}
-                      </a>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -399,12 +402,12 @@ export function Process() {
                   </div>
                   {section.content.ctaText && (
                     <div className="text-center mt-12">
-                      <a
-                        href={section.content.ctaLink || '/#contact'}
+                      <button
+                        onClick={() => handleAction(section.content.ctaType, section.content.ctaLink || '/#contact', navigate)}
                         className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white rounded-full font-bold hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-lg uppercase text-sm tracking-wider"
                       >
                         {section.content.ctaText}
-                      </a>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -430,19 +433,19 @@ export function Process() {
                   <h2 className="text-4xl md:text-5xl font-bold mb-6">{section.content.title}</h2>
                   <p className="text-xl text-white/85 mb-10 max-w-2xl mx-auto leading-relaxed">{section.content.subtitle}</p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a
-                      href={section.content.ctaLink || '/#contact'}
+                    <button
+                      onClick={() => handleAction(section.content.ctaType, section.content.ctaLink || '/#contact', navigate)}
                       className="inline-block px-10 py-4 bg-[#19FF00] text-[#1C5D15] font-bold rounded-full hover:bg-white hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-2xl hover:shadow-[#19FF00]/30 uppercase tracking-wider text-sm"
                     >
                       {section.content.ctaText}
-                    </a>
+                    </button>
                     {section.content.secondaryCtaText && (
-                      <a
-                        href={section.content.secondaryCtaLink || '/store'}
+                      <button
+                        onClick={() => handleAction(section.content.secondaryCtaType, section.content.secondaryCtaLink || '/store', navigate)}
                         className="inline-block px-10 py-4 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm"
                       >
                         {section.content.secondaryCtaText}
-                      </a>
+                      </button>
                     )}
                   </div>
                 </div>

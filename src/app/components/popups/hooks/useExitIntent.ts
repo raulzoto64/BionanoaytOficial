@@ -1,32 +1,37 @@
 import { useEffect, useState } from 'react';
 
 export function useExitIntent() {
-  const [showPopup, setShowPopup] = useState(false);
+  const [showPopupId, setShowPopupId] = useState<string | null>(null);
   const [hasShown, setHasShown] = useState(false);
 
   useEffect(() => {
-    // Solo se muestra 1 vez por sesion
+    // 1. LISTENER PARA APERTURA MANUAL DESDE BOTONES (Siempre activo)
+    const handleManualOpen = (e: any) => {
+      const id = e.detail?.popupId || 'exit-intent';
+      console.log('🔘 [POPUP] Apertura manual solicitada:', id);
+      setShowPopupId(id);
+      // Opcional: Podrías querer permitir aperturas infinitas si es manual
+    };
+    window.addEventListener('popup:open', handleManualOpen);
+
+    // 2. TRÍGERS AUTOMÁTICOS (Solo si no se ha mostrado)
     if (sessionStorage.getItem('exit_intent_shown')) {
-      console.log('🔒 [EXIT INTENT] Popup ya mostrado en esta sesión, saltando');
-      return;
+      console.log('🔒 [EXIT INTENT] Triggers automáticos desactivados (ya mostrado)');
+      return () => {
+        window.removeEventListener('popup:open', handleManualOpen);
+      };
     }
 
-    console.log('🔄 [EXIT INTENT] Listener instalado correctamente');
+    console.log('🔄 [EXIT INTENT] Triggers automáticos instalados');
     
     let canShowPopup = false;
-    console.log('⏳ [EXIT INTENT] BLOQUEADO los primeros 10 segundos, no saldrá NADA');
-
-    // ✅ MÍNIMO 10 SEGUNDOS DE BLOQUEO ABSOLUTO
     const unlockTimer = setTimeout(() => {
       canShowPopup = true;
-      console.log('✅ [EXIT INTENT] Ya pasaron 10s - Ahora SI puede aparecer');
     }, 10 * 1000);
 
-    // ✅ TEMPORIZADOR: 30 SEGUNDOS AUTOMÁTICO
     const autoShowTimer = setTimeout(() => {
       if (!hasShown) {
-        console.log('⏱️ [EXIT INTENT] Tiempo cumplido (30s) - Mostrando popup automaticamente');
-        setShowPopup(true);
+        setShowPopupId('exit-intent');
         setHasShown(true);
         sessionStorage.setItem('exit_intent_shown', 'true');
       }
@@ -34,15 +39,10 @@ export function useExitIntent() {
 
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY < 10 && !hasShown && canShowPopup) {
-        console.log('👋 [EXIT INTENT] Intento de SALIDA detectado! Mostrando popup', e.clientY);
-        clearTimeout(autoShowTimer);
-        setShowPopup(true);
+        setShowPopupId('exit-intent');
         setHasShown(true);
         sessionStorage.setItem('exit_intent_shown', 'true');
-      }
-
-      if (e.clientY < 10 && !canShowPopup) {
-        console.log('❌ [EXIT INTENT] Intento de salida detectado PERO TODAVÍA NO PASARON 10s - BLOQUEADO');
+        clearTimeout(autoShowTimer);
       }
     };
 
@@ -52,14 +52,15 @@ export function useExitIntent() {
       clearTimeout(unlockTimer);
       clearTimeout(autoShowTimer);
       document.removeEventListener('mouseleave', handleMouseLeave);
-      console.log('🔚 [EXIT INTENT] Listeners eliminados');
+      window.removeEventListener('popup:open', handleManualOpen);
+      console.log('🔚 [POPUP] Listeners eliminados');
     };
   }, [hasShown]);
 
-  console.log('🎯 [EXIT INTENT] Estado actual showPopup:', showPopup);
+  console.log('🎯 [POPUP] Estado actual:', showPopupId);
 
   return {
-    showPopup,
-    setShowPopup
+    showPopupId,
+    setShowPopupId
   };
 }

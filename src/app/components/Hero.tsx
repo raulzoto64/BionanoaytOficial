@@ -1,25 +1,10 @@
 import { Button } from "./ui/button";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
+import { handleAction } from '../utils/actions';
 
 interface HeroProps {
   content: Record<string, any>;
 }
-
-// ✅ Helper Universal para manejar TODOS los tipos de acciones
-const handleAction = (type: string, value: string, navigate: any) => {
-  if (!value) return;
-
-  if (type === 'route' || (!type && value.startsWith('/'))) {
-    // RUTA INTERNA
-    navigate(value);
-  } else if (type === 'popup') {
-    // ABRIR POPUP
-    window.dispatchEvent(new CustomEvent('popup:open', { detail: { popupId: value } }));
-  } else {
-    // URL EXTERNA (por defecto)
-    window.open(value, '_blank');
-  }
-};
 
 export function Hero({ content }: HeroProps) {
   const navigate = useNavigate();

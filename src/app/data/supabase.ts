@@ -2142,4 +2142,202 @@ export const supabaseAPI = {
       console.error("Excepción en mergeVisitorLeadsWithUser:", err);
     }
   },
+
+  // ==========================================
+  // ACTIVE CARTS
+  // ==========================================
+
+  getActiveCarts: async (): Promise<any[]> => {
+    const { data, error } = await supabase
+      .from('active_carts_summary')
+      .select('*')
+      .order('last_activity', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  getCartByIdentifier: async (identifier: string): Promise<any[]> => {
+    const { data, error } = await supabase
+      .from('cart_items')
+      .select('*, product:products(*)')
+      .or(`user_id.eq."${identifier}",guest_id.eq."${identifier}"`);
+    if (error) throw error;
+    return data || [];
+  },
+
+  // ==========================================
+  // LEADS (Cart sync + Checkout)
+  // ==========================================
+
+  createLead: async (data: any): Promise<any> => {
+    const { data: newLead, error } = await supabase
+      .from('leads')
+      .insert({
+        ...data,
+        page_url: data.page_url || (typeof window !== 'undefined' ? window.location.href : null),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ createLead error:', error.message);
+      throw error;
+    }
+    return newLead;
+  },
+
+  syncLead: async (data: any): Promise<any> => {
+    // Si no hay email, no podemos hacer upsert — creamos directamente
+    if (!data.email) return supabaseAPI.createLead(data);
+
+    try {
+      // 1. Buscar lead existente con este email (el más reciente)
+      const { data: existing } = await supabase
+        .from('leads')
+        .select('id, status')
+        .eq('email', data.email)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        // 2. Actualizar — preservar historial, actualizar datos de contacto y estado
+        const { data: updated, error } = await supabase
+          .from('leads')
+          .update({
+            ...data,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing[0].id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        console.log('🔄 Lead actualizado (upsert):', updated?.id);
+        return updated;
+      }
+
+      // 3. No existe — crear nuevo
+      return supabaseAPI.createLead(data);
+    } catch (err) {
+      console.warn('⚠️ syncLead falló, creando nuevo lead:', err);
+      return supabaseAPI.createLead(data);
+    }
+  },
+
+  // ==========================================
+  // ANALYTICS & TELEMETRY
+  // ==========================================
+
+  trackAnalyticsEvent: async (data: {
+    visitor_id: string;
+    user_id?: string;
+    event_type: 'page_view' | 'add_to_cart' | 'time_on_page' | 'checkout_step';
+    page_url: string;
+    session_duration_seconds?: number;
+    metadata?: any;
+  }): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('site_analytics')
+        .insert([data]);
+      if (error) console.warn('Analytics tracking failed silently:', error.message);
+    } catch (err) {
+      console.warn('Analytics exception:', err);
+    }
+  },
+
+  getFunnelStats: async (startDate: string, endDate: string): Promise<any> => {
+    const { data, error } = await supabase
+      .rpc('get_funnel_stats', { start_date: startDate, end_date: endDate });
+    if (error) throw new Error(error.message);
+    return data && data.length > 0 ? data[0] : null;
+  },
+
+  // ==========================================
+  // NOTIFICATIONS
+  // ==========================================
+
+  createNotification: async (data: {
+    target_role: string;
+    title: string;
+    message: string;
+    notification_type: string;
+    action_url?: string;
+  }): Promise<void> => {
+    try {
+      const { error } = await supabase.rpc('insert_notification', {
+        p_target_role:        data.target_role,
+        p_title:              data.title,
+        p_message:            data.message,
+        p_notification_type:  data.notification_type,
+        p_action_url:         data.action_url || null,
+      });
+      if (error) {
+        console.warn('RPC insert_notification failed, trying direct insert:', error.message);
+        const { error: e2 } = await supabase.from('notifications').insert([data]);
+        if (e2) console.error('Notification direct insert failed:', e2.message);
+      } else {
+        console.log('🔔 Notificación creada para rol:', data.target_role);
+      }
+    } catch (err) {
+      console.error('Notification exception:', err);
+    }
+  },
+
+  // ==========================================
+  // FORMS
+  // ==========================================
+
+  getForms: async (): Promise<Form[]> => {
+    const { data, error } = await supabase
+      .from('forms')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+  },
+
+  getFormById: async (id: string): Promise<Form | null> => {
+    const { data, error } = await supabase
+      .from('forms')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();  // maybeSingle() retorna null si no existe, en vez de lanzar error
+    if (error) {
+      console.error('Error fetching form by id:', id, error.message);
+      return null;
+    }
+    return data;
+  },
+
+  createForm: async (formData: Partial<Form>): Promise<Form> => {
+    const { id: _, ...insertData } = formData as any;
+    const { data, error } = await supabase
+      .from('forms')
+      .insert([insertData])
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  updateForm: async (id: string, formData: Partial<Form>): Promise<Form> => {
+    const { id: _, created_at: __, ...updateData } = formData as any;
+    const { data, error } = await supabase
+      .from('forms')
+      .update({ ...updateData, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  deleteForm: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('forms').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+  },
 };
+

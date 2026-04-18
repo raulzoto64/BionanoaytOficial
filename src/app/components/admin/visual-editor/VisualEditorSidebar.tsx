@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Section } from '../../../data/supabase';
+import { Section, Form } from '../../../data/supabase';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
@@ -20,6 +20,7 @@ interface VisualEditorSidebarProps {
   onUpdateSection: (sectionId: string, content: any, lang: 'es' | 'en' | 'both') => void;
   availableProducts?: any[];
   availableEcosystemMembers?: any[];
+  availableForms?: Form[];
   pageSlug?: string;
 }
 
@@ -29,6 +30,7 @@ export function VisualEditorSidebar({
   onUpdateSection, 
   availableProducts = [], 
   availableEcosystemMembers = [],
+  availableForms = [],
   pageSlug = ''
 }: VisualEditorSidebarProps) {
   const [fieldLangs, setFieldLangs] = useState<Record<string, 'es' | 'en'>>({});
@@ -48,6 +50,7 @@ export function VisualEditorSidebar({
   }, [sectionES.content.ctaActionType, sectionES.content.secondaryCtaActionType]);
 
   // Lista completa de rutas y popups disponibles
+  console.log("🔍 [Sidebar] availableForms Prop:", availableForms);
   const AVAILABLE_ROUTES = [
     { value: '/', label: '🏠 Página Principal (Home)' },
     { value: '/store', label: '🛒 Tienda / Productos' },
@@ -59,10 +62,13 @@ export function VisualEditorSidebar({
   ];
 
   const AVAILABLE_POPUPS = [
-    { value: 'exit-intent', label: '📩 Popup de Salida (Exit Intent)' },
-    { value: 'cotizacion', label: '📋 Formulario Cotización' },
-    { value: 'contacto', label: '✉️ Formulario de Contacto' },
+    { value: 'exit-intent', label: '📩 Popup predeterminado (Exit Intent)' },
+    ...availableForms.map(form => ({
+      value: form.id,
+      label: `📋 Formulario: ${form.name}`
+    }))
   ];
+  console.log("📋 [Sidebar] AVAILABLE_POPUPS List:", AVAILABLE_POPUPS);
 
   if (!sectionES || !sectionEN) {
     return null;
@@ -226,16 +232,25 @@ export function VisualEditorSidebar({
                      className="w-full text-[11px] h-8 border rounded-md bg-white px-2"
                      value={ctaType ?? sectionES.content.ctaActionType ?? 'url'}
                      onChange={(e) => {
-                       console.log('✅ [FINAL FIX] Cambiando tipo de accion a:', e.target.value);
-                       // ✅ 1. ACTUALIZAR PRIMERO EL ESTADO LOCAL - SE RENDERIZA INMEDIATAMENTE
-                       setCtaType(e.target.value);
-                       // ✅ 2. DESPUES ENVIAR AL PADRE
-                       handleContentChange('ctaActionType', e.target.value, 'both');
-                       // Poner valor por defecto segun el tipo seleccionado
-                       let defaultValue = '';
-                       if (e.target.value === 'route') defaultValue = '/';
-                       if (e.target.value === 'popup') defaultValue = 'exit-intent';
-                       handleContentChange('ctaLink', defaultValue, 'both');
+                       const newType = e.target.value;
+                       console.log('✅ [FINAL FIX] Cambiando tipo de accion a:', newType);
+                       setCtaType(newType);
+
+                       let defaultValue = sectionES.content.ctaLink || '';
+                       if (newType === 'route' && !defaultValue.startsWith('/')) defaultValue = '/';
+                       if (newType === 'popup') defaultValue = 'exit-intent';
+
+                       // UNIFICAR CAMBIOS EN UNA SOLA LLAMADA PARA EVITAR CONDICIÓN DE CARRERA
+                       onUpdateSection(sectionES.id, { 
+                         ...sectionES.content, 
+                         ctaActionType: newType, 
+                         ctaLink: defaultValue 
+                       }, 'es');
+                       onUpdateSection(sectionEN.id, { 
+                         ...sectionEN.content, 
+                         ctaActionType: newType, 
+                         ctaLink: defaultValue 
+                       }, 'en');
                      }}
                    >
                      <option value="url">🌐 URL Externa</option>
@@ -250,41 +265,49 @@ export function VisualEditorSidebar({
 
                  {/* ✅ CAMPO DINAMICO SEGUN TIPO SELECCIONADO */}
                  {(ctaType ?? sectionES.content.ctaActionType) === 'popup' ? (
-                   // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
-                   <div className="relative">
-                     <Input
-                       placeholder="🔍 Buscar popup..."
-                       value={searchFilters['cta-popup'] || ''}
-                       onFocus={() => setIsListOpen(prev => ({ ...prev, 'cta-popup': true }))}
-                       onChange={(e) => {
-                         // ✅ SOLO actualizamos el filtro de busqueda, NO guardamos nada aun
-                         setSearchFilters(prev => ({ ...prev, 'cta-popup': e.target.value }));
-                         setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
-                         console.log('🔍 Buscando popup:', e.target.value);
-                       }}
-                       className="mb-1"
-                     />
-                       {isListOpen['cta-popup'] === true && (
-                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
-                        {AVAILABLE_POPUPS
-                          .filter(p => p.label.toLowerCase().includes((searchFilters['cta-popup'] || '').toLowerCase()))
-                          .map(popup => (
-                            <div 
-                              key={popup.value}
-                              onClick={() => {
-                                console.log('✅ Seleccionado popup:', popup.value);
-                                handleContentChange('ctaLink', popup.value, getFieldLang('hero-cta'));
-                                setSearchFilters(prev => ({ ...prev, 'cta-popup': '' }));
-                                setIsListOpen(prev => ({ ...prev, 'cta-popup': false }));
-                              }}
-                              className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
-                                sectionES.content.ctaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
-                              }`}
-                            >
-                              {popup.label}
-                            </div>
-                          ))}
-                      </div>
+                    // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
+                    <div className="relative">
+                      <Input
+                        placeholder="🔍 Buscar popup..."
+                        value={searchFilters['cta-popup'] !== undefined ? searchFilters['cta-popup'] : (
+                          AVAILABLE_POPUPS.find(p => p.value === sectionES.content.ctaLink)?.label || ''
+                        )}
+                        onFocus={() => {
+                          setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
+                          setSearchFilters(prev => ({ ...prev, 'cta-popup': '' }));
+                        }}
+                        onChange={(e) => {
+                          setSearchFilters(prev => ({ ...prev, 'cta-popup': e.target.value }));
+                          setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
+                        }}
+                        className="mb-1"
+                      />
+                      {isListOpen['cta-popup'] === true && (
+                        <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
+                      {AVAILABLE_POPUPS
+                        .filter(p => {
+                          const search = (searchFilters['cta-popup'] || '').toLowerCase().trim();
+                          // Limpiar el label de emojis para facilitar la busqueda
+                          const cleanLabel = p.label.toLowerCase().replace(/[^\w\s]/gi, '');
+                          return p.label.toLowerCase().includes(search) || cleanLabel.includes(search);
+                        })
+                        .map(popup => (
+                              <div 
+                                key={popup.value}
+                                onClick={() => {
+                                  console.log('✅ [SELECCION] Popup seleccionado:', popup.value, popup.label);
+                                  handleContentChange('ctaLink', popup.value, 'both');
+                                  setSearchFilters(prev => ({ ...prev, 'cta-popup': popup.label }));
+                                  setIsListOpen(prev => ({ ...prev, 'cta-popup': false }));
+                                }}
+                                className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
+                                  sectionES.content.ctaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
+                                }`}
+                              >
+                                {popup.label}
+                              </div>
+                            ))}
+                        </div>
                       )}
                     </div>
                  ) : (ctaType ?? sectionES.content.ctaActionType) === 'route' ? (
@@ -292,20 +315,21 @@ export function VisualEditorSidebar({
                    <div className="relative">
                      <Input
                        placeholder="🔍 Buscar página..."
-value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
+                       value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
                          AVAILABLE_ROUTES.find(r => r.value === sectionES.content.ctaLink)?.label || ''
                        )}
-                       onFocus={() => setIsListOpen(prev => ({ ...prev, 'cta-route': true }))}
+                       onFocus={() => {
+                         setIsListOpen(prev => ({ ...prev, 'cta-route': true }));
+                         setSearchFilters(prev => ({ ...prev, 'cta-route': '' }));
+                       }}
                        onChange={(e) => {
-                         // ✅ SOLO actualizamos el filtro de busqueda, NO guardamos nada aun
                          setSearchFilters(prev => ({ ...prev, 'cta-route': e.target.value }));
                          setIsListOpen(prev => ({ ...prev, 'cta-route': true }));
-                         console.log('🔍 Buscando pagina:', e.target.value);
                        }}
                        className="mb-1"
                      />
                        {isListOpen['cta-route'] === true && (
-                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50">
+                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
                         {AVAILABLE_ROUTES
                           .filter(r => r.label.toLowerCase().includes((searchFilters['cta-route'] || '').toLowerCase()))
                           .map(route => (
@@ -313,13 +337,9 @@ value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
                               key={route.value}
                             onClick={() => {
                                 console.log('✅ [SELECCION] Click en ruta:', route.value, route.label);
-                                // 1. Guardar el valor (ruta) en la base de datos
                                 handleContentChange('ctaLink', route.value, 'both');
-                                // 2. Mostrar el label en el input
                                 setSearchFilters(prev => ({ ...prev, 'cta-route': route.label }));
-                                // 3. Cerrar la lista
                                 setIsListOpen(prev => ({ ...prev, 'cta-route': false }));
-                                console.log('✅ [SELECCION] isListOpen despues:', isListOpen['cta-route']);
                               }}
                               className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
                                 sectionES.content.ctaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
@@ -358,15 +378,25 @@ value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
                      className="w-full text-[11px] h-8 border rounded-md bg-white px-2"
                      value={ctaType2 ?? sectionES.content.secondaryCtaActionType ?? 'url'}
                      onChange={(e) => {
-                       // ✅ 1. ACTUALIZAR PRIMERO EL ESTADO LOCAL - SE RENDERIZA INMEDIATAMENTE
-                       setCtaType2(e.target.value);
-                       // ✅ 2. DESPUES ENVIAR AL PADRE
-                       handleContentChange('secondaryCtaActionType', e.target.value, 'both');
-                       // Poner valor por defecto segun el tipo seleccionado
-                       let defaultValue = '';
-                       if (e.target.value === 'route') defaultValue = '/';
-                       if (e.target.value === 'popup') defaultValue = 'exit-intent';
-                       handleContentChange('secondaryCtaLink', defaultValue, 'both');
+                       const newType = e.target.value;
+                       console.log('✅ [FINAL FIX] Cambiando tipo de accion 2 a:', newType);
+                       setCtaType2(newType);
+
+                       let defaultValue = sectionES.content.secondaryCtaLink || '';
+                       if (newType === 'route' && !defaultValue.startsWith('/')) defaultValue = '/';
+                       if (newType === 'popup') defaultValue = 'exit-intent';
+
+                       // UNIFICAR CAMBIOS EN UNA SOLA LLAMADA PARA EVITAR CONDICIÓN DE CARRERA
+                       onUpdateSection(sectionES.id, { 
+                         ...sectionES.content, 
+                         secondaryCtaActionType: newType, 
+                         secondaryCtaLink: defaultValue 
+                       }, 'es');
+                       onUpdateSection(sectionEN.id, { 
+                         ...sectionEN.content, 
+                         secondaryCtaActionType: newType, 
+                         secondaryCtaLink: defaultValue 
+                       }, 'en');
                      }}
                    >
                      <option value="url">🌐 URL Externa</option>
@@ -377,60 +407,90 @@ value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
 
                  {/* ✅ CAMPO DINAMICO SEGUN TIPO SELECCIONADO */}
                  {(ctaType2 ?? sectionES.content.secondaryCtaActionType) === 'popup' ? (
-                   // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
-                   <div className="relative">
-                     <Input
-                       placeholder="🔍 Buscar popup..."
-                       value={searchFilters['cta2-popup'] || ''}
-                       onChange={(e) => setSearchFilters(prev => ({ ...prev, 'cta2-popup': e.target.value }))}
-                       className="mb-1"
-                     />
-                     <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
-                       {AVAILABLE_POPUPS
-                         .filter(p => p.label.toLowerCase().includes((searchFilters['cta2-popup'] || '').toLowerCase()))
-                         .map(popup => (
-                           <div 
-                             key={popup.value}
-                             onClick={() => {
-                               handleContentChange('secondaryCtaLink', popup.value, getFieldLang('hero-cta2'));
-                               setSearchFilters(prev => ({ ...prev, 'cta2-popup': '' }));
-                             }}
-                             className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
-                               sectionES.content.secondaryCtaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
-                             }`}
-                           >
-                             {popup.label}
-                           </div>
-                         ))}
-                     </div>
-                   </div>
+                    // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
+                    <div className="relative">
+                      <Input
+                        placeholder="🔍 Buscar popup..."
+                        value={searchFilters['cta2-popup'] !== undefined ? searchFilters['cta2-popup'] : (
+                          AVAILABLE_POPUPS.find(p => p.value === sectionES.content.secondaryCtaLink)?.label || ''
+                        )}
+                        onFocus={() => {
+                          setIsListOpen(prev => ({ ...prev, 'cta2-popup': true }));
+                          setSearchFilters(prev => ({ ...prev, 'cta2-popup': '' }));
+                        }}
+                        onChange={(e) => {
+                          setSearchFilters(prev => ({ ...prev, 'cta2-popup': e.target.value }));
+                          setIsListOpen(prev => ({ ...prev, 'cta2-popup': true }));
+                        }}
+                        className="mb-1"
+                      />
+                      {isListOpen['cta2-popup'] === true && (
+                        <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
+                      {AVAILABLE_POPUPS
+                        .filter(p => {
+                          const search = (searchFilters['cta2-popup'] || '').toLowerCase().trim();
+                          const cleanLabel = p.label.toLowerCase().replace(/[^\w\s]/gi, '');
+                          return p.label.toLowerCase().includes(search) || cleanLabel.includes(search);
+                        })
+                        .map(popup => (
+                              <div 
+                                key={popup.value}
+                                onClick={() => {
+                                  console.log('✅ [SELECCION] Popup 2 seleccionado:', popup.value, popup.label);
+                                  handleContentChange('secondaryCtaLink', popup.value, 'both');
+                                  setSearchFilters(prev => ({ ...prev, 'cta2-popup': popup.label }));
+                                  setIsListOpen(prev => ({ ...prev, 'cta2-popup': false }));
+                                }}
+                                className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
+                                  sectionES.content.secondaryCtaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
+                                }`}
+                              >
+                                {popup.label}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
                  ) : (ctaType2 ?? sectionES.content.secondaryCtaActionType) === 'route' ? (
                    // ✅ BUSCADOR AUTOCOMPLETADO DE RUTAS
                    <div className="relative">
                      <Input
                        placeholder="🔍 Buscar página..."
-                       value={searchFilters['cta2-route'] || ''}
-                       onChange={(e) => setSearchFilters(prev => ({ ...prev, 'cta2-route': e.target.value }))}
+                       value={searchFilters['cta2-route'] !== undefined ? searchFilters['cta2-route'] : (
+                         AVAILABLE_ROUTES.find(r => r.value === sectionES.content.secondaryCtaLink)?.label || ''
+                       )}
+                       onFocus={() => {
+                         setIsListOpen(prev => ({ ...prev, 'cta2-route': true }));
+                         setSearchFilters(prev => ({ ...prev, 'cta2-route': '' }));
+                       }}
+                       onChange={(e) => {
+                         setSearchFilters(prev => ({ ...prev, 'cta2-route': e.target.value }));
+                         setIsListOpen(prev => ({ ...prev, 'cta2-route': true }));
+                       }}
                        className="mb-1"
                      />
-                     <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white">
-                       {AVAILABLE_ROUTES
-                         .filter(r => r.label.toLowerCase().includes((searchFilters['cta2-route'] || '').toLowerCase()))
-                         .map(route => (
-                           <div 
-                             key={route.value}
-                             onClick={() => {
-                               handleContentChange('secondaryCtaLink', route.value, getFieldLang('hero-cta2'));
-                               setSearchFilters(prev => ({ ...prev, 'cta2-route': '' }));
-                             }}
-                             className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
-                               sectionES.content.secondaryCtaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
-                             }`}
-                           >
-                             {route.label}
-                           </div>
-                         ))}
-                     </div>
+                     {isListOpen['cta2-route'] === true && (
+                       <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
+                         {AVAILABLE_ROUTES
+                           .filter(r => r.label.toLowerCase().includes((searchFilters['cta2-route'] || '').toLowerCase()))
+                           .map(route => (
+                             <div 
+                               key={route.value}
+                               onClick={() => {
+                                 console.log('✅ [SELECCION] Ruta 2 seleccionada:', route.value, route.label);
+                                 handleContentChange('secondaryCtaLink', route.value, 'both');
+                                 setSearchFilters(prev => ({ ...prev, 'cta2-route': route.label }));
+                                 setIsListOpen(prev => ({ ...prev, 'cta2-route': false }));
+                               }}
+                               className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
+                                 sectionES.content.secondaryCtaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
+                               }`}
+                             >
+                               {route.label}
+                             </div>
+                           ))}
+                       </div>
+                     )}
                    </div>
                  ) : (
                    <Input
@@ -537,20 +597,7 @@ value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
                       </div>
                     </div>
 
-                     <Input
-                       placeholder="🔍 Buscar popup..."
-                       value={searchFilters['cta-popup'] || (
-                         AVAILABLE_POPUPS.find(p => p.value === sectionES.content.ctaLink)?.label || ''
-                       )}
-                       onFocus={() => setIsListOpen(prev => ({ ...prev, 'cta-popup': true }))}
-                       onChange={(e) => {
-                         // ✅ SOLO actualizamos el filtro de busqueda, NO guardamos nada aun
-                         setSearchFilters(prev => ({ ...prev, 'cta-popup': e.target.value }));
-                         setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
-                         console.log('🔍 Buscando popup:', e.target.value);
-                       }}
-                       className="mb-1"
-                     />
+
 
                     <RichTextEditor
                       placeholder="Descripción"

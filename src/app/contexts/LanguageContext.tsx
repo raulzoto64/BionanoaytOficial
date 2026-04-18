@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabaseAPI } from '../data/supabase';
 
-type Language = 'es' | 'en';
+export type Language = 'es' | 'en';
 
 interface LanguageContextType {
   language: Language;

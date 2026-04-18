@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router';
-import { ArrowLeft, ShoppingCart, Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Package, ChevronLeft, ChevronRight, Search, Mail } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
@@ -13,12 +13,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../components/ui/dialog";
 import { useLanguage } from '../contexts/LanguageContext';
 import { useDatabase } from '../hooks/useDatabase';
 import { supabaseAPI, Product, ProductTranslation, PriceByQuantity } from '../data/supabase';
 import { toast } from 'sonner';
 import { ProductTabs } from '../components/ProductTabs';
 import { useAuth } from '../hooks/useAuth';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -27,6 +36,7 @@ export function ProductDetail() {
   const { language, t } = useLanguage();
   const { updateTrigger } = useDatabase();
   const { user, isAuthenticated, guestId: hookGuestId } = useAuth();
+  const { trackEvent } = useAnalytics();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [translation, setTranslation] = useState<ProductTranslation | null>(null);
@@ -39,8 +49,34 @@ export function ProductDetail() {
     currency: string;
   } | null>(null);
   const [selectedPackagingType, setSelectedPackagingType] = useState<string>('');
+  const [packagingOptions, setPackagingOptions] = useState<{original: string, formatted: string}[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 640);
+
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+  
+  const [quoteForm, setQuoteForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+    message: ''
+  });
+
+  const [contactForm, setContactForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    message: ''
+  });
+
+  // Efecto para pre-cargar datos del usuario si cambia el estado de auth
+  useEffect(() => {
+    if (user) {
+      setQuoteForm(prev => ({ ...prev, name: user.name || '', email: user.email || '' }));
+      setContactForm(prev => ({ ...prev, name: user.name || '', email: user.email || '' }));
+    }
+  }, [user]);
 
   const handleBack = () => {
     navigate("/store");
@@ -81,6 +117,23 @@ export function ProductDetail() {
     }
   }, [quantity, product, selectedPackagingType]); // Recalcular precio cuando cambie la cantidad o la embase
 
+  const formatPackaging = (pkg: string) => {
+    if (!pkg) return 'Sin embase';
+    const cleanPkg = pkg.trim();
+    if (!cleanPkg.includes(' ')) return cleanPkg;
+    
+    const parts = cleanPkg.split(/\s+/);
+    if (parts.length < 2) return cleanPkg;
+    
+    const hasVolumeUnit = cleanPkg.toLowerCase().includes('litro') || cleanPkg.toLowerCase().includes(' l') || / \d+[Ll]$/.test(cleanPkg);
+    const suffix = hasVolumeUnit ? '' : ' litros';
+    
+    if (!isNaN(Number(parts[0]))) {
+      return `${parts[1]} de ${parts[0]}${suffix}`;
+    }
+    return `${parts[0]} de ${parts[1]}${suffix}`;
+  };
+
   const loadProduct = async () => {
     if (!product) setLoading(true);
     try {
@@ -98,25 +151,19 @@ export function ProductDetail() {
       setTranslation(translationData);
       setPrices(pricesData);
       
-      // Obtener tipos de embase disponibles para el producto
-      const availablePackagingTypes = Array.from(
-        new Set(pricesData.map(price => {
-          const packaging = price.packaging || 'Sin embase';
-          return packaging.includes(' ') 
-            ? (() => {
-                const parts = packaging.split(' ');
-                if (!isNaN(Number(parts[0]))) {
-                  return `${parts[1]} de ${parts[0]} litros`;
-                }
-                return `${parts[0]} de ${parts[1]} litros`;
-              })()
-            : packaging;
-        }))
-      );
+      const pkgMap = new Map<string, string>();
+      pricesData.forEach(p => {
+        const raw = p.packaging || 'Sin embase';
+        if (!pkgMap.has(raw)) {
+          pkgMap.set(raw, formatPackaging(raw));
+        }
+      });
+
+      const options = Array.from(pkgMap.entries()).map(([original, formatted]) => ({ original, formatted }));
+      setPackagingOptions(options);
       
-      // Seleccionar el primer tipo de embase disponible si no hay uno seleccionado
-      if (availablePackagingTypes.length > 0 && !selectedPackagingType) {
-        setSelectedPackagingType(availablePackagingTypes[0]);
+      if (options.length > 0 && !selectedPackagingType) {
+        setSelectedPackagingType(options[0].original);
       }
     } catch (error) {
       toast.error('Error al cargar el producto');
@@ -126,70 +173,134 @@ export function ProductDetail() {
   };
 
   const calculatePricing = async () => {
-    if (!product) return;
+    if (!product || !selectedPackagingType) {
+      console.log('⚠️ [PRICING] Skip calculation: missing product or packaging');
+      return;
+    }
     
-    // Obtener el valor original de packaging (sin formatear) para pasar a la API
-    const originalPackaging = prices.find(price => {
-      const formatted = price.packaging?.includes(' ') 
-        ? (() => {
-            const parts = price.packaging.split(' ');
-            if (!isNaN(Number(parts[0]))) {
-              return `${parts[1]} de ${parts[0]} litros`;
-            }
-            return `${parts[0]} de ${parts[1]} litros`;
-          })()
-        : price.packaging || 'Sin embase';
-      return formatted === selectedPackagingType;
-    })?.packaging;
+    console.log(`💰 [PRICING] Starting for product: ${product.slug}`, {
+      quantity,
+      packaging: selectedPackagingType
+    });
 
-    const pricing = await supabaseAPI.calculatePrice(product.id, quantity, originalPackaging);
-    setCalculatedPrice(pricing);
+    try {
+      const pricing = await supabaseAPI.calculatePrice(product.id, quantity, selectedPackagingType);
+      console.log('✅ [PRICING] Calculation success:', pricing);
+      setCalculatedPrice(pricing);
+    } catch (err) {
+      console.error('❌ [PRICING] Calculation error:', err);
+    }
   };
 
   const handleAddToCart = async () => {
-    if (!product || !translation || !calculatedPrice) return;
+    console.log('🛒 [ACTION] handleAddToCart triggered');
+    
+    if (!product || !translation) {
+      console.log('⚠️ [ACTION] Aborted: missing core data', { 
+        hasProduct: !!product, 
+        hasTranslation: !!translation
+      });
+      return;
+    }
+
+    if (!calculatedPrice) {
+      console.log('ℹ️ [ACTION] Proceeding without calculated price (possibly quantity below minimum)');
+    }
 
     try {
       const userId = isAuthenticated && user ? user.id : null;
       const guestId = !isAuthenticated ? hookGuestId : null;
 
+      console.log('👤 [SESSION] Context:', { userId, guestId, isAuth: isAuthenticated });
+
       if (!userId && !guestId) {
+        console.error('❌ [SESSION] No valid identifiers found');
         toast.error('No se pudo obtener la sesión de usuario');
         return;
       }
-      
-      // Obtener el valor original de packaging (sin formatear) para pasar a la API
-      const originalPackaging = prices.find(price => {
-        const formatted = price.packaging?.includes(' ') 
-          ? (() => {
-              const parts = price.packaging.split(' ');
-              if (!isNaN(Number(parts[0]))) {
-                return `${parts[1]} de ${parts[0]} litros`;
-              }
-              return `${parts[0]} de ${parts[1]} litros`;
-            })()
-          : price.packaging || 'Sin embase';
-        return formatted === selectedPackagingType;
-      })?.packaging;
 
-      console.log('handleAddToCart - Packaging Info:', {
-        originalPackaging,
-        selectedPackagingType
+      console.log('🚀 [API] Sending to addToCart:', {
+        productId: product.id,
+        quantity,
+        packaging: selectedPackagingType
       });
 
-      await supabaseAPI.addToCart(userId, guestId, product.id, quantity, originalPackaging);
+      const result = await supabaseAPI.addToCart(userId, guestId, product.id, quantity, selectedPackagingType);
+      console.log('✨ [API] addToCart Succesful result:', result);
+      
+      // Lanzar rastreador de telemetría de negocio
+      await trackEvent('add_to_cart', {
+        product_slug: product.slug,
+        product_name: translation.name,
+        quantity: quantity,
+        packaging: selectedPackagingType,
+        total_estimate: calculatedPrice?.total || 0
+      });
       
       toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
+    } catch (error: any) {
+      console.error('🔥 [FATAL] Error in handleAddToCart:', error);
+      toast.error(`Error: ${error.message || 'No se pudo agregar al carrito'}`);
+    }
+  };
+
+  const handleLeadSubmit = async (type: 'Quote' | 'Contact') => {
+    if (!product || !translation) return;
+    
+    const currentForm = type === 'Quote' ? quoteForm : contactForm;
+
+    if (!currentForm.name || !currentForm.email) {
+      toast.error('Por favor completa los campos obligatorios');
+      return;
+    }
+
+    try {
+      setIsSubmittingLead(true);
+      const result = await supabaseAPI.syncLead({
+        name: currentForm.name,
+        email: currentForm.email,
+        phone: type === 'Quote' ? (currentForm as any).phone : '',
+        lead_type: type === 'Quote' ? 'Quotation' : 'Contact',
+        page_url: window.location.href,
+        status: 'new',
+        visitor_id: hookGuestId,
+        user_id: isAuthenticated && user ? user.id : undefined,
+        metadata: {
+          product_id: product.id,
+          product_name: translation.name,
+          packaging: selectedPackagingType,
+          quantity: quantity,
+          message: currentForm.message,
+          source: 'ProductDetail'
+        }
+      });
+
+      toast.success(type === 'Quote' 
+        ? 'Solicitud de cotización enviada correctamente' 
+        : 'Mensaje de contacto enviado. Te responderemos pronto.'
+      );
+      
+      if (type === 'Quote') {
+        setIsQuoteModalOpen(false);
+        setQuoteForm(prev => ({ ...prev, message: '' }));
+      } else {
+        setIsContactModalOpen(false);
+        setContactForm(prev => ({ ...prev, message: '' }));
+      }
     } catch (error) {
-      console.error('Error al agregar al carrito:', error);
-      toast.error('Error al agregar el producto al carrito');
+      console.error('Lead submission failed:', error);
+      toast.error('Ocurrió un error al enviar tus datos');
+    } finally {
+      setIsSubmittingLead(false);
     }
   };
 
   const handleRequestQuote = () => {
-    if (!translation) return;
-    // Aquí conectarás con tu sistema de cotizaciones
-    toast.success(`Cotización solicitada para ${translation.name}`);
+    setIsQuoteModalOpen(true);
+  };
+
+  const handleContact = () => {
+    setIsContactModalOpen(true);
   };
 
   const formatPrice = (price: number, currency: string) => {
@@ -214,36 +325,8 @@ export function ProductDetail() {
     return null;
   }
 
-  // Obtener tipos de embase disponibles para el producto
-  const availablePackagingTypes = Array.from(
-    new Set(prices.map(price => {
-      const packaging = price.packaging || 'Sin embase';
-      return packaging.includes(' ') 
-        ? (() => {
-            const parts = packaging.split(' ');
-            if (!isNaN(Number(parts[0]))) {
-              return `${parts[1]} de ${parts[0]} litros`;
-            }
-            return `${parts[0]} de ${parts[1]} litros`;
-          })()
-        : packaging;
-    }))
-  );
-
   // Filtrar precios por tipo de embase seleccionado
-  const filteredPrices = prices.filter(price => {
-    const packaging = price.packaging || 'Sin embase';
-    const packagingType = packaging.includes(' ') 
-      ? (() => {
-          const parts = packaging.split(' ');
-          if (!isNaN(Number(parts[0]))) {
-            return `${parts[1]} de ${parts[0]} litros`;
-          }
-          return `${parts[0]} de ${parts[1]} litros`;
-        })()
-      : packaging;
-    return packagingType === selectedPackagingType;
-  });
+  const filteredPrices = prices.filter(price => (price.packaging || 'Sin embase') === selectedPackagingType);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F7F9CE] to-white">
@@ -393,7 +476,7 @@ export function ProductDetail() {
                 <h3 className="text-2xl mb-4 text-[#1C5D15]">{t('price.volume_pricing')}</h3>
                 
                 {/* Selector de tipo de embase */}
-                {availablePackagingTypes.length > 1 && (
+                {packagingOptions.length > 1 && (
                   <div className="mb-6">
                     <Label>Tipo de Embase</Label>
                     <Select value={selectedPackagingType} onValueChange={setSelectedPackagingType}>
@@ -401,9 +484,9 @@ export function ProductDetail() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {availablePackagingTypes.map((packagingType) => (
-                          <SelectItem key={packagingType} value={packagingType}>
-                            {packagingType}
+                        {packagingOptions.map((opt) => (
+                          <SelectItem key={opt.original} value={opt.original}>
+                            {opt.formatted}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -534,7 +617,7 @@ export function ProductDetail() {
               {t('btn.add_to_cart')}
             </Button>
             <Button
-              onClick={handleRequestQuote}
+              onClick={handleContact}
               size="lg"
               variant="outline"
               className="border-white text-[#1C5D15] hover:bg-white hover:text-[#1C5D15]"
@@ -544,6 +627,121 @@ export function ProductDetail() {
           </div>
         </Card>
       </div>
+
+      {/* Modales de Captura de Leads */}
+      <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-[#F7F9CE] border-2 border-[#1C5D15]/20 rounded-3xl p-0 overflow-hidden">
+          <div className="p-6 bg-[#1C5D15] text-white">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-[#19FF00] uppercase italic tracking-tighter">Solicitar Cotización</DialogTitle>
+              <DialogDescription className="font-bold text-[#F7F9CE]/80 text-xs uppercase tracking-widest">
+                Recibirás una propuesta formal para {translation.name} ({selectedPackagingType}).
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-6 grid gap-4">
+            <div className="grid gap-2">
+              <Label className="uppercase text-[9px] font-black text-[#1C5D15] tracking-[0.2em]">Nombre Completo</Label>
+              <Input 
+                value={quoteForm.name} 
+                onChange={e => setQuoteForm({...quoteForm, name: e.target.value})}
+                placeholder="Ej: Juan Pérez" 
+                className="rounded-xl border-[#629960]/20 bg-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="uppercase text-[9px] font-black text-[#1C5D15] tracking-[0.2em]">Correo Electrónico</Label>
+              <Input 
+                value={quoteForm.email}
+                onChange={e => setQuoteForm({...quoteForm, email: e.target.value})}
+                type="email" 
+                placeholder="juan@empresa.com" 
+                className="rounded-xl border-[#629960]/20 bg-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="uppercase text-[9px] font-black text-[#1C5D15] tracking-[0.2em]">Teléfono / WhatsApp</Label>
+              <Input 
+                value={quoteForm.phone}
+                onChange={e => setQuoteForm({...quoteForm, phone: e.target.value})}
+                placeholder="+57..." 
+                className="rounded-xl border-[#629960]/20 bg-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="uppercase text-[9px] font-black text-[#1C5D15] tracking-[0.2em]">Requerimiento Especial</Label>
+              <textarea 
+                value={quoteForm.message}
+                onChange={e => setQuoteForm({...quoteForm, message: e.target.value})}
+                className="w-full rounded-xl border-[#629960]/20 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1C5D15]/20 min-h-[80px]"
+                placeholder="¿Tienes alguna solicitud específica?"
+              />
+            </div>
+
+            <Button 
+              onClick={() => handleLeadSubmit('Quote')} 
+              disabled={isSubmittingLead}
+              className="w-full bg-[#1C5D15] text-[#19FF00] hover:bg-[#1C5D15] font-black uppercase tracking-[0.2em] py-6 rounded-2xl shadow-xl shadow-[#1C5D15]/20 mt-2"
+            >
+              {isSubmittingLead ? 'Enviando...' : 'Enviar Solicitud'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white border-2 border-[#1C5D15]/20 rounded-3xl p-0 overflow-hidden">
+          <div className="p-6 bg-gradient-to-r from-[#1C5D15] to-[#629960] text-white">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tighter flex items-center gap-2">
+                <Mail className="w-6 h-6 text-[#19FF00]" />
+                Contactar Experto
+              </DialogTitle>
+              <DialogDescription className="font-bold text-white/70 text-xs uppercase tracking-widest">
+                Resolvemos tus dudas técnicas sobre {translation.name}.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 grid gap-4">
+            <div className="grid gap-2">
+              <Label className="uppercase text-[9px] font-black text-[#1C5D15] tracking-[0.2em]">Tu Nombre</Label>
+              <Input 
+                value={contactForm.name}
+                onChange={e => setContactForm({...contactForm, name: e.target.value})}
+                className="rounded-xl border-[#629960]/20 bg-[#F7F9CE]/30"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="uppercase text-[9px] font-black text-[#1C5D15] tracking-[0.2em]">Correo de Respuesta</Label>
+              <Input 
+                value={contactForm.email}
+                onChange={e => setContactForm({...contactForm, email: e.target.value})}
+                type="email"
+                className="rounded-xl border-[#629960]/20 bg-[#F7F9CE]/30"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="uppercase text-[9px] font-black text-[#1C5D15] tracking-[0.2em]">Consulta</Label>
+              <textarea 
+                value={contactForm.message}
+                onChange={e => setContactForm({...contactForm, message: e.target.value})}
+                className="w-full rounded-xl border-[#629960]/20 bg-[#F7F9CE]/30 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1C5D15]/20 min-h-[100px]"
+                placeholder="Escribe tu consulta aquí..."
+              />
+            </div>
+
+            <Button 
+              onClick={() => handleLeadSubmit('Contact')} 
+              disabled={isSubmittingLead}
+              className="w-full bg-[#1C5D15] text-white hover:bg-[#629960] font-black uppercase tracking-[0.2em] py-6 rounded-2xl"
+            >
+              {isSubmittingLead ? 'Enviando...' : 'Enviar Consulta'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

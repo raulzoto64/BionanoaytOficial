@@ -1,8 +1,9 @@
 import { ShoppingCart, Check, ArrowRight } from "lucide-react";
 import { Button } from "./ui/button";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useLanguage } from "../contexts/LanguageContext";
 import { Product, ProductTranslation } from "../data/supabase";
+import { handleAction } from "../utils/actions";
 
 interface ProductWithTranslation {
   id: string;
@@ -19,11 +20,13 @@ interface ProductsProps {
   subtitle: string;
   ctaText?: string;
   ctaLink?: string;
+  ctaActionType?: string;
   sectionId?: string;
 }
 
-export function Products({ products, title, subtitle, ctaText, ctaLink, sectionId }: ProductsProps) {
+export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActionType, sectionId }: ProductsProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   
   // Limit to 3 featured products
   const displayedProducts = (products || []).slice(0, 3);
@@ -133,11 +136,9 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, sectionI
           <Button 
             size="lg"
             className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
-            asChild
+            onClick={() => handleAction(ctaActionType, ctaLink || "/store", navigate)}
           >
-            <Link to={ctaLink || "/store"}>
-              {ctaText || t('btn.view_full_catalog')}
-            </Link>
+            {ctaText || t('btn.view_full_catalog')}
           </Button>
         </div>
       </div>

@@ -153,14 +153,16 @@ export function LeadsTable() {
     }
   };
 
-  const getStatusColor = (status: LeadStatus) => {
-    const colors: Record<LeadStatus, string> = {
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
       new: 'bg-blue-100 text-blue-800',
       contacted: 'bg-yellow-100 text-yellow-800',
       in_progress: 'bg-purple-100 text-purple-800',
-      closed: 'bg-green-100 text-green-800'
+      checkout_started: 'bg-orange-100 text-orange-800',
+      closed: 'bg-green-100 text-green-800',
+      lost: 'bg-red-100 text-red-800'
     };
-    return colors[status];
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const getLeadTypeLabel = (type: string) => {
@@ -180,7 +182,9 @@ export function LeadsTable() {
     new: leads.filter(l => l.status === 'new').length,
     contacted: leads.filter(l => l.status === 'contacted').length,
     inProgress: leads.filter(l => l.status === 'in_progress').length,
+    checkout: leads.filter(l => l.status === 'checkout_started').length,
     closed: leads.filter(l => l.status === 'closed').length,
+    lost: leads.filter(l => l.status === 'lost').length,
   };
 
   if (loading) return <div className="p-6 text-center">Cargando leads...</div>;
@@ -193,7 +197,7 @@ export function LeadsTable() {
       </div>
 
       {/* Panel Estadisticas Horizontal */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
         <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
           <div className="text-sm text-gray-500">Nuevos</div>
           <div className="text-2xl font-bold text-blue-600">{stats.new}</div>
@@ -206,9 +210,17 @@ export function LeadsTable() {
           <div className="text-sm text-gray-500">En Progreso</div>
           <div className="text-2xl font-bold text-purple-600">{stats.inProgress}</div>
         </div>
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+          <div className="text-sm text-gray-500">Pago Iniciado</div>
+          <div className="text-2xl font-bold text-orange-600">{stats.checkout}</div>
+        </div>
         <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
           <div className="text-sm text-gray-500">Cerrados</div>
           <div className="text-2xl font-bold text-green-600">{stats.closed}</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+          <div className="text-sm text-gray-500">Perdidos</div>
+          <div className="text-2xl font-bold text-red-600">{stats.lost}</div>
         </div>
       </div>
 
@@ -234,7 +246,9 @@ export function LeadsTable() {
               <option value="new">Nuevos</option>
               <option value="contacted">Contactados</option>
               <option value="in_progress">En progreso</option>
+              <option value="checkout_started">Pago Iniciado</option>
               <option value="closed">Cerrados</option>
+              <option value="lost">Perdidos</option>
             </select>
           </div>
           <div>
@@ -291,7 +305,9 @@ export function LeadsTable() {
                     <option value="new">Nuevo</option>
                     <option value="contacted">Contactado</option>
                     <option value="in_progress">En Progreso</option>
+                    <option value="checkout_started">Pago Iniciado</option>
                     <option value="closed">Cerrado</option>
+                    <option value="lost">Perdido</option>
                   </select>
                 </td>
                 <td className="px-3 py-3">
@@ -384,7 +400,9 @@ export function LeadsTable() {
                         <option value="new">Nuevo</option>
                         <option value="contacted">Contactado</option>
                         <option value="in_progress">En Progreso</option>
+                        <option value="checkout_started">Pago Iniciado</option>
                         <option value="closed">Cerrado</option>
+                        <option value="lost">Perdido</option>
                       </select>
                     </div>
                     <div className="flex justify-between py-1 border-b">
