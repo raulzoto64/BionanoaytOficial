@@ -23,6 +23,8 @@ interface DeviceCanvasProps {
   onDeleteSection?: (id: string) => void;
   onMoveSectionUp?: (id: string) => void;
   onMoveSectionDown?: (id: string) => void;
+  entityType?: 'page' | 'blog' | 'legal' | 'footer' | 'product';
+  page?: any;
 }
 
 export function DeviceCanvas({
@@ -43,6 +45,8 @@ export function DeviceCanvas({
   onDeleteSection,
   onMoveSectionUp,
   onMoveSectionDown,
+  entityType = 'page',
+  page
 }: DeviceCanvasProps) {
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -83,7 +87,7 @@ export function DeviceCanvas({
                 (deviceOrientation === 'landscape' ? 'h-[375px] rounded-[40px] border-[12px] border-[#111]' : 'h-[812px] rounded-[60px] border-[12px] border-[#111]') :
                 deviceView === 'tablet' ?
                   (deviceOrientation === 'landscape' ? 'h-[768px] rounded-[40px] border-[14px] border-[#111]' : 'h-[1024px] rounded-[40px] border-[14px] border-[#111]') :
-                  'w-full max-w-[1400px] rounded-xl h-[calc(100vh-120px)] min-h-[600px] shadow-none'
+                  `w-full max-w-[1400px] rounded-xl h-[calc(100vh-120px)] min-h-[600px] shadow-none ${entityType === 'legal' ? 'bg-[#F7F9CE]' : 'bg-white'}`
               }`}
           >
             {/* Notch */}
@@ -95,7 +99,7 @@ export function DeviceCanvas({
 
             <div className="h-full overflow-y-auto custom-scrollbar-content relative">
               {/* Overlay de carga que oculta el flash feo sin CSS */}
-              <div className={`absolute inset-0 bg-white z-[9999] flex items-center justify-center transition-all duration-500 ${isHydrated ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+              <div className={`absolute inset-0 bg-white z-[9999] flex items-center justify-center transition-all duration-500 ${isHydrated ? 'hidden pointer-events-none' : 'opacity-100'}`}>
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="w-8 h-8 text-[#1C5D15] animate-spin" />
                   <span className="text-xs uppercase tracking-widest text-[#1C5D15]/60 font-bold">Preparando vista</span>
@@ -104,26 +108,42 @@ export function DeviceCanvas({
 
               <PreviewFrame>
                 <div className="min-h-screen relative flex flex-col overflow-x-hidden">
-                  <div className="pointer-events-none opacity-90 saturate-50 z-50">
+                  <div className="pointer-events-none opacity-100 z-50">
                     <Navigation />
                   </div>
                   <div className="pt-20 flex-1">
-                    <VisualEditorPreview
-                      sections={activeSections}
-                      activeSectionId={activeSectionId}
-                      onSectionClick={setActiveSectionId}
-                      availableProducts={allProducts}
-                      availableEcosystemMembers={allEcosystemMembers}
-                      availableCategories={allCategories}
-                      availableBlogPosts={allBlogPosts}
-                      pageSlug={pageSlug}
-                      onDeleteSection={onDeleteSection}
-                      onMoveSectionUp={onMoveSectionUp}
-                      onMoveSectionDown={onMoveSectionDown}
-                    />
+                    {entityType !== 'footer' && (
+                      <VisualEditorPreview
+                        sections={activeSections}
+                        activeSectionId={activeSectionId}
+                        onSectionClick={setActiveSectionId}
+                        availableProducts={allProducts}
+                        availableEcosystemMembers={allEcosystemMembers}
+                        availableCategories={allCategories}
+                        availableBlogPosts={allBlogPosts}
+                        pageSlug={pageSlug}
+                        onDeleteSection={onDeleteSection}
+                        onMoveSectionUp={onMoveSectionUp}
+                        onMoveSectionDown={onMoveSectionDown}
+                        entityType={entityType}
+                        page={page}
+                      />
+                    )}
+                    {entityType === 'footer' && (
+                      <div className="flex items-center justify-center p-20 bg-gray-50/50 border-4 border-dashed border-[#1C5D15]/10 rounded-3xl m-10">
+                        <p className="font-black text-[#1C5D15]/30 uppercase tracking-[0.2em] text-center">
+                          Previsualización del Footer Global<br/>
+                          <span className="text-[10px] opacity-50">Desliza hacia abajo para ver cambios</span>
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="pointer-events-none opacity-90 saturate-50 mt-auto shrink-0 z-40 bg-white">
-                    <Footer contactInfo={{ phone: "+57 (300) 123-4567", email: "contacto@bionanoayt.com", location: "Bogotá, Colombia" }} />
+                  <div className={`mt-auto shrink-0 z-40 bg-white ${entityType === 'footer' ? 'ring-4 ring-[#19FF00] ring-inset' : 'pointer-events-none opacity-100'}`}
+                       onClick={() => entityType === 'footer' && setActiveSectionId('footer-main')}>
+                    <Footer 
+                      contactInfo={{ phone: "+57 (300) 123-4567", email: "contacto@bionanoayt.com", location: "Bogotá, Colombia" }} 
+                      settings={entityType === 'footer' ? activeSections[0]?.content : null}
+                    />
                   </div>
                 </div>
               </PreviewFrame>

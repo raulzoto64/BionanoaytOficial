@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useLanguage } from "../contexts/LanguageContext";
 import { DatabaseManager } from "../data/DatabaseManager";
 import { supabaseAPI, FooterSettings } from "../data/supabase";
+import { handleAction } from "../utils/actions";
+import { useNavigate } from "react-router";
 
 interface ContactInfo {
   phone: string;
@@ -16,12 +18,14 @@ interface ContactInfo {
 
 interface FooterProps {
   contactInfo: ContactInfo;
+  settings?: FooterSettings | null;
 }
 
-export function Footer({ contactInfo }: FooterProps) {
+export function Footer({ contactInfo, settings }: FooterProps) {
   const { t, language } = useLanguage();
-  const [footerSettings, setFooterSettings] = useState<FooterSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const [footerSettings, setFooterSettings] = useState<FooterSettings | null>(settings || null);
+  const [isLoading, setIsLoading] = useState(!settings);
   const [siteSettings, setSiteSettings] = useState<any>(null);
   
   const [formData, setFormData] = useState({
@@ -31,9 +35,14 @@ export function Footer({ contactInfo }: FooterProps) {
   });
 
   useEffect(() => {
-    loadFooterSettings();
+    if (settings) {
+      setFooterSettings(settings);
+      setIsLoading(false);
+    } else {
+      loadFooterSettings();
+    }
     loadSiteSettings();
-  }, []);
+  }, [settings]);
 
   const loadSiteSettings = async () => {
     try {
@@ -96,14 +105,22 @@ export function Footer({ contactInfo }: FooterProps) {
               {column.links.map((link) => (
                 <li key={link.id}>
                   <a
-                    href={link.type === 'category_dropdown' ? `/store?category=${link.category_id}` : link.url}
-                    className="text-white/80 hover:text-[#19FF00] transition-colors flex items-center gap-1"
-                    target={link.url.startsWith('http') ? '_blank' : '_self'}
-                    rel={link.url.startsWith('http') ? 'noopener noreferrer' : ''}
+                    href={link.type === 'category_dropdown' ? `/store?category=${link.category_id}` : (link.actionType === 'route' ? link.url : '#')}
+                    className="text-white/80 hover:text-[#19FF00] transition-colors flex items-center gap-1 group/item"
+                    onClick={(e) => {
+                      if (link.type === 'category_dropdown' || link.actionType === 'route') return;
+                      e.preventDefault();
+                      handleAction(link.actionType, link.url, navigate);
+                    }}
+                    target={(link.url.startsWith('http') || link.actionType === 'url') ? '_blank' : '_self'}
+                    rel={(link.url.startsWith('http') || link.actionType === 'url') ? 'noopener noreferrer' : ''}
                   >
                     {language === 'es' ? link.label_es : link.label_en}
-                    {link.url.startsWith('http') && (
-                      <ExternalLink className="w-3 h-3" />
+                    {(link.url.startsWith('http') || link.actionType === 'url') && (
+                      <ExternalLink className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    )}
+                    {link.actionType === 'chat' && (
+                       <div className="w-1.5 h-1.5 bg-[#19FF00] rounded-full animate-pulse ml-0.5" />
                     )}
                   </a>
                 </li>

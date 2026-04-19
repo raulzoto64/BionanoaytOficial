@@ -4,7 +4,7 @@ import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { ImageUpload } from '../../ImageUpload';
-import { Trash2, Plus, X, Globe, CheckCircle2, AlertCircle, Zap, Database, Copy, Save } from 'lucide-react';
+import { Trash2, Plus, X, Globe, CheckCircle2, AlertCircle, Zap, Database, Copy, Save, Layout, Type, Newspaper, Search } from 'lucide-react';
 import { supabaseAPI } from '../../../data/supabase';
 import { toast } from 'sonner';
 import { RichTextEditor } from '../RichTextEditor';
@@ -23,6 +23,7 @@ interface VisualEditorSidebarProps {
   availableEcosystemMembers?: any[];
   availableForms?: Form[];
   pageSlug?: string;
+  entityType?: 'page' | 'blog' | 'legal' | 'footer' | 'product';
 }
 
 export function VisualEditorSidebar({ 
@@ -32,7 +33,8 @@ export function VisualEditorSidebar({
   availableProducts = [], 
   availableEcosystemMembers = [],
   availableForms = [],
-  pageSlug = ''
+  pageSlug = '',
+  entityType = 'page'
 }: VisualEditorSidebarProps) {
   const [fieldLangs, setFieldLangs] = useState<Record<string, 'es' | 'en'>>({});
   const [searchFilters, setSearchFilters] = useState<Record<string, string>>({});
@@ -43,6 +45,39 @@ export function VisualEditorSidebar({
   
   // ✅ Controlar si las listas estan abiertas o cerradas
   const [isListOpen, setIsListOpen] = useState<Record<string, boolean>>({});
+
+  // ✅ CARGA PEREZOSA (LAZY LOADING) DE CATÁLOGOS
+  const [lazyProducts, setLazyProducts] = useState<any[]>(availableProducts);
+  const [lazyMembers, setLazyMembers] = useState<any[]>(availableEcosystemMembers);
+  const [lazyCategories, setLazyCategories] = useState<any[]>([]);
+  const [lazyForms, setLazyForms] = useState<Form[]>(availableForms);
+
+  React.useEffect(() => {
+    // Si no tenemos productos y la pestaña es de 'config', cargar bajo demanda si aplicable
+    if (lazyProducts.length === 0 && (['products', 'featured', 'problems'].includes(sectionES.type))) {
+      console.log("🚚 [Sidebar] Lazy loading products...");
+      supabaseAPI.getProducts().then(prods => {
+         supabaseAPI.getAllProductTranslations('es').then(trans => {
+            const transMap = (trans || []).reduce((acc: any, t: any) => { acc[t.product_id] = t; return acc; }, {});
+            setLazyProducts((prods || []).map((p: any) => ({ ...p, translation: transMap[p.id] || null })));
+         });
+      });
+    }
+
+    if (lazyMembers.length === 0 && sectionES.type === 'trust') {
+      console.log("🚚 [Sidebar] Lazy loading ecosystem members...");
+      supabaseAPI.getEcosystemMembers().then(members => {
+         supabaseAPI.getAllEcosystemMemberTranslations('es').then(trans => {
+            const transMap = (trans || []).reduce((acc: any, t: any) => { acc[t.member_id] = t; return acc; }, {});
+            setLazyMembers((members || []).map((m: any) => ({ ...m, translation: transMap[m.id] || null })));
+         });
+      });
+    }
+
+    if (lazyForms.length === 0) {
+      supabaseAPI.getForms().then(setLazyForms);
+    }
+  }, [sectionES.type]);
 
   // ✅ SINCRONIZAR VALOR REAL CUANDO LLEGA DEL PADRE
   React.useEffect(() => {
@@ -64,7 +99,7 @@ export function VisualEditorSidebar({
 
   const AVAILABLE_POPUPS = [
     { value: 'exit-intent', label: '📩 Popup predeterminado (Exit Intent)' },
-    ...availableForms.map(form => ({
+    ...lazyForms.map(form => ({
       value: form.id,
       label: `📋 Formulario: ${form.name}`
     }))
@@ -77,12 +112,14 @@ export function VisualEditorSidebar({
     label, 
     value, 
     actionType, 
-    fieldPrefix = 'cta' 
+    fieldPrefix = 'cta',
+    onChange
   }: { 
     label: string; 
     value: string; 
     actionType: string | undefined; 
-    fieldPrefix?: 'cta' | 'secondaryCta' 
+    fieldPrefix?: 'cta' | 'secondaryCta' | string;
+    onChange?: (type: string, val: string) => void;
   }) => {
     const isPopup = actionType === 'popup';
     const isRoute = actionType === 'route';
@@ -101,11 +138,17 @@ export function VisualEditorSidebar({
               value={actionType || 'url'}
               onChange={(e) => {
                 const newType = e.target.value;
-                handleContentChange(`${fieldPrefix}ActionType`, newType, 'both');
-                // Valor por defecto según el tipo
-                if (newType === 'popup') handleContentChange(`${fieldPrefix}Link`, 'exit-intent', 'both');
-                else if (newType === 'route') handleContentChange(`${fieldPrefix}Link`, '/', 'both');
-                else if (newType === 'chat') handleContentChange(`${fieldPrefix}Link`, 'chat', 'both');
+                let defaultVal = '';
+                if (newType === 'popup') defaultVal = 'exit-intent';
+                else if (newType === 'route') defaultVal = '/';
+                else if (newType === 'chat') defaultVal = 'chat';
+                
+                if (onChange) {
+                  onChange(newType, defaultVal);
+                } else {
+                  handleContentChange(`${fieldPrefix}ActionType`, newType, 'both');
+                  handleContentChange(`${fieldPrefix}Link`, defaultVal, 'both');
+                }
               }}
             >
               <option value="url">🌐 URL Externa (Nueva Pestaña)</option>
@@ -125,7 +168,10 @@ export function VisualEditorSidebar({
                 <select
                   className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
                   value={value}
-                  onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+                  onChange={(e) => {
+                    if (onChange) onChange(actionType || 'popup', e.target.value);
+                    else handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both');
+                  }}
                 >
                   {AVAILABLE_POPUPS.map(p => (
                     <option key={p.value} value={p.value}>{p.label}</option>
@@ -135,7 +181,10 @@ export function VisualEditorSidebar({
                 <select
                   className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
                   value={value}
-                  onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+                  onChange={(e) => {
+                    if (onChange) onChange(actionType || 'route', e.target.value);
+                    else handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both');
+                  }}
                 >
                   {AVAILABLE_ROUTES.map(r => (
                     <option key={r.value} value={r.value}>{r.label}</option>
@@ -146,7 +195,10 @@ export function VisualEditorSidebar({
                   className="text-[10px] h-8 focus:ring-1 focus:ring-[#19FF00]"
                   placeholder="https://..."
                   value={value}
-                  onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+                  onChange={(e) => {
+                    if (onChange) onChange(actionType || 'url', e.target.value);
+                    else handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both');
+                  }}
                 />
               )}
             </div>
@@ -242,30 +294,421 @@ export function VisualEditorSidebar({
 
   return (
     <div className="flex flex-col gap-6 p-2">
-      <div className="bg-[#1C5D15]/5 rounded-xl p-4 border border-[#1C5D15]/20 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <h3 className="font-black text-[#1C5D15] uppercase tracking-widest text-[11px] flex items-center gap-2">
-              <Globe className="w-3.5 h-3.5 text-[#19FF00]" />
-              Sección: {sectionES.type}
-            </h3>
-            <p className="text-[10px] text-[#629960] font-bold uppercase tracking-tighter opacity-70">ID: {sectionES.id.split('-')[0]}...</p>
+      {entityType !== 'footer' && (
+        <div className="bg-[#1C5D15]/5 rounded-xl p-4 border border-[#1C5D15]/20 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <h3 className="font-black text-[#1C5D15] uppercase tracking-widest text-[11px] flex items-center gap-2">
+                <Globe className="w-3.5 h-3.5 text-[#19FF00]" />
+                Sección: {sectionES.type}
+              </h3>
+              <p className="text-[10px] text-[#629960] font-bold uppercase tracking-tighter opacity-70">ID: {sectionES.id.split('-')[0]}...</p>
+            </div>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={handleSaveToLibrary}
+              className="h-8 text-[10px] font-black uppercase tracking-tighter border-[#1C5D15]/30 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all gap-1.5 shadow-sm rounded-lg"
+            >
+              <Database className="w-3.5 h-3.5" />
+              Guardar en Biblioteca
+            </Button>
           </div>
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={handleSaveToLibrary}
-            className="h-8 text-[10px] font-black uppercase tracking-tighter border-[#1C5D15]/30 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all gap-1.5 shadow-sm rounded-lg"
-          >
-            <Database className="w-3.5 h-3.5" />
-            Guardar en Biblioteca
-          </Button>
+          <div className="flex items-center gap-2 bg-white/50 p-1.5 rounded-lg border border-[#1C5D15]/5">
+             <Zap className="w-3 h-3 text-[#19FF00] fill-[#19FF00]" />
+             <p className="text-[9px] text-[#1C5D15] font-bold uppercase tracking-tight">Editor Pro: Multi-idioma Sincronizado</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 bg-white/50 p-1.5 rounded-lg border border-[#1C5D15]/5">
-           <Zap className="w-3 h-3 text-[#19FF00] fill-[#19FF00]" />
-           <p className="text-[9px] text-[#1C5D15] font-bold uppercase tracking-tight">Editor Pro: Multi-idioma Sincronizado</p>
+      )}
+
+      {entityType === 'footer' && (
+        <div className="bg-gradient-to-r from-[#1C5D15] to-[#629960] rounded-2xl p-6 text-white shadow-lg space-y-2 mb-2 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+          <Layout className="w-8 h-8 text-[#19FF00] mb-2" />
+          <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Editor de Footer</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Configuración Global del Sitio</p>
         </div>
-      </div>
+      )}
+
+      {entityType === 'legal' && (
+        <div className="bg-gradient-to-r from-[#1C5D15] to-[#629960] rounded-2xl p-6 text-white shadow-lg space-y-2 mb-2 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+          <Database className="w-8 h-8 text-[#19FF00] mb-2" />
+          <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Página Legal</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Contenido de Términos o Privacidad</p>
+        </div>
+      )}
+
+      {entityType === 'blog' && (
+        <div className="bg-gradient-to-r from-[#1C5D15] to-[#629960] rounded-2xl p-6 text-white shadow-lg space-y-2 mb-2 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+          <Newspaper className="w-8 h-8 text-[#19FF00] mb-2" />
+          <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Editor de Blog</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Redacción de Noticia / Artículo</p>
+        </div>
+      )}
+
+      {/* SECCIÓN ESPECIAL: METADATOS DE PÁGINA (CABECERA) */}
+      {sectionES.id === 'page-header' && (
+        <div className="space-y-6">
+          <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-5 animate-in fade-in slide-in-from-right-4">
+             <h4 className="text-[11px] font-black text-[#1C5D15] uppercase tracking-widest flex items-center gap-2 border-b pb-3">
+               <Layout className="w-4 h-4 text-[#19FF00]" />
+               Metadatos de la {entityType === 'blog' ? 'Noticia' : 'Página'}
+             </h4>
+
+             {/* TÍTULO */}
+             <div className="space-y-2">
+                 <LanguageToggle fieldKey="meta-title" label="Título Principal" />
+                 <Input 
+                   value={(getFieldLang('meta-title') === 'es' ? sectionES.content.title_es : sectionEN.content.title_en) || ''}
+                   onChange={(e) => {
+                      const lang = getFieldLang('meta-title');
+                      handleContentChange(lang === 'es' ? 'title_es' : 'title_en', e.target.value, 'both');
+                   }}
+                   placeholder="Título impactante del artículo..."
+                   className="font-bold border-[#1C5D15]/20 focus:ring-[#19FF00]"
+                 />
+             </div>
+
+             {/* EXTRACTO / SUBTÍTULO */}
+             <div className="space-y-2">
+                <LanguageToggle fieldKey="meta-excerpt" label="Extracto / Resumen" />
+                <RichTextEditor 
+                  value={(getFieldLang('meta-excerpt') === 'es' ? sectionES.content.excerpt_es : sectionEN.content.excerpt_en) || ''}
+                  onChange={(val) => {
+                     const lang = getFieldLang('meta-excerpt');
+                     handleContentChange(lang === 'es' ? 'excerpt_es' : 'excerpt_en', val, 'both');
+                  }}
+                  minHeight="100px"
+                />
+             </div>
+
+             {/* IMAGEN DE PORTADA */}
+             <div className="space-y-2">
+                <Label className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Imagen de Portada</Label>
+                <ImageUpload 
+                  currentImage={sectionES.content.cover_image}
+                  onImageUpload={(url) => handleContentChange('cover_image', url, 'both')}
+                  type="banner"
+                />
+             </div>
+
+             {/* CATEGORÍA Y AUTOR (SOLO BLOG) */}
+             {entityType === 'blog' && (
+                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
+                   <div className="space-y-1.5">
+                      <Label className="text-[9px] font-black text-[#1C5D15] uppercase opacity-60">Categoría</Label>
+                      <Input 
+                        value={sectionES.content.category_name || ''}
+                        onChange={(e) => handleContentChange('category_name', e.target.value, 'both')}
+                        className="h-8 text-[10px]"
+                        placeholder="Ej: Biotecnología"
+                      />
+                   </div>
+                   <div className="space-y-1.5">
+                      <Label className="text-[9px] font-black text-[#1C5D15] uppercase opacity-60">Tipo</Label>
+                      <select 
+                        value={sectionES.content.type || 'article'}
+                        onChange={(e) => handleContentChange('type', e.target.value, 'both')}
+                        className="w-full h-8 text-[10px] border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+                      >
+                         <option value="article">📰 Artículo</option>
+                         <option value="news">🚩 Noticia</option>
+                      </select>
+                   </div>
+                </div>
+             )}
+
+             {entityType === 'blog' && (
+                <div className="space-y-1.5">
+                   <Label className="text-[9px] font-black text-[#1C5D15] uppercase opacity-60">Autor / Firma</Label>
+                   <Input 
+                     value={sectionES.content.author || ''}
+                     onChange={(e) => handleContentChange('author', e.target.value, 'both')}
+                     className="h-8 text-[10px]"
+                     placeholder="Nombre del redactor..."
+                   />
+                </div>
+             )}
+             
+             {entityType === 'blog' && (
+                <div className="space-y-4 pt-4 border-t border-[#1C5D15]/10">
+                   <h5 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest flex items-center gap-1.5 opacity-70">
+                     <Search className="w-3 h-3 text-[#19FF00]" />
+                     Optimización SEO
+                   </h5>
+                   
+                   <div className="space-y-2">
+                      <LanguageToggle fieldKey="meta-seo-title" label="Meta Título" />
+                      <Input 
+                        value={(getFieldLang('meta-seo-title') === 'es' ? sectionES.content.meta_title : sectionEN.content.meta_title) || ''}
+                        onChange={(e) => {
+                           const lang = getFieldLang('meta-seo-title');
+                           handleContentChange('meta_title', e.target.value, lang);
+                        }}
+                        placeholder="Título para buscadores (Google)..."
+                        className="text-[10px]"
+                      />
+                   </div>
+
+                   <div className="space-y-2">
+                      <LanguageToggle fieldKey="meta-seo-desc" label="Meta Descripción" />
+                      <Input 
+                        value={(getFieldLang('meta-seo-desc') === 'es' ? sectionES.content.meta_description : sectionEN.content.meta_description) || ''}
+                        onChange={(e) => {
+                           const lang = getFieldLang('meta-seo-desc');
+                           handleContentChange('meta_description', e.target.value, lang);
+                        }}
+                        placeholder="Descripción breve para resultados de búsqueda..."
+                        className="text-[10px]"
+                      />
+                   </div>
+
+                   <div className="space-y-2">
+                      <LanguageToggle fieldKey="meta-seo-keys" label="Palabras Clave" />
+                      <Input 
+                        value={(getFieldLang('meta-seo-keys') === 'es' ? sectionES.content.meta_keywords : sectionEN.content.meta_keywords) || ''}
+                        onChange={(e) => {
+                           const lang = getFieldLang('meta-seo-keys');
+                           handleContentChange('meta_keywords', e.target.value, lang);
+                        }}
+                        placeholder="Ej: biotecnología, manzanas, pesticidas..."
+                        className="text-[10px]"
+                      />
+                   </div>
+                </div>
+             )}
+          </div>
+          
+          <div className="p-4 bg-[#19FF00]/5 border border-dashed border-[#19FF00]/30 rounded-xl">
+             <p className="text-[9px] text-[#1C5D15] font-bold uppercase text-center italic">
+               💡 Los cambios en esta cabecera se verán reflejados al guardar.
+             </p>
+          </div>
+        </div>
+      )}
+      
+      {/* SECCIÓN ESPECIAL: FOOTER SETTINGS */}
+      {sectionES.type === 'footer-settings' && (
+        <div className="space-y-6">
+          <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5 text-[#19FF00]" />
+              Configuración de Copyright
+            </h4>
+            <div>
+              <LanguageToggle fieldKey="footer-copyright" label="Texto Copyright" />
+              <Input
+                value={(getFieldLang('footer-copyright') === 'es' ? sectionES.content.copyright_text_es : sectionEN.content.copyright_text_en) || ''}
+                onChange={(e) => {
+                  const lang = getFieldLang('footer-copyright');
+                  handleContentChange(lang === 'es' ? 'copyright_text_es' : 'copyright_text_en', e.target.value, 'both');
+                }}
+                placeholder="© {{year}} BionanoAyT..."
+              />
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-[#19FF00]" />
+              Redes Sociales
+            </h4>
+            {['facebook', 'twitter', 'instagram', 'linkedin'].map(social => (
+              <div key={social}>
+                <Label className="text-[9px] font-bold text-gray-400 uppercase mb-1 block">{social}</Label>
+                <Input
+                  value={sectionES.content.social_media?.[social] || ''}
+                  onChange={(e) => {
+                    const newSocial = { ...sectionES.content.social_media, [social]: e.target.value };
+                    handleContentChange('social_media', newSocial, 'both');
+                  }}
+                  placeholder="https://..."
+                  className="h-8 text-[10px]"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Columnas del Footer</h4>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-[9px] font-black uppercase"
+                onClick={() => {
+                   const newId = `col-${Date.now()}`;
+                   const newCol = { id: newId, title_es: 'Nueva Columna', title_en: 'New Column', links: [] };
+                   const newCols = [...(sectionES.content.columns || []), newCol];
+                   handleContentChange('columns', newCols, 'both');
+                }}
+              >
+                <Plus className="w-3 h-3 mr-1" /> Añadir
+              </Button>
+            </div>
+
+            {(sectionES.content.columns || []).map((column: any, colIdx: number) => (
+              <div key={column.id} className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-3 relative group">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 h-6 w-6 p-0 text-red-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => {
+                    const newCols = sectionES.content.columns.filter((_: any, i: number) => i !== colIdx);
+                    handleContentChange('columns', newCols, 'both');
+                  }}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+
+                <div>
+                  <LanguageToggle fieldKey={`footer-col-title-${colIdx}`} label={`Columna #${colIdx + 1}`} />
+                  <Input
+                    value={(getFieldLang(`footer-col-title-${colIdx}`) === 'es' ? column.title_es : column.title_en) || ''}
+                    onChange={(e) => {
+                       const lang = getFieldLang(`footer-col-title-${colIdx}`);
+                       const newCols = [...sectionES.content.columns];
+                       newCols[colIdx] = { ...newCols[colIdx], [lang === 'es' ? 'title_es' : 'title_en']: e.target.value };
+                       handleContentChange('columns', newCols, 'both');
+                    }}
+                    className="h-8 text-[11px]"
+                  />
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-gray-50">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[9px] font-bold text-gray-400 uppercase">Enlaces</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 text-[8px] font-black uppercase text-[#1C5D15]"
+                      onClick={() => {
+                        const newCols = [...sectionES.content.columns];
+                        const newLink = { id: `link-${Date.now()}`, label_es: 'Enlace', label_en: 'Link', url: '/', type: 'link' };
+                        newCols[colIdx].links = [...(newCols[colIdx].links || []), newLink];
+                        handleContentChange('columns', newCols, 'both');
+                      }}
+                    >
+                      <Plus className="w-2.5 h-2.5 mr-1" /> Link
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {(column.links || []).map((link: any, linkIdx: number) => (
+                      <div key={link.id} className="p-2 bg-gray-50 rounded-lg space-y-2 relative group/link">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute top-1 right-1 h-5 w-5 p-0 text-red-300 hover:text-red-500 opacity-0 group-hover/link:opacity-100"
+                          onClick={() => {
+                            const newCols = [...sectionES.content.columns];
+                            newCols[colIdx].links = newCols[colIdx].links.filter((_: any, i: number) => i !== linkIdx);
+                            handleContentChange('columns', newCols, 'both');
+                          }}
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </Button>
+
+                        <div>
+                          <LanguageToggle fieldKey={`footer-col-${colIdx}-link-${linkIdx}`} label="Etiqueta" />
+                          <Input
+                            value={(getFieldLang(`footer-col-${colIdx}-link-${linkIdx}`) === 'es' ? link.label_es : link.label_en) || ''}
+                            onChange={(e) => {
+                               const lang = getFieldLang(`footer-col-${colIdx}-link-${linkIdx}`);
+                               const newCols = [...sectionES.content.columns];
+                               newCols[colIdx].links[linkIdx] = { ...newCols[colIdx].links[linkIdx], [lang === 'es' ? 'label_es' : 'label_en']: e.target.value };
+                               handleContentChange('columns', newCols, 'both');
+                            }}
+                            className="h-7 text-[10px]"
+                          />
+                        </div>
+                         <ActionSelector 
+                           label="Acción / Link"
+                           value={link.url || ''}
+                           actionType={link.actionType || 'url'}
+                           onChange={(type, val) => {
+                             const newCols = [...sectionES.content.columns];
+                             newCols[colIdx].links[linkIdx] = { 
+                               ...newCols[colIdx].links[linkIdx], 
+                               url: val, 
+                               actionType: type 
+                             };
+                             handleContentChange('columns', newCols, 'both');
+                           }}
+                         />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-4 bg-gray-100 rounded-xl border border-dashed border-[#1C5D15]/30">
+             <p className="text-[10px] text-[#1C5D15]/50 font-bold uppercase text-center italic">
+               🔒 El formulario de captación (leads) no es editable
+             </p>
+          </div>
+        </div>
+      )}
+
+      {/* SECCIÓN ESPECIAL: RICH TEXT (PARA BLOG/LEGAL LEGACY O SIMPLE) */}
+      {sectionES.type === 'rich-text' && (
+        <div className="space-y-6">
+          <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
+            <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest flex items-center gap-2">
+              <Type className="w-3.5 h-3.5 text-[#19FF00]" />
+              Contenido de Cuerpo
+            </h4>
+            <div>
+              <LanguageToggle fieldKey="rich-text-content" label="Editor de Texto" />
+              <RichTextEditor
+                value={(getFieldLang('rich-text-content') === 'es' ? sectionES.content.html : sectionEN.content.html) || ''}
+                onChange={(val) => handleContentChange('html', val, getFieldLang('rich-text-content'))}
+                minHeight="400px"
+              />
+            </div>
+          </div>
+
+          {/* Bloque de CTA Personalizado - SOLO LEGAL */}
+          {entityType === 'legal' && (
+            <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4 font-sans animate-in fade-in slide-in-from-bottom-2">
+               <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2 flex items-center gap-2">
+                  <Zap className="w-3 h-3 text-[#19FF00] fill-[#19FF00]" />
+                  Botón de Contacto (CTA)
+               </h4>
+               <div className="space-y-4">
+                  <div>
+                     <LanguageToggle fieldKey="legal-cta-label" label="Frase Superior (Opcional)" />
+                     <Input
+                        placeholder="Ej: ¿Necesitas información adicional?"
+                        value={(getFieldLang('legal-cta-label') === 'es' ? sectionES.content.ctaLabel : sectionEN.content.ctaLabel) || ""}
+                        onChange={(e) => handleContentChange("ctaLabel", e.target.value, getFieldLang('legal-cta-label'))}
+                        className="text-xs h-9"
+                     />
+                  </div>
+                  <div>
+                     <LanguageToggle fieldKey="legal-cta-text" label="Texto del Botón" />
+                     <Input
+                        placeholder="Ej: Contáctanos"
+                        value={(getFieldLang('legal-cta-text') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
+                        onChange={(e) => handleContentChange("ctaText", e.target.value, getFieldLang('legal-cta-text'))}
+                        className="text-xs h-9"
+                     />
+                  </div>
+                  <ActionSelector 
+                    label="Acción del Botón"
+                    value={sectionES.content.ctaLink || ''}
+                    actionType={sectionES.content.ctaActionType}
+                    fieldPrefix="cta"
+                  />
+               </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tipo HERO BLOG */}
       {sectionES.type === 'hero-blog' && (
@@ -2110,6 +2553,132 @@ export function VisualEditorSidebar({
         </div>
       )}
 
+      {/* TIPO BLOG-TEXT y BLOG-INTRO */}
+      {(sectionES.type === "blog-text" || sectionES.type === "blog-intro") && (
+        <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+          <LanguageToggle fieldKey="blog-content" label="Contenido HTML" />
+          <RichTextEditor
+            value={(getFieldLang('blog-content') === 'es' ? sectionES.content.html : sectionEN.content.html) || ''}
+            onChange={(val) => handleContentChange('html', val, getFieldLang('blog-content'))}
+            minHeight="300px"
+          />
+        </div>
+      )}
+
+      {/* TIPO BLOG-QUOTE */}
+      {sectionES.type === "blog-quote" && (
+        <div className="space-y-6">
+          <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+             <div>
+                <LanguageToggle fieldKey="blog-quote-text" label="Cita / Testimonio" />
+                <textarea
+                  value={(getFieldLang('blog-quote-text') === 'es' ? sectionES.content.text : sectionEN.content.text) || ''}
+                  onChange={(e) => handleContentChange('text', e.target.value, getFieldLang('blog-quote-text'))}
+                  placeholder="Escribe la frase destacada aquí..."
+                  className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#19FF00] outline-none"
+                  rows={4}
+                />
+             </div>
+             <div>
+                <LanguageToggle fieldKey="blog-quote-author" label="Autor / Referencia" />
+                <Input
+                  value={(getFieldLang('blog-quote-author') === 'es' ? sectionES.content.author : sectionEN.content.author) || ''}
+                  onChange={(e) => handleContentChange('author', e.target.value, getFieldLang('blog-quote-author'))}
+                  placeholder="Ej: Dr. Alberto Linero"
+                  className="mt-1"
+                />
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TIPO BLOG-LIST */}
+      {sectionES.type === "blog-list" && (
+        <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+          <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">ELEMENTOS DE LA LISTA</Label>
+          {(sectionES.content.items || []).map((_: any, idx: number) => {
+            const fKey = `blog-list-item-${idx}`;
+
+            return (
+              <div key={idx} className="p-3 border rounded-lg bg-gray-50 relative group">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 rounded-full bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm border"
+                  onClick={() => {
+                    const newListES = (sectionES.content.items || []).filter((_: any, i: number) => i !== idx);
+                    const newListEN = (sectionEN.content.items || []).filter((_: any, i: number) => i !== idx);
+                    handleContentChange("items", newListES, 'es');
+                    handleContentChange("items", newListEN, 'en');
+                  }}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+
+                <LanguageToggle fieldKey={fKey} label={`Punto #${idx + 1}`} />
+                <Input
+                  value={(getFieldLang(fKey) === 'es' ? sectionES.content.items[idx] : sectionEN.content.items[idx]) || ''}
+                  onChange={(e) => {
+                    const lang = getFieldLang(fKey);
+                    const target = lang === 'es' ? sectionES : sectionEN;
+                    const newList = [...(target.content.items || [])];
+                    newList[idx] = e.target.value;
+                    handleContentChange("items", newList, lang);
+                  }}
+                  placeholder="Escribe el punto aquí..."
+                  className="mt-1"
+                />
+              </div>
+            );
+          })}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs py-5 border-dashed bg-white shadow-sm"
+            onClick={() => {
+              const currentES = sectionES.content.items || [];
+              const currentEN = sectionEN.content.items || [];
+              handleContentChange("items", [...currentES, ""], 'es');
+              handleContentChange("items", [...currentEN, ""], 'en');
+            }}
+          >
+            <Plus className="w-3 h-3 mr-2 text-[#1C5D15]" /> Agregar Item
+          </Button>
+        </div>
+      )}
+
+      {/* TIPO BLOG-IMAGE */}
+      {sectionES.type === "blog-image" && (
+        <div className="space-y-6">
+          <div className="p-3 bg-white border rounded-xl shadow-sm space-y-4">
+             <div>
+                <Label className="text-[#1C5D15] font-bold text-xs uppercase mb-2 block">Cargar Imagen</Label>
+                <ImageUpload
+                  currentImage={sectionES.content.url}
+                  onImageUpload={(url) => handleContentChange('url', url, 'both')}
+                  type="standard"
+                />
+             </div>
+             <div>
+                <LanguageToggle fieldKey="blog-caption" label="Texto Alternativo / Epígrafe" />
+                <Input
+                  value={(getFieldLang('blog-caption') === 'es' ? sectionES.content.caption : sectionEN.content.caption) || ''}
+                  onChange={(e) => handleContentChange('caption', e.target.value, getFieldLang('blog-caption'))}
+                  placeholder="Ej: Muestra microscópica de tejido vegetal..."
+                />
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TIPO BLOG-DIVIDER */}
+      {sectionES.type === "blog-divider" && (
+        <div className="p-4 bg-white border rounded-xl shadow-sm text-center">
+           <Label className="text-[#1C5D15] font-bold text-xs uppercase mb-2 block">Separador Visual</Label>
+           <p className="text-[10px] text-gray-400">Este bloque insertará automáticamente una línea verde suave para separar el contenido del artículo. No requiere configuración adicional.</p>
+        </div>
+      )}
+
       {sectionES.type === "custom" && (
         <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
           <LanguageToggle fieldKey="custom-json" label="JSON Content (Low Level)" />
@@ -2873,7 +3442,7 @@ export function VisualEditorSidebar({
       )}
 
       {/* Configuración Genérica de CTA Button para otras secciones */}
-      {!["hero", "ecosystem", "news", "products", "featured", "flipcards", "category-filter", "clientes", "certifications", "stats", "cta", "custom"].includes(sectionES.type) && (
+      {!["hero", "ecosystem", "news", "products", "featured", "flipcards", "category-filter", "clientes", "certifications", "stats", "cta", "custom", "footer-settings", "rich-text"].includes(sectionES.type) && (
         <div className="mt-8 pt-6 border-t border-[#1C5D15]/10 space-y-4">
           <h4 className="font-extrabold text-[#1C5D15] text-xs uppercase tracking-widest px-1">Botón de Acción Final (CTA) - Opcional</h4>
           <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">

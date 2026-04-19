@@ -25,10 +25,22 @@ export const getApiHeaders = () => {
  * Helper para manejar errores de respuesta fetch
  */
 export const handleApiResponse = async (response: Response) => {
-    if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+  const text = await response.text();
+  
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = JSON.parse(text);
+    } catch (e) {}
     
     throw new Error(errorData.message || errorData.error || `Error del servidor: ${response.status}`);
   }
-  return response.json();
+  
+  if (!text) return null; // Respuesta exitosa, pero vacía.
+  
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return text; // Es texto plano, lo devolvemos tal cual.
+  }
 };

@@ -5,7 +5,8 @@ import {
   ArrowUp, 
   ArrowDown, 
   Trash2, 
-  Zap
+  Zap,
+  Plus
 } from 'lucide-react';
 import { DynamicSection } from '../../DynamicSection';
 import { ProcessSectionPreview } from '../../../pages/Process';
@@ -25,6 +26,8 @@ interface VisualEditorPreviewProps {
   onDeleteSection?: (id: string) => void;
   onMoveSectionUp?: (id: string) => void;
   onMoveSectionDown?: (id: string) => void;
+  entityType?: 'page' | 'blog' | 'legal' | 'footer' | 'product';
+  page?: any;
 }
 
 interface EditableBlockProps {
@@ -38,6 +41,7 @@ interface EditableBlockProps {
   totalSections: number;
   children: React.ReactNode;
   label?: string;
+  hideControls?: boolean;
 }
 
 function EditableBlock({ 
@@ -50,7 +54,8 @@ function EditableBlock({
   index,
   totalSections,
   children, 
-  label = "Sección" 
+  label = "Sección",
+  hideControls = false
 }: EditableBlockProps) {
   const isActive = activeSectionId === sectionId;
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -71,36 +76,38 @@ function EditableBlock({
       }`}>
         <span>{label}</span>
         
-        <div className="flex items-center gap-1 border-l border-white/20 pl-3 ml-1">
-          <button 
-            disabled={index === 0}
-            onClick={(e) => { e.stopPropagation(); onMoveUp?.(sectionId); }}
-            className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
-            title="Mover arriba"
-          >
-            <ArrowUp size={14} />
-          </button>
-          
-          <button 
-            disabled={index === totalSections - 1}
-            onClick={(e) => { e.stopPropagation(); onMoveDown?.(sectionId); }}
-            className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
-            title="Mover abajo"
-          >
-            <ArrowDown size={14} />
-          </button>
-          
-          <button 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              setDeleteConfirmOpen(true);
-            }}
-            className="p-1 hover:text-red-400 transition-colors ml-1"
-            title="Eliminar sección"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+        {!hideControls && (
+          <div className="flex items-center gap-1 border-l border-white/20 pl-3 ml-1">
+            <button 
+              disabled={index === 0}
+              onClick={(e) => { e.stopPropagation(); onMoveUp?.(sectionId); }}
+              className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
+              title="Mover arriba"
+            >
+              <ArrowUp size={14} />
+            </button>
+            
+            <button 
+              disabled={index === totalSections - 1}
+              onClick={(e) => { e.stopPropagation(); onMoveDown?.(sectionId); }}
+              className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
+              title="Mover abajo"
+            >
+              <ArrowDown size={14} />
+            </button>
+            
+            <button 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setDeleteConfirmOpen(true);
+              }}
+              className="p-1 hover:text-red-400 transition-colors ml-1"
+              title="Eliminar sección"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
       <ConfirmModal
@@ -113,18 +120,13 @@ function EditableBlock({
         message="¿Estás seguro de que quieres eliminar esta sección de forma permanente?<br/>Esta acción no se puede deshacer."
       />
 
-      <div className={`${isActive ? 'opacity-100' : 'opacity-90 group-hover:opacity-100'} transition-opacity`}>
+      <div className={`${isActive ? 'opacity-100' : 'opacity-100 group-hover:opacity-100'} transition-opacity`}>
         {children}
       </div>
 
       {!isActive && (
-        <div className="absolute inset-0 bg-[#19FF00]/0 group-hover:bg-[#19FF00]/5 pointer-events-none transition-colors duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-            <div className="bg-white/95 backdrop-blur-sm text-[#1C5D15] px-4 py-2 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 border border-[#1C5D15]/10">
-              <Zap size={12} className="text-[#19FF00] fill-[#19FF00]" />
-              Click para editar
-            </div>
-          </div>
+        <div className="absolute inset-0 bg-transparent group-hover:bg-[#19FF00]/5 pointer-events-none transition-colors duration-300 flex items-center justify-center">
+          {/* Eliminado el overlay de 'Click para editar' para máxima fidelidad visual */}
         </div>
       )}
     </div>
@@ -142,9 +144,13 @@ export function VisualEditorPreview({
   pageSlug = '',
   onDeleteSection,
   onMoveSectionUp,
-  onMoveSectionDown
+  onMoveSectionDown,
+  entityType = 'page',
+  page
 }: VisualEditorPreviewProps) {
-  return (
+  const isLockedEntity = ['footer', 'product'].includes(entityType);
+
+  const renderSections = () => (
     <div className="space-y-0 relative">
       {sections.map((section, index) => {
         let PreviewComponent = null;
@@ -162,34 +168,152 @@ export function VisualEditorPreview({
         }
 
         return (
-          <EditableBlock
-            key={section.id}
-            sectionId={section.id}
-            activeSectionId={activeSectionId}
-            onClick={onSectionClick}
-            onDelete={onDeleteSection}
-            onMoveUp={onMoveSectionUp}
-            onMoveDown={onMoveSectionDown}
-            index={index}
-            totalSections={sections.length}
-            label={section.type.toUpperCase()}
-          >
-            {PreviewComponent || (
-              <DynamicSection 
-                section={section}
-                isEditor={true}
-                availableProducts={availableProducts}
-                availableCategories={availableCategories}
-                availableEcosystemMembers={availableEcosystemMembers}
-                availableBlogPosts={availableBlogPosts}
-                pageSlug={pageSlug}
-                onSectionClick={onSectionClick}
-                index={index}
-              />
+          <div key={section.id}>
+            <EditableBlock
+              sectionId={section.id}
+              activeSectionId={activeSectionId}
+              onClick={onSectionClick}
+              onDelete={onDeleteSection}
+              onMoveUp={onMoveSectionUp}
+              onMoveDown={onMoveSectionDown}
+              index={index}
+              totalSections={sections.length}
+              label={section.type === 'footer-settings' ? 'Configuración Footer' : (section.type === 'rich-text' ? 'Contenido Principal' : section.type.toUpperCase())}
+              hideControls={isLockedEntity}
+            >
+              <div className={entityType === 'blog' ? 'blog-content' : (entityType === 'legal' ? 'prose prose-lg max-w-none' : '')}>
+                {PreviewComponent || (
+                    <DynamicSection 
+                      section={section}
+                      isEditor={true}
+                      availableProducts={availableProducts}
+                      availableCategories={availableCategories}
+                      availableEcosystemMembers={availableEcosystemMembers}
+                      availableBlogPosts={availableBlogPosts}
+                      pageSlug={pageSlug}
+                      onSectionClick={onSectionClick}
+                      index={index}
+                      entityType={entityType}
+                    />
+                )}
+              </div>
+            </EditableBlock>
+
+            {!isLockedEntity && (
+               <div className="group/add relative flex justify-center py-4 my-2 opacity-0 hover:opacity-100 transition-opacity">
+                 <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-full h-px bg-gradient-to-r from-transparent via-[#19FF00]/30 to-transparent"></div>
+                 </div>
+                 <button 
+                   onClick={() => {
+                      const event = new CustomEvent('editor:open-library', { detail: { insertAt: index + 1 } });
+                      window.dispatchEvent(event);
+                   }}
+                   className="relative z-10 bg-white border-2 border-[#19FF00] text-[#1C5D15] p-2 rounded-full shadow-lg hover:bg-[#19FF00] transition-all hover:scale-110"
+                 >
+                   <Plus className="w-4 h-4" />
+                 </button>
+               </div>
             )}
-          </EditableBlock>
+          </div>
         );
       })}
     </div>
   );
+
+  if (entityType === 'blog' && page) {
+    const title = page.translation?.title || page.title || page.title_es || 'Título del Artículo';
+    const excerpt = page.translation?.excerpt || page.excerpt || '';
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-[#F0F9F0] py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <EditableBlock
+            sectionId="page-header"
+            activeSectionId={activeSectionId}
+            onClick={onSectionClick}
+            index={-1}
+            totalSections={sections.length}
+            label="Cabecera del Artículo"
+            hideControls={true}
+          >
+            <article className="bg-white rounded-t-lg shadow-lg overflow-hidden">
+              {page.cover_image && (
+                <div className="relative h-80 overflow-hidden">
+                  <img src={page.cover_image} alt={title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                </div>
+              )}
+              
+              <div className="p-8 pb-0">
+                <div className="flex flex-wrap items-center gap-4 mb-6">
+                  <span className="px-3 py-1 bg-[#19FF00]/20 text-[#1C5D15] text-sm font-medium rounded-full">
+                    {page.category_name || 'Industria y Regulación'}
+                  </span>
+                  <span className={`px-3 py-1 text-xs font-bold uppercase rounded-md ${page.type === 'news' ? 'bg-[#19FF00] text-[#1C5D15]' : 'bg-[#1C5D15] text-white'}`}>
+                    {page.type === 'news' ? 'NOTICIA' : 'ARTÍCULO'}
+                  </span>
+                  <span className="text-sm text-[#629960]">
+                    {new Date(page.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                  <span className="text-sm text-[#629960]">
+                    Por {page.author || 'BioNano A&T'}
+                  </span>
+                </div>
+
+                <h1 className="text-3xl md:text-4xl font-bold text-[#1C5D15] mb-6">
+                  {title}
+                </h1>
+
+                {excerpt && (
+                  <div className="border-l-4 border-[#19FF00] pl-6 py-2 mb-8 bg-[#F0F9F0]">
+                    <p className="text-lg text-[#629960] italic">{excerpt}</p>
+                  </div>
+                )}
+              </div>
+            </article>
+          </EditableBlock>
+
+          <div className="bg-white rounded-b-lg shadow-lg px-8 pb-12">
+            {renderSections()}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (entityType === 'legal' && page) {
+    const title = page.title_es || page.title_en || 'Página Legal';
+    
+    return (
+      <div className="min-h-screen bg-[#F7F9CE]">
+        <EditableBlock
+          sectionId="page-header"
+          activeSectionId={activeSectionId}
+          onClick={onSectionClick}
+          index={-1}
+          totalSections={sections.length}
+          label="Cabecera Legal"
+          hideControls={true}
+        >
+          <div className="bg-[#1C5D15] text-white py-12 px-6 shadow-md">
+            <div className="max-w-4xl mx-auto">
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
+              <p className="text-white/80">Información legal y política de la empresa</p>
+            </div>
+          </div>
+        </EditableBlock>
+        
+        <div className="py-12 px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-8">
+               {renderSections()}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return renderSections();
 }

@@ -136,5 +136,53 @@ export const DEFAULT_SECTION_TEMPLATES = [
       es: { title: 'Últimas Noticias' },
       en: { title: 'Latest News' }
     }
+  },
+  {
+    name: 'Artículo: Texto Enriquecido',
+    type: 'blog-text',
+    content: {
+      es: { html: '<h2>Encabezado de Sección</h2><p>Escribe aquí el contenido de tu artículo con el estilo institucional...</p>' },
+      en: { html: '<h2>Section Header</h2><p>Write your article content here with the institutional style...</p>' }
+    }
+  },
+  {
+    name: 'Artículo: Cita Destacada',
+    type: 'blog-quote',
+    content: {
+      es: { text: 'Esta es una cita importante que resalta dentro del artículo para captar la atención del lector.', author: 'BioNano A&T' },
+      en: { text: 'This is an important quote that stands out within the article to catch the reader\'s attention.', author: 'BioNano A&T' }
+    }
+  },
+  {
+    name: 'Artículo: Imagen con Epígrafe',
+    type: 'blog-image',
+    content: {
+      es: { url: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80', caption: 'Descripción detallada de la imagen para el artículo.' },
+      en: { url: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80', caption: 'Detailed image description for the article.' }
+    }
+  },
+  {
+    name: 'Artículo: Línea Divisora',
+    type: 'blog-divider',
+    content: {
+      es: { style: 'thin-green' },
+      en: { style: 'thin-green' }
+    }
+  },
+  {
+    name: 'Artículo: Texto Destacado (Párrafo)',
+    type: 'blog-intro',
+    content: {
+      es: { html: '<p>Este es un párrafo introductorio con tipografía destacada para captar el interés desde el inicio...</p>' },
+      en: { html: '<p>This is an introductory paragraph with prominent typography to capture interest from the start...</p>' }
+    }
+  },
+  {
+    name: 'Artículo: Lista Estilizada',
+    type: 'blog-list',
+    content: {
+      es: { items: ['Primer punto clave del artículo', 'Segundo hallazgo importante', 'Conclusión relevante'] },
+      en: { items: ['First key point of the article', 'Second important finding', 'Relevant conclusion'] }
+    }
   }
 ];

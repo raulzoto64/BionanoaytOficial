@@ -2,6 +2,21 @@
 .blog-content {
   line-height: 1.8;
   font-size: 18px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+/* Forzar que prose de Tailwind no se desborde */
+.blog-content .prose,
+.blog-content [class*="prose"],
+.blog-sections .prose,
+.blog-sections [class*="prose"] {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100% !important;
 }
 
 .blog-content h2 {

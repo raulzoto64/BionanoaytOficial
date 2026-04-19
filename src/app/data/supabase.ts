@@ -347,8 +347,10 @@ export const supabaseAPI = {
     return handleApiResponse(res).catch(() => null);
   },
   getAllProductTranslations: async (lang: string) => {
-    const res = await fetch(`${API_BASE_URL}/products/translations/${lang}`, { headers: getApiHeaders() });
-    return handleApiResponse(res);
+    return supabaseAPI._fetchWithCache(`product-translations-${lang}`, async () => {
+      const res = await fetch(`${API_BASE_URL}/products/translations/${lang}`, { headers: getApiHeaders() });
+      return handleApiResponse(res);
+    });
   },
   createProduct: async (data: any) => {
     const res = await fetch(`${API_BASE_URL}/products`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
@@ -408,25 +410,71 @@ export const supabaseAPI = {
     return content;
   },
   getUniversalContent: async (type: string, id: string, lang: string) => {
+    console.log(`🌐 [supabaseAPI] getUniversalContent:`, { type, id, lang });
     switch (type) {
       case 'page':
         const pageContent = await supabaseAPI.getPageContent(id, lang);
         return pageContent?.sections || [];
-      case 'blog':
+      case 'blog': {
         const blogTrans = await supabaseAPI.getBlogPostTranslation(id, lang);
-        try {
-          return JSON.parse(blogTrans.content);
-        } catch (e) {
-          return blogTrans.content ? [{ id: 'legacy-content', type: 'rich-text', content: { html: blogTrans.content } }] : [];
+        console.log(`📖 [getUniversalContent] RAW blogTrans (${lang}):`, blogTrans);
+        
+        const BLOG_CONTENT_TYPES = ['blog-text', 'blog-intro', 'blog-quote', 'blog-list', 'blog-image', 'blog-divider', 'rich-text'];
+
+        if (blogTrans?.content) {
+          try {
+            const parsed = JSON.parse(blogTrans.content);
+            if (Array.isArray(parsed)) {
+              // Marcar cada sección como 'blog-internal' o 'page-external' para el renderizador
+              const tagged = parsed.map((s: any) => ({
+                ...s,
+                _zone: BLOG_CONTENT_TYPES.includes(s.type) ? 'article' : 'page'
+              }));
+              console.log(`✅ [getUniversalContent] ${tagged.length} secciones cargadas (${lang})`);
+              return tagged;
+            }
+          } catch (e) {
+            console.log(`📄 [getUniversalContent] HTML legacy detectado (${lang}), convirtiendo a blog-text`);
+          }
+          // Fallback: HTML puro → un bloque blog-text con _zone article
+          return [{ id: 'legacy-content', type: 'blog-text', _zone: 'article', content: { html: blogTrans.content } }];
         }
+        return [];
+      }
       case 'legal':
-        const legalPages = await supabaseAPI.getLegalPages();
-        const legalPage = legalPages.find((p: any) => p.id === id || p.slug === id);
-        const content = lang === 'es' ? legalPage?.content_es : legalPage?.content_en;
-        try {
-          return JSON.parse(content);
-        } catch (e) {
-          return content ? [{ id: 'legacy-content', type: 'rich-text', content: { html: content } }] : [];
+        {
+          let rawData = await supabaseAPI.getLegalPageById(id);
+          
+          // Fallback 1: Si el fetch directo devuelve vacío {}, intentamos buscar en la lista completa
+          if (!rawData || (typeof rawData === 'object' && Object.keys(rawData).length === 0)) {
+            console.log(`⚠️ [supabaseAPI] Direct fetch by ID returned empty, trying by list...`);
+            const allPages = await supabaseAPI.getLegalPages();
+            rawData = allPages.find((p: any) => p.id === id || p.slug === id);
+          }
+          
+          // Fallback 2: Si el objeto encontrado no tiene contenido (como ocurre con la lista parcial),
+          // intentamos un fetch directo usando el SLUG, ya que a veces la API prefiere el slug para el detalle completo.
+          if (rawData && !rawData.content_es && rawData.slug) {
+            console.log(`📡 [supabaseAPI] Object found but missing content. Trying direct fetch by SLUG: ${rawData.slug}`);
+            const fullData = await supabaseAPI.getLegalPageBySlug(rawData.slug);
+            if (fullData && fullData.content_es) {
+              rawData = fullData;
+            }
+          }
+          
+          const legalPage = Array.isArray(rawData) ? rawData[0] : rawData;
+          console.log(`⚖️ [supabaseAPI] Final processed legalPage:`, legalPage);
+          
+          const content = lang === 'es' ? legalPage?.content_es : legalPage?.content_en;
+          
+          try {
+            const parsed = content ? JSON.parse(content) : [];
+            console.log(`📊 [supabaseAPI] Parsed legal content:`, parsed);
+            return parsed;
+          } catch (e) {
+            console.log(`📜 [supabaseAPI] content is legacy HTML, wrapping...`);
+            return content ? [{ id: 'legacy-content', type: 'rich-text', content: { html: content } }] : [];
+          }
         }
       case 'footer':
         const footer = await supabaseAPI.getFooterSettings();
@@ -626,8 +674,10 @@ export const supabaseAPI = {
     return handleApiResponse(res).catch(() => null);
   },
   getAllEcosystemMemberTranslations: async (lang: string) => {
-    const res = await fetch(`${API_BASE_URL}/ecosystem/translations/${lang}`, { headers: getApiHeaders() });
-    return handleApiResponse(res);
+    return supabaseAPI._fetchWithCache(`ecosystem-translations-${lang}`, async () => {
+      const res = await fetch(`${API_BASE_URL}/ecosystem/translations/${lang}`, { headers: getApiHeaders() });
+      return handleApiResponse(res);
+    });
   },
 
   // BLOG
@@ -655,7 +705,19 @@ export const supabaseAPI = {
     return handleApiResponse(res);
   },
   getAllBlogPostTranslations: async (lang: string) => {
-    const res = await fetch(`${API_BASE_URL}/blog/translations/${lang}`, { headers: getApiHeaders() });
+    return supabaseAPI._fetchWithCache(`blog-translations-${lang}`, async () => {
+      const res = await fetch(`${API_BASE_URL}/blog/translations/${lang}`, { headers: getApiHeaders() });
+      return handleApiResponse(res);
+    });
+  },
+  createBlogPost: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/blog`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    supabaseAPI._invalidateCache(`blog-posts-all`);
+    return handleApiResponse(res);
+  },
+  deleteBlogPost: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/blog/${id}`, { method: 'DELETE', headers: getApiHeaders() });
+    supabaseAPI._invalidateCache(`blog-posts-all`);
     return handleApiResponse(res);
   },
   getBlogCategories: async () => {
@@ -752,8 +814,12 @@ export const supabaseAPI = {
     return handleApiResponse(res);
   },
   getLegalPageById: async (id: string) => {
+    console.log(`📡 [supabaseAPI] Fetching legal page: ${id}`);
     const res = await fetch(`${API_BASE_URL}/legal/${id}`, { headers: getApiHeaders() });
-    return handleApiResponse(res).catch(() => null);
+    const data = await handleApiResponse(res).catch(() => null);
+    console.log(`📥 [supabaseAPI] Legal page data:`, data);
+    if (data) console.log(`🔑 [supabaseAPI] Keys in data:`, Object.keys(data));
+    return data;
   },
   getLegalPageBySlug: async (slug: string) => {
     const res = await fetch(`${API_BASE_URL}/legal/${slug}`, { headers: getApiHeaders() });
@@ -762,6 +828,50 @@ export const supabaseAPI = {
   updateLegalPage: async (id: string, data: any) => {
     const res = await fetch(`${API_BASE_URL}/legal/${id}`, { method: 'PUT', headers: getApiHeaders(), body: JSON.stringify(data) });
     return handleApiResponse(res);
+  },
+  updateLegalPageMetadata: async (id: string, data: any) => {
+    // Para legales, título es lo principal que cambia fuera de secciones
+    return supabaseAPI.updateLegalPage(id, data);
+  },
+  updateBlogPostMetadata: async (id: string, data: any) => {
+    // 1. Actualizar tabla principal (author, image, type, etc)
+    await fetch(`${API_BASE_URL}/blog/${id}`, { 
+      method: 'PUT', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify({
+        author: data.author,
+        cover_image: data.cover_image,
+        type: data.type,
+        category_name: data.category_name
+      }) 
+    });
+
+    // 2. Actualizar traducciones si vienen (title, excerpt, meta, content)
+    const promises = [];
+    if (data.title_es !== undefined || data.content_es !== undefined) {
+      promises.push(supabaseAPI.updateBlogPostTranslation(id, 'es', { 
+        title: data.title_es, 
+        excerpt: data.excerpt_es,
+        meta_title: data.meta_title_es,
+        meta_description: data.meta_description_es,
+        meta_keywords: data.meta_keywords_es,
+        content: data.content_es
+      }));
+    }
+    if (data.title_en !== undefined || data.content_en !== undefined) {
+      promises.push(supabaseAPI.updateBlogPostTranslation(id, 'en', { 
+        title: data.title_en, 
+        excerpt: data.excerpt_en,
+        meta_title: data.meta_title_en,
+        meta_description: data.meta_description_en,
+        meta_keywords: data.meta_keywords_en,
+        content: data.content_en
+      }));
+    }
+    
+    await Promise.all(promises);
+    supabaseAPI._invalidateCache(`blog-posts-all`);
+    return { success: true };
   },
   updateFooterSettings: async (data: any) => {
     const res = await fetch(`${API_BASE_URL}/settings/footer`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });

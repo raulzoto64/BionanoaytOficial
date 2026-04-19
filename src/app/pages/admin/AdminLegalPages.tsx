@@ -1,30 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
-import { Switch } from '../../components/ui/switch';
-import { Label } from '../../components/ui/label';
 import { Card } from '../../components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
 import { toast } from 'sonner';
 import { DatabaseManager } from '../../data/DatabaseManager';
 import { LegalPage } from '../../data/supabase';
-import { Plus, Trash2, Edit } from 'lucide-react';
-import { RichTextEditor } from '../../components/admin/RichTextEditor';
+import { Plus, Trash2, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router';
 
 export function AdminLegalPages() {
+  const navigate = useNavigate();
   const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingPage, setEditingPage] = useState<LegalPage | null>(null);
-  const [formData, setFormData] = useState({
-    slug: '',
-    title_es: '',
-    title_en: '',
-    content_es: '',
-    content_en: '',
-    is_active: true
-  });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     loadLegalPages();
@@ -43,225 +32,137 @@ export function AdminLegalPages() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleEdit = (page: LegalPage) => {
+    navigate(`/admin/visual-editor/legal/${page.id}`);
+  };
+
+  const handleNewPage = async () => {
     try {
-      if (editingPage) {
-        await DatabaseManager.updateLegalPage(editingPage.id, formData);
-        toast.success('Página legal actualizada exitosamente');
-      } else {
-        await DatabaseManager.createLegalPage(formData);
-        toast.success('Página legal creada exitosamente');
-      }
+      setIsLoading(true);
+      const newPage: Partial<LegalPage> = {
+        slug: `draft-legal-${Date.now()}`,
+        title_es: 'Nueva Página Legal',
+        title_en: 'New Legal Page',
+        content_es: '',
+        content_en: '',
+        is_active: false
+      };
       
-      setIsDialogOpen(false);
-      resetForm();
+      const created = await DatabaseManager.createLegalPage(newPage);
+      navigate(`/admin/visual-editor/legal/${created.id}`);
+    } catch (e) {
+      toast.error('Error al crear página');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    setPageToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!pageToDelete) return;
+    try {
+      await DatabaseManager.deleteLegalPage(pageToDelete);
+      toast.success('Página legal eliminada exitosamente');
       loadLegalPages();
     } catch (error) {
-      console.error('Error saving legal page:', error);
-      toast.error('Error al guardar la página legal');
+      console.error('Error deleting legal page:', error);
+      toast.error('Error al eliminar la página legal');
+    } finally {
+      setDeleteDialogOpen(false);
+      setPageToDelete(null);
     }
-  };
-
-  const handleEdit = (page: LegalPage) => {
-    setEditingPage(page);
-    setFormData({
-      slug: page.slug,
-      title_es: page.title_es,
-      title_en: page.title_en,
-      content_es: page.content_es,
-      content_en: page.content_en,
-      is_active: page.is_active
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Está seguro que desea eliminar esta página legal?')) {
-      try {
-        await DatabaseManager.deleteLegalPage(id);
-        toast.success('Página legal eliminada exitosamente');
-        loadLegalPages();
-      } catch (error) {
-        console.error('Error deleting legal page:', error);
-        toast.error('Error al eliminar la página legal');
-      }
-    }
-  };
-
-  const resetForm = () => {
-    setEditingPage(null);
-    setFormData({
-      slug: '',
-      title_es: '',
-      title_en: '',
-      content_es: '',
-      content_en: '',
-      is_active: true
-    });
   };
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1C5D15]"></div>
-        </div>
+      <div className="p-4 md:p-6 text-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1C5D15] mx-auto mb-4"></div>
+        <p className="text-[#629960] font-bold uppercase text-[10px] tracking-widest">Cargando páginas...</p>
       </div>
     );
   }
 
   return (
     <div className="p-4 md:p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[#1C5D15]">Páginas Legales</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              className="bg-[#1C5D15] hover:bg-[#1C5D15]/90 text-white"
-              onClick={resetForm}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva Página
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingPage ? 'Editar Página Legal' : 'Nueva Página Legal'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="slug">Slug</Label>
-                  <Input
-                    id="slug"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="slug-de-la-pagina"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="is_active">Activa</Label>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="is_active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                    />
-                    <span>{formData.is_active ? 'Activa' : 'Inactiva'}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title_es">Título (ES)</Label>
-                  <Input
-                    id="title_es"
-                    value={formData.title_es}
-                    onChange={(e) => setFormData({ ...formData, title_es: e.target.value })}
-                    placeholder="Título en español"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="title_en">Título (EN)</Label>
-                  <Input
-                    id="title_en"
-                    value={formData.title_en}
-                    onChange={(e) => setFormData({ ...formData, title_en: e.target.value })}
-                    placeholder="Title in English"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="content_es">Contenido (ES)</Label>
-                  <RichTextEditor
-                    value={formData.content_es}
-                    onChange={(val) => setFormData({ ...formData, content_es: val })}
-                    placeholder="Escribe el contenido en español..."
-                    minHeight="280px"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="content_en">Contenido (EN)</Label>
-                  <RichTextEditor
-                    value={formData.content_en}
-                    onChange={(val) => setFormData({ ...formData, content_en: val })}
-                    placeholder="Write content in English..."
-                    minHeight="280px"
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" className="bg-[#1C5D15] hover:bg-[#1C5D15]/90 text-white">
-                  {editingPage ? 'Actualizar' : 'Crear'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-[#1C5D15] tracking-tight">Páginas Legales</h1>
+          <p className="text-[#629960]">Gestiona los términos, condiciones y políticas de privacidad</p>
+        </div>
+        <Button 
+          className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-6"
+          onClick={handleNewPage}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nueva Página
+        </Button>
       </div>
 
       <div className="grid gap-4">
         {legalPages.map((page) => (
-          <Card key={page.id} className="p-6">
-            <div className="flex items-start justify-between">
+          <Card key={page.id} className="p-6 bg-white border-2 border-[#1C5D15]/10 hover:border-[#19FF00]/30 transition-all shadow-sm">
+            <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-semibold">{page.title_es}</h3>
+                <div className="flex items-center gap-3 mb-1">
+                  <h3 className="text-xl font-bold text-[#1C5D15]">{page.title_es}</h3>
                   {!page.is_active && (
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                    <span className="text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
                       Inactiva
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-600 mb-2">
-                  {page.title_en}
-                </p>
-                <p className="text-xs text-gray-500 mb-4">
-                  Slug: /legal/{page.slug}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleEdit(page)}
-                    className="flex items-center gap-1"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(page.id)}
-                    className="flex items-center gap-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Eliminar
-                  </Button>
-                </div>
+                <p className="text-sm text-[#629960] mb-2">{page.title_en}</p>
+                <code className="text-[10px] bg-gray-50 text-gray-400 px-2 py-1 rounded">/legal/{page.slug}</code>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  onClick={() => handleEdit(page)}
+                  className="bg-[#F7F9CE] text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white border border-[#1C5D15]/10"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Editor Visual
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDelete(page.id)}
+                  className="border-red-100 text-red-400 hover:bg-red-500 hover:text-white"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </Card>
         ))}
+
+        {legalPages.length === 0 && (
+          <div className="text-center py-20 bg-gray-50 rounded-3xl border-4 border-dashed border-gray-100">
+             <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">No hay páginas legales creadas</p>
+          </div>
+        )}
       </div>
+
+      {/* Confirmation Dialog for Delete */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar esta página legal? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={confirmDelete} className="bg-red-500 text-white hover:bg-red-600">Eliminar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -26,6 +26,7 @@ interface SidebarProps {
   availableForms?: any[];
   pageSlug?: string;
   onAddLibrarySection?: (section: ReusableSection) => void;
+  entityType?: 'page' | 'blog' | 'legal' | 'footer' | 'product';
 }
 
 export function Sidebar({
@@ -39,10 +40,18 @@ export function Sidebar({
   allEcosystemMembers,
   availableForms = [],
   pageSlug,
-  onAddLibrarySection
+  onAddLibrarySection,
+  entityType = 'page'
 }: SidebarProps) {
-  const [activeTab, setActiveTab] = useState<'sections' | 'config'>('sections');
+  const [activeTab, setActiveTab] = useState<'sections' | 'config'>(['footer'].includes(entityType) ? 'config' : 'sections');
   const [librarySections, setLibrarySections] = useState<ReusableSection[]>([]);
+
+  // Si es footer, forzar pestaña config
+  useEffect(() => {
+    if (['footer', 'legal', 'blog'].includes(entityType)) {
+      setActiveTab('config');
+    }
+  }, [entityType]);
 
   // Cargar secciones de la biblioteca
   useEffect(() => {
@@ -63,37 +72,42 @@ export function Sidebar({
       setActiveTab('config');
     }
   }, [activeSectionES]);
+  const sectionGroups = [
+    {
+      name: 'Componentes de Artículo',
+      visible: entityType === 'blog',
+      items: [
+        { type: 'blog-text', label: 'Cuerpo de Texto', icon: 'Type' },
+        { type: 'blog-intro', label: 'Párrafo Destacado', icon: 'Sparkles' },
+        { type: 'blog-quote', label: 'Cita Destacada', icon: 'Quote' },
+        { type: 'blog-list', label: 'Lista Estilizada', icon: 'CheckSquare' },
+        { type: 'blog-image', label: 'Imagen / Galería', icon: 'ShoppingBag' },
+        { type: 'blog-divider', label: 'Separador Sutil', icon: 'Layers' },
+      ]
+    },
+    {
+      name: entityType === 'blog' ? 'Secciones de Página' : 'Secciones de Marketing',
+      visible: !['legal'].includes(entityType),
+      items: [
+        { type: 'hero', label: 'Banner Principal', icon: 'Layout' },
+        { type: 'stats', label: 'Estadísticas', icon: 'BarChart' },
+        { type: 'category-filter', label: 'Directorio Ecosistema', icon: 'Users' },
+        { type: 'ecosystem', label: 'Nuestra Red (Features)', icon: 'Globe' },
+        { type: 'products', label: 'Catálogo de Productos', icon: 'ShoppingBag' },
+        { type: 'news', label: 'Noticias Actuales', icon: 'Newspaper' },
+        { type: 'faq', label: 'Preguntas Frecuentes', icon: 'HelpCircle' },
+        { type: 'cta', label: 'Llamado a la Acción', icon: 'Zap' },
+        { type: 'hero-blog', label: 'Hero Blog', icon: 'FileText' },
+        { type: 'bento', label: 'Bento Grid', icon: 'Layers' },
+        { type: 'timeline', label: 'Línea de Tiempo', icon: 'Clock' },
+        { type: 'featured', label: 'Producto Destacado', icon: 'Award' },
+      ]
+    }
+  ].filter(group => group.visible);
 
-  const sectionTypes = [
-    // SECCIONES ORIGINALES
-    { type: 'hero', label: 'Banner Principal', icon: 'Layout' },
-    { type: 'stats', label: 'Estadísticas', icon: 'BarChart' },
-    { type: 'category-filter', label: 'Directorio Ecosistema', icon: 'Users' },
-    { type: 'ecosystem', label: 'Nuestra Red (Features)', icon: 'Globe' },
-    { type: 'products', label: 'Catálogo de Productos', icon: 'ShoppingBag' },
-    { type: 'news', label: 'Noticias Actuales', icon: 'Newspaper' },
-    { type: 'faq', label: 'Preguntas Frecuentes', icon: 'HelpCircle' },
-    { type: 'cta', label: 'Llamado a la Acción', icon: 'Zap' },
-    { type: 'text', label: 'Bloque de Texto', icon: 'Type' },
+  const sortedGroups = [...sectionGroups];
 
-    // SECCIONES ADICIONALES IMPLEMENTADAS
-    { type: 'hero-blog', label: 'Hero Blog', icon: 'FileText' },
-    { type: 'bento', label: 'Bento / Por Qué Elegirnos', icon: 'Layers' },
-    { type: 'quote', label: 'Cita / Testimonio', icon: 'Quote' },
-    { type: 'timeline', label: 'Línea de Tiempo', icon: 'Clock' },
-    { type: 'history', label: 'Historia de la Empresa', icon: 'History' },
-    { type: 'features', label: 'Características / Propósitos', icon: 'Star' },
-    { type: 'trust', label: 'Aliados / Confianza', icon: 'Handshake' },
-    { type: 'featured', label: 'Destacados', icon: 'Award' },
-    { type: 'team', label: 'Equipo', icon: 'UsersRound' },
-    { type: 'problems', label: 'Problemas que Solucionamos', icon: 'Target' },
-    { type: 'sectors', label: 'Sectores / Industrias', icon: 'FolderKanban' },
-    { type: 'certifications', label: 'Certificaciones', icon: 'BadgeCheck' },
-    { type: 'flipcards', label: 'Tarjetas Giratorias', icon: 'Sparkles' },
-    { type: 'clientes', label: 'Logos de Clientes', icon: 'CheckSquare' },
-    { type: 'custom', label: 'Sección Personalizada', icon: 'MessageSquare' },
-    { type: 'blog', label: 'Sección de Blog', icon: 'Newspaper' },
-  ];
+
 
   return (
     <>
@@ -124,28 +138,28 @@ export function Sidebar({
 
           {/* TABS MENU HORIZONTAL COMO ELEMENTOR */}
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => {
-                setActiveTab('sections');
-                // Reset forzar completamente para que se pueda volver a seleccionar la misma seccion
-                window.dispatchEvent(new CustomEvent('editor:deselect-section'));
-                console.log('[EDITOR] Seccion deseleccionada automaticamente al ir a pestaña Secciones');
-              }}
-              className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'sections'
-                  ? 'bg-white text-[#1C5D15] shadow-sm'
-                  : 'text-gray-500 hover:text-[#1C5D15]'
-                }`}
-            >
-              📋 Secciones
-            </button>
+            {!['footer'].includes(entityType) && (
+              <button
+                onClick={() => {
+                  setActiveTab('sections');
+                  window.dispatchEvent(new CustomEvent('editor:deselect-section'));
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'sections'
+                    ? 'bg-white text-[#1C5D15] shadow-sm'
+                    : 'text-gray-500 hover:text-[#1C5D15]'
+                  }`}
+              >
+                📋 Secciones
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('config')}
               className={`flex-1 py-1.5 px-3 rounded-md text-[10px] font-bold uppercase transition-all ${activeTab === 'config'
                   ? 'bg-white text-[#1C5D15] shadow-sm'
                   : 'text-gray-500 hover:text-[#1C5D15]'
-                }`}
+                } ${['footer', 'legal', 'blog'].includes(entityType) ? 'w-full' : ''}`}
             >
-              ⚙️ Configuración
+              ⚙️ {['footer', 'legal', 'blog'].includes(entityType) ? `Configuración ${entityType.charAt(0).toUpperCase() + entityType.slice(1)}` : 'Configuración'}
             </button>
           </div>
         </div>
@@ -155,6 +169,42 @@ export function Sidebar({
           {/* TAB SECCIONES - GRID PERMANENTE CON TODOS LOS ICONOS */}
           {activeTab === 'sections' && (
             <div className="p-4 space-y-6">
+
+              {/* ── LIBRERÍA DE COMPONENTES (primero) ── */}
+              <div>
+                <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-4">Librería de Componentes</h3>
+                <div className="space-y-6 pb-2">
+                  {sortedGroups.map((group) => (
+                    <div key={group.name} className="space-y-3">
+                       <div className="flex items-center gap-2 px-1">
+                          <div className="h-px flex-1 bg-[#1C5D15]/10"></div>
+                          <span className="text-[9px] font-black text-[#1C5D15] opacity-40 uppercase tracking-[0.2em]">{group.name}</span>
+                          <div className="h-px flex-1 bg-[#1C5D15]/10"></div>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-2.5">
+                          {group.items.map((item) => (
+                            <button
+                              key={item.type}
+                              onClick={() => {
+                                onAddSection?.(item.type);
+                                setActiveTab('config');
+                              }}
+                              className="flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 border-emerald-50 hover:border-[#19FF00] hover:bg-emerald-50/50 transition-all group shadow-sm bg-white"
+                            >
+                              <div className="w-9 h-9 bg-[#19FF00]/10 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                <Icon name={item.icon} className="w-4 h-4 text-[#1C5D15]" />
+                              </div>
+                              <span className="text-[9px] font-bold text-[#1C5D15] text-center leading-none uppercase tracking-tighter">{item.label}</span>
+                            </button>
+                          ))}
+                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── BIBLIOTECA DE SECCIONES GUARDADAS (después) ── */}
               <div>
                 <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[#19FF00]" />
@@ -165,13 +215,11 @@ export function Sidebar({
                     No hay secciones guardadas en la biblioteca todavía.
                   </p>
                 ) : (
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 gap-2 pb-8">
                     {librarySections.map((libSection: ReusableSection) => (
                       <button
                         key={libSection.id}
                         onClick={() => {
-                           // El contenido guardado en la biblioteca tiene estructura {es: content, en: content}
-                           // necesitamos insertarlo correctamente.
                            onAddLibrarySection?.(libSection);
                            setActiveTab('config');
                         }}
@@ -191,27 +239,8 @@ export function Sidebar({
                 )}
               </div>
 
-              <div>
-                <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-4">Añadir nueva sección (Base)</h3>
-                <div className="grid grid-cols-2 gap-3 pb-8">
-                  {sectionTypes.map((item) => (
-                    <button
-                      key={item.type}
-                      onClick={() => {
-                        onAddSection?.(item.type);
-                        setActiveTab('config');
-                      }}
-                      className="flex flex-col items-center justify-center p-4 rounded-3xl border-2 border-[#F7F9CE] hover:border-[#19FF00] hover:bg-[#F7F9CE]/20 transition-all group shadow-sm bg-white"
-                    >
-                      <div className="w-10 h-10 bg-[#19FF00]/10 rounded-2xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                        <Icon name={item.icon} className="w-5 h-5 text-[#1C5D15]" />
-                      </div>
-                      <span className="text-[10px] font-bold text-[#1C5D15] text-center leading-tight uppercase tracking-tighter">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
+
           )}
 
           {/* TAB CONFIGURACION */}
@@ -226,15 +255,20 @@ export function Sidebar({
                   availableEcosystemMembers={allEcosystemMembers}
                   availableForms={availableForms}
                   pageSlug={pageSlug}
+                  entityType={entityType}
                 />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center p-10 select-none">
-                  <div className="w-20 h-20 bg-[#F7F9CE] rounded-full flex items-center justify-center mb-6">
-                    <Globe className="w-10 h-10 text-[#1C5D15]" />
+                  <div className="w-20 h-20 bg-[#F7F9CE] rounded-full flex items-center justify-center mb-6 text-[#1C5D15]">
+                    {entityType === 'footer' ? <Layout className="w-10 h-10" /> : <Globe className="w-10 h-10" />}
                   </div>
-                  <h3 className="text-[#1C5D15] font-black uppercase text-sm mb-2">Selecciona una sección</h3>
+                  <h3 className="text-[#1C5D15] font-black uppercase text-sm mb-2">
+                    {entityType === 'footer' ? 'Cargando Configuración...' : 'Selecciona una sección'}
+                  </h3>
                   <p className="text-xs text-[#629960] leading-relaxed">
-                    Toca cualquier elemento del sitio en el panel derecho para editar sus propiedades.
+                    {entityType === 'footer' 
+                      ? 'Espera un momento mientras cargamos los ajustes del footer.' 
+                      : 'Toca cualquier elemento del sitio en el panel derecho para editar sus propiedades.'}
                   </p>
                 </div>
               )}

@@ -107,7 +107,7 @@ export function AdminSidebar() {
     { path: '/admin/sections', icon: Database, label: 'Secciones' },
     { path: '/admin/blog/posts', icon: FileEdit, label: 'Blog' },
     { path: '/admin/legal', icon: Scale, label: 'Páginas Legales' },
-    { path: '/admin/footer', icon: Footprints, label: 'Footer' },
+    { path: '/admin/visual-editor/footer/global', icon: Footprints, label: 'Footer' },
   ];
 
   const mainFooterItems = [

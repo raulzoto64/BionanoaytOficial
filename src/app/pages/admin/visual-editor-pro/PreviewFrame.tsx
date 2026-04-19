@@ -19,7 +19,7 @@ export const PreviewFrame = ({ children, onLoad }: { children: React.ReactNode; 
       style.innerHTML = `
         body { background-color: white; overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
         .iframe-root { min-height: 100vh; }
-        * { cursor: pointer !important; }
+        * { cursor: pointer !important; opacity: 1 !important; filter: none !important; }
       `;
       doc.head.appendChild(style);
       setStylesLoaded(true);

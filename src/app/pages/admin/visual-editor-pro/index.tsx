@@ -12,7 +12,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { Loader2 } from 'lucide-react';
 
 export function AdminVisualEditor() {
-  const { id } = useParams<{ id: string }>();
+  const { type = 'page', id } = useParams<{ type?: string; id?: string }>();
   const navigate = useNavigate();
   const { setLanguage } = useLanguage();
   const [page, setPage] = useState<PageWithContent | null>(null);
@@ -67,8 +67,10 @@ export function AdminVisualEditor() {
   // Escuchar evento para deseleccionar todas las secciones
   useEffect(() => {
     const handleDeselectSection = () => {
-      setActiveSectionId(null);
-      console.log('[EDITOR] Todas las secciones desactivadas');
+      if (!['footer', 'legal', 'blog'].includes(type)) {
+        setActiveSectionId(null);
+        console.log('[EDITOR] Todas las secciones desactivadas');
+      }
     };
 
     window.addEventListener('editor:deselect-section', handleDeselectSection);
@@ -76,10 +78,10 @@ export function AdminVisualEditor() {
   }, []);
 
   useEffect(() => {
-    if (id) {
-      loadPageData(id);
+    if (id || type === 'footer') {
+      loadUniversalData();
     }
-  }, [id]); // Solo cargar datos cuando cambia la ID de la página, NO el idioma activo
+  }, [id, type]); // Recargar si cambia el ID o el tipo
 
   useEffect(() => {
     if (!isResizing) return;
@@ -104,117 +106,274 @@ export function AdminVisualEditor() {
     resizeStart.current = { x: e.clientX, w: el?.offsetWidth || 0 };
   };
 
-  const loadPageData = async (pageId: string) => {
+  const loadUniversalData = async () => {
     setLoading(true);
     try {
-      const allPages = await supabaseAPI.getAllPages();
-      const page = allPages.find((p: any) => p.id === pageId);
+      // 1. Cargar metadatos del objeto (si aplica)
+      let entityTitle = 'Cargando...';
+      if (type === 'page' && id) {
+        const allPages = await supabaseAPI.getAllPages();
+        const pageObj = allPages.find((p: any) => p.id === id);
+        if (pageObj) {
+          setPage(pageObj as any);
+          console.log("📄 [EDITOR-LOAD] Página cargada:", pageObj);
+          entityTitle = pageObj.slug;
+        }
+      } else if (type === 'blog' && id) {
+        const [blogPost, blogTransES, blogTransEN] = await Promise.all([
+          supabaseAPI.getBlogPostById(id),
+          supabaseAPI.getBlogPostTranslation(id, 'es'),
+          supabaseAPI.getBlogPostTranslation(id, 'en')
+        ]);
+        
+        if (blogPost) {
+          // Guardamos las traducciones en un objeto estructurado dentro de la página
+          const pageData = { 
+            ...blogPost, 
+            translationES: blogTransES, 
+            translationEN: blogTransEN,
+            // Mantener compatibilidad con componentes que buscan .translation
+            translation: activeLanguage === 'es' ? blogTransES : blogTransEN
+          };
+          setPage(pageData as any);
+          entityTitle = blogPost.slug || 'Artículo';
+          
+          // Poblar contenido de cabecera con datos reales de las traducciones
+          const headerContentES = {
+            title_es: blogTransES?.title || blogPost.title || '',
+            excerpt_es: blogTransES?.excerpt || blogPost.excerpt || '',
+            cover_image: blogPost.cover_image,
+            author: blogPost.author,
+            type: blogPost.type,
+            category_name: blogPost.category_name,
+            meta_title: blogTransES?.meta_title || '',
+            meta_description: blogTransES?.meta_description || '',
+            meta_keywords: blogTransES?.meta_keywords || ''
+          };
 
-      if (!page) {
-        toast.error('Página no encontrada');
-        navigate('/admin/content');
-        return;
+          const headerContentEN = {
+            title_en: blogTransEN?.title || blogPost.title || '',
+            excerpt_en: blogTransEN?.excerpt || blogPost.excerpt || '',
+            cover_image: blogPost.cover_image,
+            author: blogPost.author,
+            type: blogPost.type,
+            category_name: blogPost.category_name,
+            meta_title: blogTransEN?.meta_title || '',
+            meta_description: blogTransEN?.meta_description || '',
+            meta_keywords: blogTransEN?.meta_keywords || ''
+          };
+
+          const headerSectionES = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentES };
+          const headerSectionEN = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentEN };
+          
+          // Cargar Secciones / Contenido Universal
+          const [sES, sEN] = await Promise.all([
+            supabaseAPI.getUniversalContent(type, id, 'es'),
+            supabaseAPI.getUniversalContent(type, id, 'en')
+          ]);
+
+          const prepareSections = (rawContent: any, headerSection: any) => {
+            if (!Array.isArray(rawContent) || rawContent.length === 0) {
+               // Fallback para contenido legacy que viene como string HTML o objeto simple
+               let content = rawContent;
+               if (typeof content === 'string') content = { html: content };
+               else if (!content || typeof content !== 'object') content = { html: '<p>Empieza a escribir...</p>' };
+               else if (content.content) content = { html: content.content }; // Manejo de estructura de traducción plana
+
+               return [headerSection, { id: 'main-content', type: 'rich-text' as any, order: 0, visible: true, content }];
+            }
+            return [headerSection, ...rawContent];
+          };
+
+          setSectionsES(prepareSections(sES, headerSectionES));
+          setSectionsEN(prepareSections(sEN, headerSectionEN));
+          setActiveSectionId('page-header');
+        }
+        return; // Terminamos carga específica
+      } else if (type === 'legal' && id) {
+        let rawLegal = await supabaseAPI.getLegalPageById(id);
+        let legalPage = Array.isArray(rawLegal) ? rawLegal[0] : rawLegal;
+        
+        if (!legalPage || (typeof legalPage === 'object' && Object.keys(legalPage).length === 0)) {
+           const allPages = await supabaseAPI.getLegalPages();
+           legalPage = allPages.find((p: any) => p.id === id || p.slug === id);
+        }
+
+        if (legalPage) {
+            setPage({ ...legalPage, slug: legalPage.slug || 'untitled-legal' } as any);
+            entityTitle = legalPage.slug || 'Sin título';
+        }
+      } else if (type === 'footer') {
+        entityTitle = 'Footer Global';
+        setPage({ id: 'footer-global', slug: 'footer' } as any);
       }
 
-      const [contentES, contentEN] = await Promise.all([
-        supabaseAPI.getPageContent(pageId, 'es'),
-        supabaseAPI.getPageContent(pageId, 'en')
+      // 2. Cargar Secciones / Contenido Universal
+      const [sES, sEN] = await Promise.all([
+        supabaseAPI.getUniversalContent(type, id || 'footer', 'es'),
+        supabaseAPI.getUniversalContent(type, id || 'footer', 'en')
       ]);
 
-      const targetPage = { ...page, contentES, contentEN };
+      const headerContentES = {
+        title_es: type === 'legal' ? page?.title_es : page?.translation?.title || page?.title,
+        excerpt_es: type === 'legal' ? '' : page?.translation?.excerpt || page?.excerpt,
+        cover_image: page?.cover_image,
+        author: page?.author,
+        type: page?.type,
+        category_name: page?.category_name
+      };
 
-      setPage(targetPage as any);
-      let sES = targetPage.contentES?.sections || [];
-      let sEN = targetPage.contentEN?.sections || [];
+      const headerContentEN = {
+        title_en: type === 'legal' ? page?.title_en : page?.translation?.title || page?.title,
+        excerpt_en: type === 'legal' ? '' : page?.translation?.excerpt || page?.excerpt,
+        cover_image: page?.cover_image,
+        author: page?.author,
+        type: page?.type,
+        category_name: page?.category_name
+      };
 
-      // Normalize Home News logic
-      if (page.id === 'page-home' || page.slug === 'home' || page.slug === 'page-home') {
-        const normalizeSections = (sectionsArr: any[]) => {
-          let arr = [...sectionsArr];
-          let newsIdx = arr.findIndex((s: any) => s.type === 'news');
-          let newsBlock = null;
+      const headerSectionES = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentES };
+      const headerSectionEN = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentEN };
 
-          if (newsIdx >= 0) {
-            [newsBlock] = arr.splice(newsIdx, 1);
-          } else {
-            newsBlock = {
-              id: 'news-home-auto',
-              type: 'news' as any,
-              order: 90,
-              visible: true,
-              content: { title: '', subtitle: '', ctaText: '', ctaLink: '' }
-            };
-          }
+      console.log(`🔌 [EDITOR-LOAD] Raw results for ${type}:`, { sES, sEN });
 
-          const ecoIdx = arr.findIndex((s: any) => s.type === 'ecosystem');
-          if (ecoIdx >= 0) arr.splice(ecoIdx + 1, 0, newsBlock);
-          else arr.push(newsBlock);
-
-          return arr.map((s, idx) => ({ ...s, order: idx * 10 }));
+      if (type === 'footer') {
+        setSectionsES([ { id: 'footer-main', type: 'footer-settings' as any, order: 0, visible: true, content: sES } ]);
+        setSectionsEN([ { id: 'footer-main', type: 'footer-settings' as any, order: 0, visible: true, content: sEN } ]);
+        setActiveSectionId('footer-main');
+      } else if ((type === 'legal' || type === 'blog') && (!Array.isArray(sES) || sES.length === 0)) {
+        const wrapContent = (content: any) => {
+          if (typeof content === 'string') return { html: content };
+          if (content && typeof content === 'object' && !Array.isArray(content)) return content;
+          return { html: '<p>Empieza a escribir aquí...</p>' };
         };
-        sES = normalizeSections(sES);
-        sEN = normalizeSections(sEN);
+        const contentES = wrapContent(sES);
+        const contentEN = wrapContent(sEN);
+        
+        const baseSectionES = { id: 'main-content', type: 'rich-text' as any, order: 0, visible: true, content: contentES };
+        const baseSectionEN = { id: 'main-content', type: 'rich-text' as any, order: 0, visible: true, content: contentEN };
+        
+        setSectionsES([headerSectionES, baseSectionES]);
+        setSectionsEN([headerSectionEN, baseSectionEN]);
+        setActiveSectionId('page-header');
+      } else {
+        const sectionsArrayES = Array.isArray(sES) ? sES : [];
+        const sectionsArrayEN = Array.isArray(sEN) ? sEN : [];
+        
+        if (type === 'blog' || type === 'legal') {
+           setSectionsES([headerSectionES, ...sectionsArrayES]);
+           setSectionsEN([headerSectionEN, ...sectionsArrayEN]);
+           setActiveSectionId('page-header');
+        } else {
+           setSectionsES(sectionsArrayES);
+           setSectionsEN(sectionsArrayEN);
+           if (sectionsArrayES.length > 0) setActiveSectionId(sectionsArrayES[0].id);
+        }
       }
 
-      setSectionsES(sES);
-      setSectionsEN(sEN);
-
-      if (sES.length > 0) setActiveSectionId(sES[0].id);
-
-      const [products, productTranslations, members, memberTranslations, categories, categoryTranslations, blogPosts, blogTranslations] = await Promise.all([
-        supabaseAPI.getProducts(),
-        supabaseAPI.getAllProductTranslations(activeLanguage),
-        supabaseAPI.getEcosystemMembers(),
-        supabaseAPI.getAllEcosystemMemberTranslations(activeLanguage),
-        supabaseAPI.getCategories(),
-        supabaseAPI.getAllCategoryTranslations(activeLanguage),
-        supabaseAPI.getBlogPosts('published'),
-        supabaseAPI.getAllBlogPostTranslations(activeLanguage)
-      ]);
-
-      const productTranslationsMap = (productTranslations || []).reduce((acc: any, t: any) => { acc[t.product_id] = t; return acc; }, {});
-      setAllProducts(products.map((p: any) => ({ ...p, translation: productTranslationsMap[p.id] || null })));
-
-      const memberTranslationsMap = (memberTranslations || []).reduce((acc: any, t: any) => { acc[t.member_id] = t; return acc; }, {});
-      setAllEcosystemMembers(members.map((m: any) => ({ ...m, translation: memberTranslationsMap[m.id] || null })));
-
-      const categoryTranslationsMap = (categoryTranslations || []).reduce((acc: any, t: any) => { acc[t.category_id] = t; return acc; }, {});
-      setAllCategories(categories.map((c: any) => ({ ...c, name: categoryTranslationsMap[c.id]?.name || c.id })));
-
-      // Blog posts normalization for preview
-      const blogTranslationsMap = (blogTranslations || []).reduce((acc: any, t: any) => { acc[t.post_id] = t; return acc; }, {});
-      const enrichedBlogPosts = blogPosts.map((post: any) => ({
-        ...post,
-        translation: blogTranslationsMap[post.id] || { title: 'Untitled', excerpt: '' },
-        category_name: 'General'
-      }));
-      setAllBlogPosts(enrichedBlogPosts);
+      // Los datos del catálogo (productos, miembros, etc.) ahora se cargan de forma diferida 
+      // o bajo demanda en los componentes que los necesiten, igual que en la web pública.
+      
 
     } catch (err) {
-      toast.error('Error al cargar la página');
+      toast.error('Error al cargar contenido');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSave = async () => {
-    if (!page) return;
+    if (!page || (!id && type !== 'footer')) return;
     setSaving(true);
     try {
-      console.log(`📤 Saving page ${page.id}...`);
-      console.log(`   ES sections: ${sectionsES.length}`, sectionsES.map(s => `${s.id}(${s.type})`));
-      console.log(`   EN sections: ${sectionsEN.length}`, sectionsEN.map(s => `${s.id}(${s.type})`));
+      const finalId = id || 'footer';
       
-      console.log(`📤 [DATABASE] Enviando a Supabase ES...`, sectionsES);
-      console.log(`📤 [DATABASE] Enviando a Supabase EN...`, sectionsEN);
-      
-      const [resES, resEN] = await Promise.all([
-        supabaseAPI.updatePageContent(page.id, 'es', sectionsES),
-        supabaseAPI.updatePageContent(page.id, 'en', sectionsEN)
-      ]);
+      // Si es footer, extraemos el contenido de la sección envuelta
+      if (type === 'footer') {
+        const footerES = sectionsES[0]?.content;
+        const footerEN = sectionsEN[0]?.content;
+        
+        // El footer suele ser global, guardamos por separado si la API lo requiere o unificado
+        // En este caso saveUniversalContent para footer toma el objeto completo
+        await supabaseAPI.saveUniversalContent('footer', 'global', 'es', footerES);
+        // Nota: Si el footer tiene traducciones internas, el objeto footerES/EN ya las debería contener
+      } else {
+        // Separar secciones reales de la sección virtual de metadatos antes de guardar
+        const realSectionsES = sectionsES.filter(s => s.id !== 'page-header');
+        const realSectionsEN = sectionsEN.filter(s => s.id !== 'page-header');
+        
+        // Guardar metadatos si han cambiado
+        const headerES = sectionsES.find(s => s.id === 'page-header')?.content;
+        const headerEN = sectionsEN.find(s => s.id === 'page-header')?.content;
 
-      console.log(`✅ [DATABASE] Respuesta Supabase ES:`, resES);
-      console.log(`✅ [DATABASE] Respuesta Supabase EN:`, resEN);
+        console.log(`🔍 [EDITOR-SAVE] DEBUG - type: ${type}, finalId: ${finalId}`);
+        console.log(`🔍 [EDITOR-SAVE] DEBUG - headerES:`, headerES);
+        console.log(`🔍 [EDITOR-SAVE] DEBUG - realSectionsES (${realSectionsES.length}):`, realSectionsES);
+        console.log(`🔍 [EDITOR-SAVE] DEBUG - realSectionsEN (${realSectionsEN.length}):`, realSectionsEN);
+
+        if (type === 'blog') {
+          // SIEMPRE guardar las secciones del blog via updateBlogPostTranslation
+          // El guardado de contenido NO depende del header
+          console.log(`📝 [EDITOR-SAVE] Guardando secciones blog directamente via updateBlogPostTranslation...`);
+          
+          await Promise.all([
+            supabaseAPI.updateBlogPostTranslation(finalId, 'es', {
+              content: JSON.stringify(realSectionsES),
+              // Solo incluir metadatos si el header fue cargado/modificado
+              ...(headerES ? {
+                title: headerES.title_es,
+                excerpt: headerES.excerpt_es,
+                meta_title: headerES.meta_title,
+                meta_description: headerES.meta_description,
+                meta_keywords: headerES.meta_keywords,
+              } : {})
+            }),
+            supabaseAPI.updateBlogPostTranslation(finalId, 'en', {
+              content: JSON.stringify(realSectionsEN),
+              ...(headerEN ? {
+                title: headerEN.title_en,
+                excerpt: headerEN.excerpt_en,
+                meta_title: headerEN.meta_title,
+                meta_description: headerEN.meta_description,
+                meta_keywords: headerEN.meta_keywords,
+              } : {})
+            })
+          ]);
+
+          // Actualizar metadatos globales del post si el header fue tocado
+          if (headerES) {
+            console.log(`🖼️ [EDITOR-SAVE] Actualizando metadatos del post (cover, author, type)...`);
+            await supabaseAPI.updateBlogPostMetadata(finalId, {
+               author: headerES.author,
+               cover_image: headerES.cover_image,
+               type: headerES.type,
+               category_name: headerES.category_name,
+            });
+          }
+
+          console.log(`✅ [EDITOR-SAVE] Blog guardado completamente.`);
+
+        } else if (type === 'legal') {
+          if (headerES) {
+            await supabaseAPI.updateLegalPageMetadata(finalId, {
+               title_es: headerES.title_es,
+               title_en: headerEN?.title_en
+            });
+          }
+          await Promise.all([
+            supabaseAPI.saveUniversalContent(type, finalId, 'es', realSectionsES),
+            supabaseAPI.saveUniversalContent(type, finalId, 'en', realSectionsEN)
+          ]);
+        } else {
+          await Promise.all([
+            supabaseAPI.saveUniversalContent(type, finalId, 'es', realSectionsES),
+            supabaseAPI.saveUniversalContent(type, finalId, 'en', realSectionsEN)
+          ]);
+        }
+
+        console.log(`💾 [EDITOR-SAVE] COMPLETADO - ${realSectionsES.length} secciones ES, ${realSectionsEN.length} secciones EN`);
+      }
       
       toast.success('Cambios publicados con éxito');
     } catch (error) {
@@ -308,7 +467,7 @@ export function AdminVisualEditor() {
   };
 
   const handleViewLive = () => {
-    if (!page) return;
+    if (!page?.slug) return;
     const slug = page.slug.replace(/^page-/, '');
     window.open(slug === 'home' ? '/' : `/${slug}`, '_blank');
   };
@@ -330,11 +489,11 @@ export function AdminVisualEditor() {
 
   return (
     <ProtectedRoute>
-      <SEO title={`Editando: ${page.slug} | Editor Visual`} />
+      <SEO title={`Editando: ${page?.slug || 'Contenido'} | Editor Visual`} />
       <div className="h-screen w-full bg-[#f0f2f0] flex flex-col overflow-hidden font-sans">
         
         <Toolbar 
-          pageTitle={page.slug.replace(/page-/g, '').replace(/-/g, ' ')}
+          pageTitle={(page?.slug || 'Editor').replace(/page-/g, '').replace(/-/g, ' ')}
           onBack={() => navigate('/admin/content')}
           deviceView={deviceView}
           setDeviceView={setDeviceView}
@@ -361,6 +520,7 @@ export function AdminVisualEditor() {
             allEcosystemMembers={allEcosystemMembers}
             availableForms={allForms}
             pageSlug={page?.slug}
+            entityType={type as any}
           />
 
           <DeviceCanvas 
@@ -381,6 +541,8 @@ export function AdminVisualEditor() {
             onDeleteSection={handleDeleteSection}
             onMoveSectionUp={(id) => handleMoveSection(id, 'up')}
             onMoveSectionDown={(id) => handleMoveSection(id, 'down')}
+            entityType={type as any}
+            page={page}
           />
         </div>
 

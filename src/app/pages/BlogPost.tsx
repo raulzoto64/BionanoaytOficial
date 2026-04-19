@@ -5,6 +5,7 @@ import { supabaseAPI, type BlogPost, type BlogPostTranslation } from "../data/su
 import { SEO } from "../components/SEO";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { RelatedPosts } from "../components/RelatedPosts";
+import { DynamicSection } from "../components/DynamicSection";
 // @ts-ignore
 import '../../styles/blog-content.css';
 
@@ -206,11 +207,105 @@ export function BlogPost() {
                 </div>
               )}
 
-              {/* Article Content */}
-              <div
-                className="blog-content text-[#629960]"
-                dangerouslySetInnerHTML={{ __html: post.translation.content || '' }}
-              />
+              {/* Article Content - renderiza secciones JSON o HTML legacy */}
+              {(() => {
+                const raw = post.translation.content || '';
+                
+                // Intentar parsear como JSON de secciones
+                let sections: any[] = [];
+                try {
+                  const parsed = JSON.parse(raw);
+                  if (Array.isArray(parsed)) sections = parsed;
+                } catch {
+                  // Es HTML legacy: envolver en una sección de texto
+                  sections = raw ? [{ id: 'legacy', type: 'blog-text', content: { html: raw } }] : [];
+                }
+
+                if (sections.length === 0) return null;
+
+                return (
+                  <div className="blog-sections space-y-2">
+                    {sections.map((section: any) => {
+                      switch (section.type) {
+                        case 'blog-text':
+                        case 'rich-text':
+                          return (
+                            <div key={section.id} className="blog-content">
+                              <div
+                                className="prose prose-lg max-w-none text-[#629960] leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: section.content?.html || '' }}
+                              />
+                            </div>
+                          );
+                        case 'blog-intro':
+                          return (
+                            <div key={section.id} className="blog-content my-4">
+                              <div
+                                className="text-xl md:text-2xl font-medium text-[#1C5D15] leading-relaxed border-l-4 border-[#19FF00] pl-6 py-2"
+                                dangerouslySetInnerHTML={{ __html: section.content?.html || '' }}
+                              />
+                            </div>
+                          );
+                        case 'blog-quote':
+                          return (
+                            <div key={section.id} className="w-full my-8">
+                              <div className="border-l-4 border-[#19FF00] pl-6 py-4 bg-[#F0F9F0] rounded-r-lg">
+                                <p className="text-xl text-[#1C5D15] italic font-medium leading-relaxed">
+                                  &ldquo;{section.content?.text}&rdquo;
+                                </p>
+                                {section.content?.author && (
+                                  <p className="mt-2 text-sm text-[#629960] font-bold uppercase tracking-wider">
+                                    &mdash; {section.content.author}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        case 'blog-image':
+                          return (
+                            <div key={section.id} className="w-full my-8">
+                              <figure className="relative overflow-hidden rounded-xl shadow-lg">
+                                <img
+                                  src={section.content?.url}
+                                  alt={section.content?.caption || ''}
+                                  className="w-full h-auto object-cover max-h-[500px]"
+                                />
+                                {section.content?.caption && (
+                                  <figcaption className="bg-[#1C5D15]/90 text-white p-4 text-sm italic">
+                                    {section.content.caption}
+                                  </figcaption>
+                                )}
+                              </figure>
+                            </div>
+                          );
+                        case 'blog-list':
+                          return (
+                            <div key={section.id} className="blog-content w-full py-4">
+                              <ul className="space-y-4">
+                                {(section.content?.items || []).map((item: string, i: number) => (
+                                  <li key={i} className="flex gap-4">
+                                    <div className="w-6 h-6 rounded-full bg-[#19FF00]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                      <div className="w-2 h-2 rounded-full bg-[#1C5D15]"></div>
+                                    </div>
+                                    <span className="text-lg text-[#629960]">{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        case 'blog-divider':
+                          return (
+                            <div key={section.id} className="w-full py-8 text-center">
+                              <div className="h-0.5 w-1/2 mx-auto bg-gradient-to-r from-transparent via-[#19FF00] to-transparent"></div>
+                            </div>
+                          );
+                        default:
+                          return null;
+                      }
+                    })}
+                  </div>
+                );
+              })()}
 
               {/* Share Section */}
               <div className="mt-12 pt-8 border-t border-[#629960]/20">
@@ -250,6 +345,38 @@ export function BlogPost() {
           </div>
         </div>
       </div>
+
+      {/* ── SECCIONES DE PÁGINA (products, hero, cta, etc.) ──────────────────
+           Aparecen FUERA de la tarjeta del artículo, full-width debajo */}
+      {(() => {
+        const raw = post.translation.content || '';
+        let allSections: any[] = [];
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) allSections = parsed;
+        } catch { return null; }
+
+        const BLOG_TYPES = ['blog-text', 'blog-intro', 'blog-quote', 'blog-list', 'blog-image', 'blog-divider', 'rich-text'];
+        const pageSections = allSections.filter(
+          (s: any) => !BLOG_TYPES.includes(s.type) && s.type !== 'page-metadata'
+        );
+
+        if (pageSections.length === 0) return null;
+
+        return (
+          <div className="blog-page-sections">
+            {pageSections.map((section: any, index: number) => (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                index={index}
+                language={language}
+                isEditor={false}
+              />
+            ))}
+          </div>
+        );
+      })()}
     </>
   );
 }

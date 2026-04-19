@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Section } from '../data/supabase';
+import { Section, supabaseAPI } from '../data/supabase';
 import { Hero } from './Hero';
 import { TrustBar } from './TrustBar';
 import { Purpose } from './Purpose';
@@ -146,6 +146,7 @@ interface DynamicSectionProps {
   availableProducts?: any[];
   pageSlug?: string;
   onSectionClick?: (id: string) => void;
+  entityType?: 'page' | 'blog' | 'legal' | 'footer' | 'product';
 }
 
 export function DynamicSection({
@@ -160,9 +161,46 @@ export function DynamicSection({
   availableBlogPosts = [],
   availableProducts = [],
   pageSlug = '',
-  onSectionClick
+  onSectionClick,
+  entityType = 'page'
 }: DynamicSectionProps) {
   const navigate = useNavigate();
+
+  // ✅ CARGA PEREZOSA (LAZY LOADING) EN EL EDITOR
+  const [localProducts, setLocalProducts] = useState<any[]>(availableProducts);
+  const [localMembers, setLocalMembers] = useState<any[]>(availableEcosystemMembers);
+  const [localBlogPosts, setLocalBlogPosts] = useState<any[]>(availableBlogPosts);
+
+  useEffect(() => {
+    if (!isEditor) return;
+
+    if (localProducts.length === 0 && (['products', 'featured', 'problems'].includes(section.type))) {
+      supabaseAPI.getProducts().then(prods => {
+         supabaseAPI.getAllProductTranslations(language).then(trans => {
+            const transMap = (trans || []).reduce((acc: any, t: any) => { acc[t.product_id] = t; return acc; }, {});
+            setLocalProducts((prods || []).map((p: any) => ({ ...p, translation: transMap[p.id] || null })));
+         });
+      });
+    }
+
+    if (localMembers.length === 0 && section.type === 'trust') {
+      supabaseAPI.getEcosystemMembers().then(members => {
+         supabaseAPI.getAllEcosystemMemberTranslations(language).then(trans => {
+            const transMap = (trans || []).reduce((acc: any, t: any) => { acc[t.member_id] = t; return acc; }, {});
+            setLocalMembers((members || []).map((m: any) => ({ ...m, translation: transMap[m.id] || null })));
+         });
+      });
+    }
+
+    if (localBlogPosts.length === 0 && section.type === 'blog') {
+       supabaseAPI.getBlogPosts('published').then(posts => {
+          supabaseAPI.getAllBlogPostTranslations(language).then(trans => {
+             const transMap = (trans || []).reduce((acc: any, t: any) => { acc[t.post_id] = t; return acc; }, {});
+             setLocalBlogPosts((posts || []).map((p: any) => ({ ...p, translation: transMap[p.id] || null })));
+          });
+       });
+    }
+  }, [section.type, isEditor, language]);
   if (!section.visible && !isEditor) return null;
 
 
@@ -208,7 +246,7 @@ export function DynamicSection({
         {
           if (pageSlug?.includes('store') && section.content.selectedMemberIds?.length > 0) {
             const selectedIds = section.content.selectedMemberIds;
-            const filtered = availableEcosystemMembers.filter(m => selectedIds.includes(m.id));
+            const filtered = localMembers.filter(m => selectedIds.includes(m.id));
             return (
               <section key={section.id} id={section.id} className="py-20 bg-white">
                 <div className="max-w-6xl mx-auto px-6 text-center">
@@ -265,8 +303,8 @@ export function DynamicSection({
         {
           const isStore = pageSlug?.includes('store');
           const selectedIds = section.content.selectedProductIds || [];
-          // En el editor usamos availableProducts si se pasan, si no, products de la prop (que vienen del contexto en vivo)
-          const productsSource = availableProducts.length > 0 ? availableProducts : products;
+          // En el editor usamos localProducts si se pasan, si no, products de la prop (que vienen del contexto en vivo)
+          const productsSource = localProducts.length > 0 ? localProducts : products;
 
           const displayProducts = isStore
             ? productsSource
@@ -747,7 +785,7 @@ export function DynamicSection({
                    <p className="text-[#629960]">{section.content.subtitle}</p>
                  </div>
                  <div className="grid md:grid-cols-3 gap-8">
-                   {(availableBlogPosts || []).slice(0, 3).map((post: any) => (
+                   {(localBlogPosts || []).slice(0, 3).map((post: any) => (
                      <div key={post.id} className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 p-4">
                        <div className="h-40 bg-gray-200 rounded-xl mb-4 overflow-hidden">
                          <img src={post.image} className="w-full h-full object-cover" />
@@ -762,7 +800,133 @@ export function DynamicSection({
           </div>
         );
 
-      // ── DEFAULT: Si no se reconoce, no rompe nada
+      // ── RICH TEXT ────────────────────────────────
+      case 'rich-text':
+        const isFidelityEntity = ['legal', 'blog'].includes(entityType || '');
+        return (
+          <div 
+            key={section.id} 
+            id={section.id} 
+            className={`${isFidelityEntity ? 'bg-transparent py-4' : 'bg-white py-10 md:py-20'} min-h-[100px] flex flex-col`}
+          >
+            <div className="max-w-4xl mx-auto px-4 md:px-6 w-full flex-grow">
+               <div className={isFidelityEntity ? '' : 'bg-white shadow-2xl shadow-[#1C5D15]/5 rounded-[32px] md:rounded-[40px] p-6 md:p-16 border border-[#F7F9CE] relative overflow-hidden'}>
+                  {!isFidelityEntity && (
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#19FF00]/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                  )}
+                  
+                  <div 
+                    className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed prose-headings:text-[#1C5D15] prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tighter prose-p:text-[#334155] prose-li:text-[#334155] prose-strong:text-[#1C5D15]"
+                    dangerouslySetInnerHTML={{ __html: section.content.html || '' }}
+                  />
+
+                  {/* Llamado a la acción Final - SOLO LEGAL */}
+                  {entityType === 'legal' && (
+                     <div className="mt-16 pt-10 border-t border-[#F7F9CE] text-center">
+                        <p className="text-[#1C5D15] font-bold mb-6 italic text-sm md:text-base">
+                           {section.content.ctaLabel || '¿Necesitas información adicional?'}
+                        </p>
+                        <Button 
+                           onClick={() => handleAction(section.content.ctaActionType || 'route', section.content.ctaLink || '/contact', navigate)}
+                           className="bg-[#1C5D15] text-[#F7F9CE] hover:bg-[#19FF00] hover:text-[#1C5D15] px-10 py-7 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1C5D15]/10 hover:scale-105 transition-all"
+                        >
+                           {section.content.ctaText || 'Contáctanos'}
+                        </Button>
+                     </div>
+                  )}
+               </div>
+            </div>
+          </div>
+        );
+
+      // ── RICH-TEXT (legacy HTML content fallback) ────────────
+      case 'rich-text':
+        return (
+          <div className="blog-content w-full py-6 overflow-hidden">
+            <div
+              className="prose prose-lg max-w-none text-[#629960] leading-relaxed break-words"
+              dangerouslySetInnerHTML={{ __html: section.content.html || '' }}
+            />
+          </div>
+        );
+
+      case 'blog-text':
+        return (
+          <div className="blog-content w-full py-4 overflow-hidden">
+             <div 
+               className="prose prose-lg max-w-none text-[#629960] leading-relaxed break-words"
+               dangerouslySetInnerHTML={{ __html: section.content.html || '' }}
+             />
+          </div>
+        );
+
+      case 'blog-quote':
+        return (
+          <div className="w-full my-8">
+            <div className="border-l-4 border-[#19FF00] pl-6 py-4 bg-[#F0F9F0] rounded-r-lg">
+              <p className="text-xl text-[#1C5D15] italic font-medium leading-relaxed">
+                &ldquo;{section.content.text}&rdquo;
+              </p>
+              {section.content.author && (
+                <p className="mt-2 text-sm text-[#629960] font-bold uppercase tracking-wider">
+                  &mdash; {section.content.author}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'blog-image':
+        return (
+          <div className="w-full my-8">
+            <figure className="relative overflow-hidden rounded-xl shadow-lg border border-[#F7F9CE]">
+              <img 
+                src={section.content.url} 
+                alt={section.content.caption || ''} 
+                className="w-full h-auto object-cover max-h-[500px]" 
+              />
+              {section.content.caption && (
+                <figcaption className="bg-[#1C5D15]/90 text-white p-4 text-sm italic backdrop-blur-sm">
+                  {section.content.caption}
+                </figcaption>
+              )}
+            </figure>
+          </div>
+        );
+
+      case 'blog-divider':
+        return (
+          <div className="w-full py-8 text-center">
+            <div className="h-0.5 w-1/2 mx-auto bg-gradient-to-r from-transparent via-[#19FF00] to-transparent"></div>
+          </div>
+        );
+
+      case 'blog-intro':
+        return (
+          <div className="blog-content w-full py-2 overflow-hidden">
+             <div 
+               className="text-xl md:text-2xl font-medium text-[#1C5D15] leading-relaxed border-l-4 border-[#19FF00] pl-6 break-words"
+               dangerouslySetInnerHTML={{ __html: section.content.html || '' }}
+             />
+          </div>
+        );
+
+      case 'blog-list':
+        return (
+          <div className="blog-content w-full py-4">
+             <ul className="space-y-4">
+               {(section.content.items || []).map((item: string, i: number) => (
+                 <li key={i} className="flex gap-4">
+                   <div className="w-6 h-6 rounded-full bg-[#19FF00]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                      <div className="w-2 h-2 rounded-full bg-[#1C5D15]"></div>
+                   </div>
+                   <span className="text-lg text-[#629960]">{item}</span>
+                 </li>
+               ))}
+             </ul>
+          </div>
+        );
+
       default:
         console.warn(`⚠️ Tipo de sección desconocido: "${section.type}" (id: ${section.id})`);
         return null;
@@ -786,7 +950,7 @@ export function DynamicSection({
       data-section-type={section.type}
       key={section.id}
       style={{ scrollMarginTop: '80px' }}
-      className={!section.visible && isEditor ? 'opacity-50 grayscale' : ''}
+      className={!section.visible && isEditor ? '' : ''}
     >
       <LazySectionWrapper sectionType={section.type} forceVisible={shouldForceLoad} isEditor={isEditor}>
         {() => renderSectionContent()}
