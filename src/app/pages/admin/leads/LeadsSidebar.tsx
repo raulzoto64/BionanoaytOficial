@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LeadStatus } from '../../../components/popups/types';
-import { supabase } from '../../../data/supabase';
+import { supabaseAPI } from '../../../data/supabase';
 
 export function LeadsSidebar() {
   const [stats, setStats] = useState({
@@ -20,23 +20,17 @@ export function LeadsSidebar() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('leads')
-        .select('status');
+      const data = await supabaseAPI.getAllLeads();
 
-      if (error) {
-        setError(error.message);
-      } else {
-        const statsData = data.reduce((acc: any, item: any) => {
-          acc[item.status] = (acc[item.status] || 0) + 1;
-          return acc;
-        }, { new: 0, contacted: 0, in_progress: 0, closed: 0 } as Record<LeadStatus, number>);
+      const statsData = (data || []).reduce((acc: any, item: any) => {
+        acc[item.status] = (acc[item.status] || 0) + 1;
+        return acc;
+      }, { new: 0, contacted: 0, in_progress: 0, closed: 0 } as Record<LeadStatus, number>);
 
-        const total = data.length;
-        setStats({ ...statsData, total });
-      }
-    } catch (err) {
-      setError('Error al cargar estadísticas');
+      const total = (data || []).length;
+      setStats({ ...statsData, total });
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar estadísticas');
     } finally {
       setLoading(false);
     }

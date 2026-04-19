@@ -4,7 +4,7 @@ import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { ImageUpload } from '../../ImageUpload';
-import { Trash2, Plus, X, Globe, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Trash2, Plus, X, Globe, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { RichTextEditor } from '../RichTextEditor';
 
@@ -68,7 +68,88 @@ export function VisualEditorSidebar({
       label: `📋 Formulario: ${form.name}`
     }))
   ];
-  console.log("📋 [Sidebar] AVAILABLE_POPUPS List:", AVAILABLE_POPUPS);
+
+  /**
+   * COMPONENTE AUXILIAR INTERNO: Selector de Acción Universal
+   */
+  const ActionSelector = ({ 
+    label, 
+    value, 
+    actionType, 
+    fieldPrefix = 'cta' 
+  }: { 
+    label: string; 
+    value: string; 
+    actionType: string | undefined; 
+    fieldPrefix?: 'cta' | 'secondaryCta' 
+  }) => {
+    const isPopup = actionType === 'popup';
+    const isRoute = actionType === 'route';
+
+    return (
+      <div className="space-y-2 p-3 bg-[#1C5D15]/5 rounded-xl border border-[#1C5D15]/10 mb-2">
+        <Label className="text-[#1C5D15] font-black text-[10px] uppercase mb-1 block tracking-wider">
+          {label}
+        </Label>
+        
+        <div className="space-y-2">
+          <div>
+            <Label className="text-[9px] text-gray-400 uppercase font-bold mb-1 block">Tipo de Acción</Label>
+            <select
+              className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+              value={actionType || 'url'}
+              onChange={(e) => {
+                const newType = e.target.value;
+                handleContentChange(`${fieldPrefix}ActionType`, newType, 'both');
+                // Valor por defecto según el tipo
+                if (newType === 'popup') handleContentChange(`${fieldPrefix}Link`, 'exit-intent', 'both');
+                else if (newType === 'route') handleContentChange(`${fieldPrefix}Link`, '/', 'both');
+              }}
+            >
+              <option value="url">🌐 URL Externa (Nueva Pestaña)</option>
+              <option value="route">📍 Página / Ruta (Interna)</option>
+              <option value="popup">📩 Abrir Popup / Formulario</option>
+            </select>
+          </div>
+
+          <div>
+            <Label className="text-[9px] text-gray-400 uppercase font-bold mb-1 block">
+              {isPopup ? 'Seleccionar Popup' : 'Destino / Enlace'}
+            </Label>
+            
+            {isPopup ? (
+              <select
+                className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+                value={value}
+                onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+              >
+                {AVAILABLE_POPUPS.map(p => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            ) : isRoute ? (
+              <select
+                className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+                value={value}
+                onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+              >
+                {AVAILABLE_ROUTES.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            ) : (
+              <Input
+                className="text-[10px] h-8 focus:ring-1 focus:ring-[#19FF00]"
+                placeholder="https://..."
+                value={value}
+                onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (!sectionES || !sectionEN) {
     return null;
@@ -215,292 +296,44 @@ export function VisualEditorSidebar({
             </div>
           </div>
 
-          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-5">
-            <div className="grid gap-4">
-               <div className="space-y-3">
-                 <LanguageToggle fieldKey="hero-cta" label="Botón Primario" />
-                 <Input
-                   placeholder="Texto"
-                   value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ''}
-                   onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('hero-cta'))}
-                 />
-                 
-                   {/* ✅ SELECTOR TIPO DE ACCIÓN */}
-                 <div className="mb-1">
-                   <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1 block">Acción al hacer click</Label>
-                   <select
-                     className="w-full text-[11px] h-8 border rounded-md bg-white px-2"
-                     value={ctaType ?? sectionES.content.ctaActionType ?? 'url'}
-                     onChange={(e) => {
-                       const newType = e.target.value;
-                       console.log('✅ [FINAL FIX] Cambiando tipo de accion a:', newType);
-                       setCtaType(newType);
+          <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4 font-sans">
+            <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest mb-1 flex items-center gap-2">
+              <Zap className="w-3 h-3 text-[#19FF00] fill-[#19FF00]" />
+              Botones y Acciones
+            </h4>
 
-                       let defaultValue = sectionES.content.ctaLink || '';
-                       if (newType === 'route' && !defaultValue.startsWith('/')) defaultValue = '/';
-                       if (newType === 'popup') defaultValue = 'exit-intent';
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <LanguageToggle fieldKey="hero-cta" label="Botón Primario (Texto)" />
+                <Input
+                  placeholder="Ej: Ver más"
+                  value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ''}
+                  onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('hero-cta'))}
+                />
+                <ActionSelector 
+                  label="Acción Primaria" 
+                  value={sectionES.content.ctaLink || ''} 
+                  actionType={sectionES.content.ctaActionType}
+                  fieldPrefix="cta"
+                />
+              </div>
 
-                       // UNIFICAR CAMBIOS EN UNA SOLA LLAMADA PARA EVITAR CONDICIÓN DE CARRERA
-                       onUpdateSection(sectionES.id, { 
-                         ...sectionES.content, 
-                         ctaActionType: newType, 
-                         ctaLink: defaultValue 
-                       }, 'es');
-                       onUpdateSection(sectionEN.id, { 
-                         ...sectionEN.content, 
-                         ctaActionType: newType, 
-                         ctaLink: defaultValue 
-                       }, 'en');
-                     }}
-                   >
-                     <option value="url">🌐 URL Externa</option>
-                     <option value="route">📍 Página / Ruta Interna</option>
-                     <option value="popup">📩 Abrir Popup</option>
-                   </select>
-                   {/* 🐛 DEBUG LOG */}
-                   <div className="text-[8px] text-gray-400 mt-1 font-mono">
-                     Valor actual: {sectionES.content.ctaActionType ?? 'url'} | ctaLink: {sectionES.content.ctaLink}
-                   </div>
-                 </div>
+              <div className="h-px bg-gray-100 my-2" />
 
-                 {/* ✅ CAMPO DINAMICO SEGUN TIPO SELECCIONADO */}
-                 {(ctaType ?? sectionES.content.ctaActionType) === 'popup' ? (
-                    // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
-                    <div className="relative">
-                      <Input
-                        placeholder="🔍 Buscar popup..."
-                        value={searchFilters['cta-popup'] !== undefined ? searchFilters['cta-popup'] : (
-                          AVAILABLE_POPUPS.find(p => p.value === sectionES.content.ctaLink)?.label || ''
-                        )}
-                        onFocus={() => {
-                          setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
-                          setSearchFilters(prev => ({ ...prev, 'cta-popup': '' }));
-                        }}
-                        onChange={(e) => {
-                          setSearchFilters(prev => ({ ...prev, 'cta-popup': e.target.value }));
-                          setIsListOpen(prev => ({ ...prev, 'cta-popup': true }));
-                        }}
-                        className="mb-1"
-                      />
-                      {isListOpen['cta-popup'] === true && (
-                        <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
-                      {AVAILABLE_POPUPS
-                        .filter(p => {
-                          const search = (searchFilters['cta-popup'] || '').toLowerCase().trim();
-                          // Limpiar el label de emojis para facilitar la busqueda
-                          const cleanLabel = p.label.toLowerCase().replace(/[^\w\s]/gi, '');
-                          return p.label.toLowerCase().includes(search) || cleanLabel.includes(search);
-                        })
-                        .map(popup => (
-                              <div 
-                                key={popup.value}
-                                onClick={() => {
-                                  console.log('✅ [SELECCION] Popup seleccionado:', popup.value, popup.label);
-                                  handleContentChange('ctaLink', popup.value, 'both');
-                                  setSearchFilters(prev => ({ ...prev, 'cta-popup': popup.label }));
-                                  setIsListOpen(prev => ({ ...prev, 'cta-popup': false }));
-                                }}
-                                className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
-                                  sectionES.content.ctaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
-                                }`}
-                              >
-                                {popup.label}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                 ) : (ctaType ?? sectionES.content.ctaActionType) === 'route' ? (
-                   // ✅ BUSCADOR AUTOCOMPLETADO DE RUTAS
-                   <div className="relative">
-                     <Input
-                       placeholder="🔍 Buscar página..."
-                       value={searchFilters['cta-route'] !== undefined ? searchFilters['cta-route'] : (
-                         AVAILABLE_ROUTES.find(r => r.value === sectionES.content.ctaLink)?.label || ''
-                       )}
-                       onFocus={() => {
-                         setIsListOpen(prev => ({ ...prev, 'cta-route': true }));
-                         setSearchFilters(prev => ({ ...prev, 'cta-route': '' }));
-                       }}
-                       onChange={(e) => {
-                         setSearchFilters(prev => ({ ...prev, 'cta-route': e.target.value }));
-                         setIsListOpen(prev => ({ ...prev, 'cta-route': true }));
-                       }}
-                       className="mb-1"
-                     />
-                       {isListOpen['cta-route'] === true && (
-                      <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
-                        {AVAILABLE_ROUTES
-                          .filter(r => r.label.toLowerCase().includes((searchFilters['cta-route'] || '').toLowerCase()))
-                          .map(route => (
-                            <div 
-                              key={route.value}
-                            onClick={() => {
-                                console.log('✅ [SELECCION] Click en ruta:', route.value, route.label);
-                                handleContentChange('ctaLink', route.value, 'both');
-                                setSearchFilters(prev => ({ ...prev, 'cta-route': route.label }));
-                                setIsListOpen(prev => ({ ...prev, 'cta-route': false }));
-                              }}
-                              className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
-                                sectionES.content.ctaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
-                              }`}
-                            >
-                              {route.label}
-                            </div>
-                          ))}
-                      </div>
-                      )}
-                    </div>
-                 ) : (
-                   <Input
-                     placeholder="https://ejemplo.com"
-                     value={(getFieldLang('hero-cta') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ''}
-                     onChange={(e) => handleContentChange('ctaLink', e.target.value, getFieldLang('hero-cta'))}
-                     className="focus:ring-[#19FF00]/30"
-                   />
-                 )}
-               </div>
-
-              <div className="h-px bg-gray-100" />
-
-               <div className="space-y-3">
-                 <LanguageToggle fieldKey="hero-cta2" label="Botón Secundario" />
-                 <Input
-                   placeholder="Texto"
-                   value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ''}
-                   onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('hero-cta2'))}
-                 />
-                 
-                 {/* ✅ SELECTOR TIPO DE ACCIÓN PARA BOTÓN SECUNDARIO */}
-                 <div className="mb-1">
-                   <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1 block">Acción al hacer click</Label>
-                   <select
-                     className="w-full text-[11px] h-8 border rounded-md bg-white px-2"
-                     value={ctaType2 ?? sectionES.content.secondaryCtaActionType ?? 'url'}
-                     onChange={(e) => {
-                       const newType = e.target.value;
-                       console.log('✅ [FINAL FIX] Cambiando tipo de accion 2 a:', newType);
-                       setCtaType2(newType);
-
-                       let defaultValue = sectionES.content.secondaryCtaLink || '';
-                       if (newType === 'route' && !defaultValue.startsWith('/')) defaultValue = '/';
-                       if (newType === 'popup') defaultValue = 'exit-intent';
-
-                       // UNIFICAR CAMBIOS EN UNA SOLA LLAMADA PARA EVITAR CONDICIÓN DE CARRERA
-                       onUpdateSection(sectionES.id, { 
-                         ...sectionES.content, 
-                         secondaryCtaActionType: newType, 
-                         secondaryCtaLink: defaultValue 
-                       }, 'es');
-                       onUpdateSection(sectionEN.id, { 
-                         ...sectionEN.content, 
-                         secondaryCtaActionType: newType, 
-                         secondaryCtaLink: defaultValue 
-                       }, 'en');
-                     }}
-                   >
-                     <option value="url">🌐 URL Externa</option>
-                     <option value="route">📍 Página / Ruta Interna</option>
-                     <option value="popup">📩 Abrir Popup</option>
-                   </select>
-                 </div>
-
-                 {/* ✅ CAMPO DINAMICO SEGUN TIPO SELECCIONADO */}
-                 {(ctaType2 ?? sectionES.content.secondaryCtaActionType) === 'popup' ? (
-                    // ✅ BUSCADOR AUTOCOMPLETADO DE POPUPS
-                    <div className="relative">
-                      <Input
-                        placeholder="🔍 Buscar popup..."
-                        value={searchFilters['cta2-popup'] !== undefined ? searchFilters['cta2-popup'] : (
-                          AVAILABLE_POPUPS.find(p => p.value === sectionES.content.secondaryCtaLink)?.label || ''
-                        )}
-                        onFocus={() => {
-                          setIsListOpen(prev => ({ ...prev, 'cta2-popup': true }));
-                          setSearchFilters(prev => ({ ...prev, 'cta2-popup': '' }));
-                        }}
-                        onChange={(e) => {
-                          setSearchFilters(prev => ({ ...prev, 'cta2-popup': e.target.value }));
-                          setIsListOpen(prev => ({ ...prev, 'cta2-popup': true }));
-                        }}
-                        className="mb-1"
-                      />
-                      {isListOpen['cta2-popup'] === true && (
-                        <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
-                      {AVAILABLE_POPUPS
-                        .filter(p => {
-                          const search = (searchFilters['cta2-popup'] || '').toLowerCase().trim();
-                          const cleanLabel = p.label.toLowerCase().replace(/[^\w\s]/gi, '');
-                          return p.label.toLowerCase().includes(search) || cleanLabel.includes(search);
-                        })
-                        .map(popup => (
-                              <div 
-                                key={popup.value}
-                                onClick={() => {
-                                  console.log('✅ [SELECCION] Popup 2 seleccionado:', popup.value, popup.label);
-                                  handleContentChange('secondaryCtaLink', popup.value, 'both');
-                                  setSearchFilters(prev => ({ ...prev, 'cta2-popup': popup.label }));
-                                  setIsListOpen(prev => ({ ...prev, 'cta2-popup': false }));
-                                }}
-                                className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
-                                  sectionES.content.secondaryCtaLink === popup.value ? 'bg-[#1C5D15] text-white' : ''
-                                }`}
-                              >
-                                {popup.label}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                 ) : (ctaType2 ?? sectionES.content.secondaryCtaActionType) === 'route' ? (
-                   // ✅ BUSCADOR AUTOCOMPLETADO DE RUTAS
-                   <div className="relative">
-                     <Input
-                       placeholder="🔍 Buscar página..."
-                       value={searchFilters['cta2-route'] !== undefined ? searchFilters['cta2-route'] : (
-                         AVAILABLE_ROUTES.find(r => r.value === sectionES.content.secondaryCtaLink)?.label || ''
-                       )}
-                       onFocus={() => {
-                         setIsListOpen(prev => ({ ...prev, 'cta2-route': true }));
-                         setSearchFilters(prev => ({ ...prev, 'cta2-route': '' }));
-                       }}
-                       onChange={(e) => {
-                         setSearchFilters(prev => ({ ...prev, 'cta2-route': e.target.value }));
-                         setIsListOpen(prev => ({ ...prev, 'cta2-route': true }));
-                       }}
-                       className="mb-1"
-                     />
-                     {isListOpen['cta2-route'] === true && (
-                       <div className="max-h-[180px] overflow-y-auto border rounded-md bg-white absolute top-full left-0 right-0 z-50 shadow-xl">
-                         {AVAILABLE_ROUTES
-                           .filter(r => r.label.toLowerCase().includes((searchFilters['cta2-route'] || '').toLowerCase()))
-                           .map(route => (
-                             <div 
-                               key={route.value}
-                               onClick={() => {
-                                 console.log('✅ [SELECCION] Ruta 2 seleccionada:', route.value, route.label);
-                                 handleContentChange('secondaryCtaLink', route.value, 'both');
-                                 setSearchFilters(prev => ({ ...prev, 'cta2-route': route.label }));
-                                 setIsListOpen(prev => ({ ...prev, 'cta2-route': false }));
-                               }}
-                               className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-[#19FF00]/10 ${
-                                 sectionES.content.secondaryCtaLink === route.value ? 'bg-[#1C5D15] text-white' : ''
-                               }`}
-                             >
-                               {route.label}
-                             </div>
-                           ))}
-                       </div>
-                     )}
-                   </div>
-                 ) : (
-                   <Input
-                     placeholder="https://ejemplo.com"
-                     value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaLink : sectionEN.content.secondaryCtaLink) || ''}
-                     onChange={(e) => handleContentChange('secondaryCtaLink', e.target.value, getFieldLang('hero-cta2'))}
-                     className="focus:ring-[#19FF00]/30"
-                   />
-                 )}
-               </div>
+              <div className="space-y-2">
+                <LanguageToggle fieldKey="hero-cta2" label="Botón Secundario (Texto)" />
+                <Input
+                  placeholder="Ej: Contacto"
+                  value={(getFieldLang('hero-cta2') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ''}
+                  onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('hero-cta2'))}
+                />
+                <ActionSelector 
+                  label="Acción Secundaria" 
+                  value={sectionES.content.secondaryCtaLink || ''} 
+                  actionType={sectionES.content.secondaryCtaActionType}
+                  fieldPrefix="secondaryCta"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1533,14 +1366,12 @@ export function VisualEditorSidebar({
                 placeholder="Ej: Ver Producto"
               />
             </div>
-            <div>
-              <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1.5 block">Enlace del Botón (Global)</Label>
-              <Input
-                value={sectionES.content.ctaLink || ""}
-                onChange={(e) => handleContentChange("ctaLink", e.target.value, 'both')}
-                placeholder="https://..."
-              />
-            </div>
+            <ActionSelector 
+              label="Acción del Botón"
+              value={sectionES.content.ctaLink || ''}
+              actionType={sectionES.content.ctaActionType}
+              fieldPrefix="cta"
+            />
           </div>
 
           <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
@@ -1965,15 +1796,12 @@ export function VisualEditorSidebar({
                     className="text-xs h-9"
                   />
                 </div>
-                <div>
-                  <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1.5 block">Enlace del Botón (Global)</Label>
-                  <Input
-                    value={sectionES.content.ctaLink || ""}
-                    onChange={(e) => handleContentChange("ctaLink", e.target.value, 'both')}
-                    placeholder="Ej: /ecosystem"
-                    className="text-xs h-8"
-                  />
-                </div>
+                <ActionSelector 
+                  label="Acción del Botón"
+                  value={sectionES.content.ctaLink || ''}
+                  actionType={sectionES.content.ctaActionType}
+                  fieldPrefix="cta"
+                />
               </div>
 
               <Label className="text-[#1C5D15] font-bold px-1 uppercase tracking-tight">CARACTERÍSTICAS SINCRONIZADAS</Label>
@@ -2056,14 +1884,12 @@ export function VisualEditorSidebar({
                   placeholder="Ej: Ver todas las noticias"
                 />
               </div>
-              <div>
-                <Label className="text-[#1C5D15] font-bold text-[10px] uppercase mb-1.5 block">Enlace del Botón (Global)</Label>
-                <Input
-                  value={sectionES.content.ctaLink || ""}
-                  onChange={(e) => handleContentChange("ctaLink", e.target.value, 'both')}
-                  placeholder="Ej: /blog"
-                />
-              </div>
+              <ActionSelector 
+                label="Acción del Botón"
+                value={sectionES.content.ctaLink || ''}
+                actionType={sectionES.content.ctaActionType}
+                fieldPrefix="cta"
+              />
             </div>
           )}
 
@@ -2124,6 +1950,28 @@ export function VisualEditorSidebar({
                   </span>
                 </div>
 
+                <div className="flex items-center justify-between border-b pb-2 mb-2">
+                  <div className="flex flex-col">
+                    <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Selección de Productos (Máx 3)</h4>
+                    {((sectionES.content.selectedProductIds || []).length > 3 || (sectionES.content.selectedProductIds || []).some((id: string) => !availableProducts.find(p => p.id === id))) && (
+                      <span className="text-[8px] text-amber-500 font-bold animate-pulse">⚠️ Hay IDs obsoletos o exceso de items</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(sectionES.content.selectedProductIds || []).length > 0 && (
+                      <button 
+                        onClick={() => handleContentChange("selectedProductIds", [], 'both')}
+                        className="text-[9px] text-red-500 hover:text-red-700 font-bold underline"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                    <span className="text-[9px] bg-[#1C5D15]/10 text-[#1C5D15] px-2 py-0.5 rounded-full font-bold">
+                      {Math.min((sectionES.content.selectedProductIds || []).filter((id: string) => availableProducts.find(p => p.id === id)).length, 3)} / 3
+                    </span>
+                  </div>
+                </div>
+
                 <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                   {availableProducts.map((prod) => {
                     const isSelected = (sectionES.content.selectedProductIds || []).includes(prod.id);
@@ -2131,42 +1979,58 @@ export function VisualEditorSidebar({
                       <div
                         key={prod.id}
                         onClick={() => {
-                          const current = sectionES.content.selectedProductIds || [];
+                          // 1. Obtener lista actual limpando IDs que ya no existen
+                          const current = (sectionES.content.selectedProductIds || []).filter((id: string) => 
+                            availableProducts.find(p => p.id === id)
+                          );
+                          
                           let newList;
                           if (isSelected) {
                             newList = current.filter((id: string) => id !== prod.id);
                           } else {
                             if (current.length >= 3) {
-                              toast.error('En el Home solo puedes seleccionar un máximo de 3 productos');
+                              toast.warning('Capacidad máxima alcanzada (3). Deselecciona uno para añadir este.');
                               return;
                             }
                             newList = [...current, prod.id];
                           }
+                          console.log('🛒 [CATALOGO] Actualizando selección:', newList);
                           handleContentChange("selectedProductIds", newList, 'both');
                         }}
-                        className={`flex items-center gap-3 p-2 rounded-lg border transition-all cursor-pointer ${isSelected ? 'bg-[#1C5D15]/5 border-[#1C5D15] shadow-sm' : 'hover:bg-gray-50 border-gray-100'
-                          }`}
+                        className={`group flex items-center gap-3 p-2 rounded-xl border transition-all cursor-pointer ${
+                          isSelected 
+                            ? 'bg-[#1C5D15]/5 border-[#1C5D15] shadow-sm' 
+                            : 'hover:bg-gray-50 border-gray-100'
+                        }`}
                       >
-                        <div className="w-10 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                          <img src={prod.image} className="w-full h-full object-cover" />
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-50 group-hover:scale-105 transition-transform">
+                          <img src={prod.image} className="w-full h-full object-cover" alt={prod.slug} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-bold text-[#1C5D15] truncate">{prod.translation?.name || prod.slug}</p>
-                          <p className="text-[9px] text-gray-400 uppercase tracking-tighter">{prod.category}</p>
+                          <p className="text-[11px] font-extrabold text-[#1C5D15] truncate">{prod.translation?.name || prod.slug}</p>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">{prod.category}</p>
                         </div>
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'bg-[#1C5D15] border-[#1C5D15]' : 'border-gray-200'}`}>
-                          {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          isSelected ? 'bg-[#19FF00] border-[#19FF00]' : 'border-gray-200 group-hover:border-[#19FF00]/30'
+                        }`}>
+                          {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#1C5D15]" />}
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {(sectionES.content.selectedProductIds || []).length === 0 && (
-                  <div className="p-3 bg-amber-50 rounded-lg flex gap-2 items-start text-amber-600">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <p className="text-[10px] leading-tight">
-                      Si no seleccionas productos aquí, se mostrarán automáticamente los marcados como "Destacados".
+                {availableProducts.length === 0 && (
+                   <div className="py-8 text-center border-2 border-dashed rounded-xl">
+                      <p className="text-[10px] text-gray-400 font-medium">Cargando productos...</p>
+                   </div>
+                )}
+
+                {(sectionES.content.selectedProductIds || []).filter((id: string) => availableProducts.find(p => p.id === id)).length === 0 && (
+                  <div className="p-3 bg-amber-50 rounded-xl flex gap-2 items-start border border-amber-100">
+                    <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-amber-700 leading-tight font-medium">
+                      Si no seleccionas productos específicos, el sistema mostrará automáticamente los ítems marcados como <strong>Destacados</strong> en tu inventario.
                     </p>
                   </div>
                 )}
@@ -2187,15 +2051,12 @@ export function VisualEditorSidebar({
                     className="mt-1"
                   />
                 </div>
-                <div>
-                  <LanguageToggle fieldKey="products-cta-link" label="Enlace (URL)" />
-                  <Input 
-                    value={(getFieldLang('products-cta-link') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ""}
-                    onChange={(e) => handleContentChange("ctaLink", e.target.value, getFieldLang('products-cta-link'))}
-                    placeholder="Ej: /store"
-                    className="mt-1"
-                  />
-                </div>
+                <ActionSelector 
+                  label="Acción del Botón"
+                  value={sectionES.content.ctaLink || ''}
+                  actionType={sectionES.content.ctaActionType}
+                  fieldPrefix="cta"
+                />
               </div>
             </div>
           </>

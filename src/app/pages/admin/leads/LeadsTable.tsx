@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LeadStatus } from '../../../components/popups/types';
-import { supabase } from '../../../data/supabase';
+import { supabaseAPI } from '../../../data/supabase';
 
 interface LeadItem {
   id: number;
@@ -44,26 +44,28 @@ export function LeadsTable() {
   }, [search, statusFilter]);
 
   const fetchLeads = async () => {
-    console.log('🔄 [DEBUG] Fetching leads...');
+    console.log('🔄 [DEBUG] Fetching leads via API...');
     try {
-      let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
-
+      // Usamos el nuevo supabaseAPI.getAllLeads() que hace fetch a /api/leads
+      const data = await supabaseAPI.getAllLeads();
+      
+      let filteredData = data;
+      
       if (search) {
-        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+        const s = search.toLowerCase();
+        filteredData = filteredData.filter((l: any) => 
+          l.name?.toLowerCase().includes(s) || 
+          l.email?.toLowerCase().includes(s) || 
+          l.phone?.includes(s)
+        );
       }
 
       if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+        filteredData = filteredData.filter((l: any) => l.status === statusFilter);
       }
 
-      const { data, error } = await query;
-
-      if (error) {
-        setError(error.message);
-      } else {
-        console.log('✅ [DEBUG] Datos recibidos de Supabase en fetchLeads:', data);
-        setLeads(data as LeadItem[]);
-      }
+      console.log('✅ [DEBUG] Leads recibidos:', filteredData.length);
+      setLeads(filteredData as LeadItem[]);
     } catch (err) {
       setError("Error al cargar los leads");
     } finally {
@@ -72,83 +74,43 @@ export function LeadsTable() {
   };
 
   const updateLeadStatus = async (id: number, newStatus: LeadStatus) => {
-    console.log('🔵 [DEBUG] Iniciando actualizacion estado - Lead ID:', id, 'Nuevo estado:', newStatus);
-    const { data: { user, session } } = await supabase.auth.getSession();
-    console.log('🔵 [DEBUG] Sesión Supabase antes de UPDATE:', { user, session });
-
+    console.log('🔵 [DEBUG] Actualizando estado lead:', id, newStatus);
     try {
       setUpdatingId(id);
       
-      const { data, error, status, statusText } = await supabase
-        .from('leads')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select();
-
-      console.log('🟢 [DEBUG] Respuesta Supabase: status', status, statusText);
-      console.log('🟢 [DEBUG] Datos devueltos:', data);
-
-      if (error) {
-        console.log('🔴 [DEBUG] ERROR SUPABASE:', error.code, error.message, error.details);
-        throw error;
-      }
-      
-      console.log('✅ [DEBUG] Actualizado exitosamente en BD');
-      
-      setLeads(prev => {
-        const nuevos = prev.map(lead => 
-          lead.id === id ? { ...lead, status: newStatus } : lead
-        );
-        console.log('✅ [DEBUG] Estado local actualizado:', nuevos.find(l => l.id === id));
-        return nuevos;
+      await supabaseAPI.updateLead(id.toString(), { 
+        status: newStatus, 
+        updated_at: new Date().toISOString() 
       });
+
+      console.log('✅ [DEBUG] Actualizado exitosamente');
+      
+      setLeads(prev => prev.map(lead => 
+        lead.id === id ? { ...lead, status: newStatus } : lead
+      ));
       
     } catch (err: any) {
-      console.error('❌ [DEBUG] Error general actualizando:', err);
+      console.error('❌ [DEBUG] Error actualizando lead:', err);
       alert('Error: ' + err.message);
     } finally {
       setUpdatingId(null);
-      console.log('⏹️ [DEBUG] Proceso actualizacion terminado');
     }
   };
 
   const deleteLead = async (id: number) => {
-    console.log('🔴 [DEBUG] Iniciando eliminacion - Lead ID:', id);
-    const { data: { user, session } } = await supabase.auth.getSession();
-    console.log('🔴 [DEBUG] Sesión Supabase antes de DELETE:', { user, session });
-
-    if (!confirm('¿Estas seguro de eliminar este lead? Esta accion no se puede deshacer.')) {
-      console.log('⚠️ [DEBUG] Eliminacion cancelada por usuario');
-      return;
-    }
+    if (!confirm('¿Estas seguro de eliminar este lead? Esta accion no se puede deshacer.')) return;
 
     try {
-      const { data, error, status, statusText } = await supabase
-        .from('leads')
-        .delete()
-        .eq('id', id)
-        .select();
-
-      console.log('🟢 [DEBUG] Respuesta Supabase DELETE: status', status, statusText);
-      console.log('🟢 [DEBUG] Elemento eliminado:', data);
-
-      if (error) {
-        console.log('🔴 [DEBUG] ERROR SUPABASE DELETE:', error.code, error.message, error.details);
-        throw error;
-      }
+      console.log('🔴 [DEBUG] Eliminando lead:', id);
+      await supabaseAPI.deleteLead(id.toString());
       
-      console.log('✅ [DEBUG] Eliminado exitosamente en BD');
+      console.log('✅ [DEBUG] Eliminado exitosamente');
       
-      setLeads(prev => {
-        const nuevos = prev.filter(lead => lead.id !== id);
-        console.log('✅ [DEBUG] Eliminado de estado local, quedan:', nuevos.length);
-        return nuevos;
-      });
-      
+      setLeads(prev => prev.filter(lead => lead.id !== id));
       setShowModal(false);
       
     } catch (err: any) {
-      console.error('❌ [DEBUG] Error general eliminando:', err);
+      console.error('❌ [DEBUG] Error eliminando lead:', err);
       alert('Error: ' + err.message);
     }
   };

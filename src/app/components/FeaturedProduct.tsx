@@ -60,7 +60,7 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
 <p className="text-xl mb-6 text-[#629960] leading-relaxed" dangerouslySetInnerHTML={{ __html: content.productDescription }}></p>
             
             <div className="space-y-4 mb-8">
-              {content.features.map((feature: any, index: number) => {
+              {Array.isArray(content.features) && content.features.map((feature: any, index: number) => {
                 const IconComponent = getIconComponent(feature.icon);
                 return (
                   <div key={index} className="flex items-start gap-3">
@@ -69,7 +69,7 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
                     </div>
                     <div>
                       <h4 className="text-[#1C5D15] mb-1">{feature.title}</h4>
-<p className="text-[#629960]" dangerouslySetInnerHTML={{ __html: feature.description }}></p>
+                      <p className="text-[#629960]" dangerouslySetInnerHTML={{ __html: feature.description }}></p>
                     </div>
                   </div>
                 );

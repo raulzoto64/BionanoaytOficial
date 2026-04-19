@@ -33,7 +33,7 @@ export function AddToCartButton({ productId, packaging, onSuccess }: AddToCartBu
         return;
       }
 
-      await supabaseAPI.addToCart(userId, guestIdParam, productId, 1, packaging);
+      await supabaseAPI.addToCart(productId, 1, userId, guestIdParam, packaging || 'standard');
       
       setIsAdded(true);
 

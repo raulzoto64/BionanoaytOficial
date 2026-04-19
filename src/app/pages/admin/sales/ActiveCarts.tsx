@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabaseAPI, supabase } from "../../../data/supabase";
+import { supabaseAPI } from "../../../data/supabase";
 import { ShoppingCart, User, Search, Loader2, MapPin } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -42,12 +42,7 @@ export function ActiveCarts() {
       const items = await supabaseAPI.getCartByIdentifier(cart.identifier);
       setCartDetails(items);
 
-      const { data: leads } = await supabase
-        .from('leads')
-        .select('*')
-        .or(`visitor_id.eq.${cart.identifier},user_id.eq.${cart.identifier}`)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      const leads = await supabaseAPI.getLeadByIdentifier(cart.identifier);
 
       if (leads && leads.length > 0) {
         setUserLead(leads[0]);

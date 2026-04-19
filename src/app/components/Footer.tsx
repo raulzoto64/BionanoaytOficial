@@ -6,9 +6,7 @@ import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ExternalLi
 import { toast } from "sonner";
 import { useLanguage } from "../contexts/LanguageContext";
 import { DatabaseManager } from "../data/DatabaseManager";
-import { FooterSettings } from "../data/supabase";
-import { supabase, supabaseAPI, Category} from "../data/supabase";
-
+import { supabaseAPI } from "../data/supabase";
 interface ContactInfo {
   phone: string;
   email: string;
@@ -23,8 +21,6 @@ export function Footer({ contactInfo }: FooterProps) {
   const { t, language } = useLanguage();
   const [footerSettings, setFooterSettings] = useState<FooterSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [siteSettings, setSiteSettings] = useState<any>(null);
   
   const [formData, setFormData] = useState({
@@ -35,7 +31,6 @@ export function Footer({ contactInfo }: FooterProps) {
 
   useEffect(() => {
     loadFooterSettings();
-    loadCategories();
     loadSiteSettings();
   }, []);
 
@@ -56,15 +51,6 @@ export function Footer({ contactInfo }: FooterProps) {
     } catch (error) {
       console.error('Error loading footer settings:', error);
       setIsLoading(false);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const categoriesData = await supabaseAPI.getCategories();
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error('Error loading categories:', error);
     }
   };
 

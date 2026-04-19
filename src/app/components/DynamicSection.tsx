@@ -161,6 +161,9 @@ export function DynamicSection({ section, products = [], language = 'es', index 
               title={section.content.title} 
               subtitle={section.content.subtitle} 
               items={section.content.items}
+              ctaText={section.content.ctaText}
+              ctaLink={section.content.ctaLink}
+              ctaActionType={section.content.ctaActionType}
               sectionId={section.id}
             />
           </div>

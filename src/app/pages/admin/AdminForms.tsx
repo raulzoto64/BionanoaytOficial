@@ -59,9 +59,9 @@ export function AdminForms() {
   };
 
   const filteredForms = forms.filter(f => 
-    f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    f.title_es.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    f.title_en.toLowerCase().includes(searchQuery.toLowerCase())
+    (f?.name?.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    (f?.title_es?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (f?.title_en?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (

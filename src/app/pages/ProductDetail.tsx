@@ -225,7 +225,7 @@ export function ProductDetail() {
         packaging: selectedPackagingType
       });
 
-      const result = await supabaseAPI.addToCart(userId, guestId, product.id, quantity, selectedPackagingType);
+      const result = await supabaseAPI.addToCart(product.id, quantity, userId, guestId, selectedPackagingType);
       console.log('✨ [API] addToCart Succesful result:', result);
       
       // Lanzar rastreador de telemetría de negocio

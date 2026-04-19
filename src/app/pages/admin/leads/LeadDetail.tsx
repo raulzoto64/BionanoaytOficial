@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { LeadData, LeadStatus } from '../../components/popups/types';
-import { supabase } from '../../data/supabase';
+import { LeadStatus } from '../../components/popups/types';
+import { supabaseAPI } from '../../data/supabase';
 
 interface LeadItem {
   id: number;
@@ -35,21 +35,12 @@ export function LeadDetail({ leadId }: { leadId: number }) {
   const fetchLead = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('id', leadId)
-        .single();
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setLead(data as LeadItem);
-        setStatus(data.status);
-        setNotes(data.notes || '');
-      }
-    } catch (err) {
-      setError('Error al cargar el lead');
+      const data = await supabaseAPI.getLeadById(String(leadId));
+      setLead(data as LeadItem);
+      setStatus(data.status);
+      setNotes(data.notes || '');
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar el lead');
     } finally {
       setLoading(false);
     }
@@ -57,22 +48,14 @@ export function LeadDetail({ leadId }: { leadId: number }) {
 
   const updateLead = async () => {
     try {
-      const { error } = await supabase
-        .from('leads')
-        .update({
-          status,
-          notes: notes || null
-        })
-        .eq('id', leadId);
-
-      if (error) {
-        setError(error.message);
-      } else {
-        // Recargar el lead actualizado
-        fetchLead();
-      }
-    } catch (err) {
-      setError('Error al actualizar el lead');
+      await supabaseAPI.updateLead(String(leadId), {
+        status,
+        notes: notes || null
+      });
+      // Recargar el lead actualizado
+      fetchLead();
+    } catch (err: any) {
+      setError(err.message || 'Error al actualizar el lead');
     }
   };
 

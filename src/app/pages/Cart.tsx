@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Trash2, Plus, Minus, ShoppingBag, Truck, User, Mail, Phone, MapPin, Globe, CreditCard, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { supabaseAPI, CartItemWithProduct, supabase } from "../data/supabase";
+import { supabaseAPI, CartItemWithProduct } from "../data/supabase";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -106,7 +106,7 @@ export function Cart() {
           cart_total: subtotal,
           items_count: cartItems.length,
           items_list: cartItems.map(i => ({
-            name: i.translation.name,
+            name: i.translation?.name || (i as any).name || 'Producto',
             quantity: i.quantity,
             packaging: i.packaging
           })),
@@ -182,13 +182,14 @@ export function Cart() {
       const item = cartItems.find((i) => i.id === itemId);
       if (!item) return;
       const newQuantity = Math.max(1, item.quantity + delta);
-      const updatedItem = await supabaseAPI.updateCartItemQuantity(itemId, newQuantity);
-      const priceInfo = await supabaseAPI.calculatePrice(updatedItem.product_id, updatedItem.quantity, updatedItem.packaging);
+      await supabaseAPI.updateCartItemQuantity(itemId, newQuantity);
+      
+      const priceInfo = await supabaseAPI.calculatePrice(item.product_id, newQuantity, item.packaging);
 
       setCartItems((items) => {
         const mapped = items.map((i) => i.id === itemId ? {
           ...i,
-          quantity: updatedItem.quantity,
+          quantity: newQuantity,
           pricePerUnit: priceInfo?.pricePerUnit || 0,
           totalPrice: priceInfo?.total || 0,
         } : i);
@@ -269,10 +270,10 @@ export function Cart() {
                 {cartItems.map((item) => (
                   <div key={item.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-transparent hover:border-[#19FF00]/20 transition-all flex flex-col md:flex-row gap-6 items-center">
                     <div className="w-24 h-24 flex-shrink-0 bg-gray-50 rounded-2xl overflow-hidden shadow-inner">
-                      <img src={item.product.images?.[0] || item.product.image} className="w-full h-full object-cover" alt={item.translation.name} />
+                      <img src={item.product?.images?.[0] || item.product?.image || (item as any).image_url || ''} className="w-full h-full object-cover" alt={(item.translation?.name || (item as any).name || 'Producto')} />
                     </div>
                     <div className="flex-1 text-center md:text-left">
-                      <h4 className="font-black text-[#1C5D15] text-lg uppercase tracking-tight">{item.translation.name}</h4>
+                      <h4 className="font-black text-[#1C5D15] text-lg uppercase tracking-tight">{item.translation?.name || (item as any).name || 'Producto'}</h4>
                       <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-2">
                         <span className="text-[10px] font-black bg-[#19FF00]/10 text-[#1C5D15] px-3 py-1 rounded-full uppercase">{item.packaging}</span>
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${item.pricePerUnit.toLocaleString()} COP / un.</span>
@@ -313,7 +314,7 @@ export function Cart() {
                                 type="text" 
                                 value={checkoutData.name}
                                 onChange={handleInputChange}
-                                onBlur={syncLead}
+                                onBlur={() => syncLead(false)}
                                 placeholder="Ej: Juan Pérez"
                                 className="w-full bg-gray-50 border-none rounded-2xl px-12 py-4 text-sm font-bold text-[#1C5D15] focus:ring-2 focus:ring-[#19FF00]/30 transition-all shadow-inner"
                              />
@@ -328,7 +329,7 @@ export function Cart() {
                                 type="email" 
                                 value={checkoutData.email}
                                 onChange={handleInputChange}
-                                onBlur={syncLead}
+                                onBlur={() => syncLead(false)}
                                 placeholder="tu@email.com"
                                 className="w-full bg-gray-50 border-none rounded-2xl px-12 py-4 text-sm font-bold text-[#1C5D15] focus:ring-2 focus:ring-[#19FF00]/30 transition-all shadow-inner"
                              />
@@ -343,7 +344,7 @@ export function Cart() {
                                 type="tel" 
                                 value={checkoutData.phone}
                                 onChange={handleInputChange}
-                                onBlur={syncLead}
+                                onBlur={() => syncLead(false)}
                                 placeholder="+57 --- --- -- --"
                                 className="w-full bg-gray-50 border-none rounded-2xl px-12 py-4 text-sm font-bold text-[#1C5D15] focus:ring-2 focus:ring-[#19FF00]/30 transition-all shadow-inner"
                              />
@@ -372,7 +373,7 @@ export function Cart() {
                                 type="text" 
                                 value={checkoutData.city}
                                 onChange={handleInputChange}
-                                onBlur={syncLead}
+                                onBlur={() => syncLead(false)}
                                 placeholder="Ej: Bogotá"
                                 className="w-full bg-gray-50 border-none rounded-2xl px-12 py-4 text-sm font-bold text-[#1C5D15] focus:ring-2 focus:ring-[#19FF00]/30 shadow-inner"
                              />
@@ -385,7 +386,7 @@ export function Cart() {
                             type="text" 
                             value={checkoutData.district}
                             onChange={handleInputChange}
-                            onBlur={syncLead}
+                            onBlur={() => syncLead(false)}
                             placeholder="Calle 123 #45-67..."
                             className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-[#1C5D15] focus:ring-2 focus:ring-[#19FF00]/30 shadow-inner"
                           />
@@ -406,7 +407,7 @@ export function Cart() {
                     <div className="space-y-4 mb-10 max-h-48 overflow-y-auto custom-scrollbar-light pr-2">
                        {cartItems.map((item, idx) => (
                          <div key={idx} className="flex justify-between items-start text-xs border-b border-white/5 pb-2">
-                            <span className="opacity-70 font-bold">({item.quantity}) {item.translation.name}</span>
+                            <span className="opacity-70 font-bold">({item.quantity}) {item.translation?.name || (item as any).name || 'Producto'}</span>
                             <span className="font-black text-[#19FF00]">${item.totalPrice.toLocaleString()}</span>
                          </div>
                        ))}

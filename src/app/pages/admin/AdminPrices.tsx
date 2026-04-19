@@ -72,8 +72,10 @@ export function AdminPrices() {
 
   const loadPrices = async () => {
     try {
+      console.log('🔍 [ADMIN/PRICES] Cargando precios para producto:', selectedProductId);
       const pricesData = await supabaseAPI.getPricesByProduct(selectedProductId);
-      setPrices(pricesData.sort((a, b) => a.min_quantity - b.min_quantity));
+      console.log('✅ [ADMIN/PRICES] Respuesta recibida:', pricesData);
+      setPrices(pricesData.sort((a: any, b: any) => a.min_quantity - b.min_quantity));
       
       // Obtener tipos de embase disponibles para el producto seleccionado
       const availablePackagingTypes = Array.from(
@@ -123,44 +125,40 @@ export function AdminPrices() {
   const handleSave = async () => {
     if (!editingPrice) return;
 
-    // Validate packaging
-    const packagingType = editingPrice.packaging?.split(' ')[0];
-    const packagingVolume = editingPrice.packaging?.split(' ')[1];
-    
-    if (packagingType && !packagingVolume) {
-      toast.error('Debe seleccionar un volumen para este tipo de embase');
-      return;
-    }
-
-    if (packagingVolume && !packagingType) {
-      toast.error('Debe seleccionar un tipo de embase');
-      return;
-    }
-
     try {
-      console.log('💾 [ADMIN/PRICE] Saving price data...', { isNew: isNewPrice, data: editingPrice });
+      console.log('💾 [ADMIN/PRICE] Iniciando guardado de precio...', { 
+        isNew: isNewPrice, 
+        id: editingPrice.id,
+        productId: editingPrice.product_id,
+        min: editingPrice.min_quantity,
+        price: editingPrice.price_per_unit,
+        packaging: editingPrice.packaging || 'null'
+      });
       
       if (isNewPrice) {
-        await supabaseAPI.createPrice({
+        const result = await supabaseAPI.createPrice({
           product_id: editingPrice.product_id,
           min_quantity: editingPrice.min_quantity,
           max_quantity: editingPrice.max_quantity,
           price_per_unit: editingPrice.price_per_unit,
           currency: editingPrice.currency,
-          packaging: editingPrice.packaging,
+          packaging: editingPrice.packaging || null,
         });
-        console.log('✅ [ADMIN/PRICE] Create successful');
+        console.log('✅ [ADMIN/PRICE] Creación exitosa:', result);
         toast.success('Precio agregado correctamente');
       } else {
-        await supabaseAPI.updatePrice(editingPrice.id, editingPrice);
-        console.log('✅ [ADMIN/PRICE] Update successful');
+        const result = await supabaseAPI.updatePrice(editingPrice.id, {
+          ...editingPrice,
+          packaging: editingPrice.packaging || null
+        });
+        console.log('✅ [ADMIN/PRICE] Actualización exitosa:', result);
         toast.success('Precio actualizado correctamente');
       }
       setDialogOpen(false);
       loadPrices();
     } catch (error: any) {
-      console.error('❌ [ADMIN/PRICE] Save failed:', error);
-      toast.error(`Error al guardar: ${error.message || 'Error desconocido'}`);
+      console.error('❌ [ADMIN/PRICE] Fallo al guardar:', error);
+      toast.error(`Error al guardar: ${error.message || 'Verifique la consola para más detalles'}`);
     }
   };
 

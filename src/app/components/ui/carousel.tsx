@@ -73,15 +73,15 @@ function Carousel({
 
   // Pause autoplay on hover
   const handleMouseEnter = () => {
-    if (pauseOnHover) {
-      autoplayPlugin.current?.stop();
+    if (pauseOnHover && autoplayPlugin.current) {
+      autoplayPlugin.current.stop();
     }
   };
 
   // Resume autoplay on mouse leave
   const handleMouseLeave = () => {
-    if (pauseOnHover) {
-      autoplayPlugin.current?.play();
+    if (pauseOnHover && autoplayPlugin.current) {
+      autoplayPlugin.current.play();
     }
   };
 

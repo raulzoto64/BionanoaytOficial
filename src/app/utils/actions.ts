@@ -9,10 +9,11 @@ export interface ActionData {
 /** UUID regex — if a ctaLink looks like this, it's a popup ID, not a URL */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * Detects if a given string is a UUID (popup ID) rather than a navigable link.
- */
-export const isPopupId = (value: string): boolean => UUID_REGEX.test(value.trim());
+/** Detects if a given string is a popup ID rather than a navigable link. */
+export const isPopupId = (value: string): boolean => 
+  UUID_REGEX.test(value.trim()) || 
+  value.trim().startsWith('form-') || 
+  value.trim() === 'exit-intent';
 
 /**
  * Auto-resolves the action type for a ctaLink:

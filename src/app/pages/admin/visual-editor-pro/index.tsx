@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { supabase, supabaseAPI, PageWithContent, Section } from '../../../data/supabase';
+import { supabaseAPI, PageWithContent, Section } from '../../../data/supabase';
 import { toast } from 'sonner';
 
 import { Toolbar } from './Toolbar';
@@ -47,11 +47,12 @@ export function AdminVisualEditor() {
     const fetchData = async () => {
       try {
         const [products, members, categories, forms] = await Promise.all([
-          supabaseAPI.getProducts(),
-          supabaseAPI.getEcosystemMembers(),
-          supabaseAPI.getCategories(),
+          supabaseAPI.getAllProducts(),
+          supabaseAPI.getAllEcosystemMembers(),
+          supabaseAPI.getAllCategories(),
           supabaseAPI.getForms()
         ]);
+        console.log("📦 [EDITOR-FIX] Datos cargados:", { products: products.length, members: members.length, forms: forms.length });
         setAllProducts(products);
         setAllEcosystemMembers(members);
         setAllCategories(categories);
@@ -160,29 +161,28 @@ export function AdminVisualEditor() {
 
       if (sES.length > 0) setActiveSectionId(sES[0].id);
 
-      const [products, productTranslations, members, memberTranslations, categories, categoryTranslations, blogPosts, blogTranslations, blogMeta] = await Promise.all([
+      const [products, productTranslations, members, memberTranslations, categories, categoryTranslations, blogPosts, blogTranslations] = await Promise.all([
         supabaseAPI.getProducts(),
-        supabase.from('product_translations').select('*').eq('language', activeLanguage),
+        supabaseAPI.getAllProductTranslations(activeLanguage),
         supabaseAPI.getEcosystemMembers(),
-        supabase.from('ecosystem_member_translations').select('*').eq('language', activeLanguage),
+        supabaseAPI.getAllEcosystemMemberTranslations(activeLanguage),
         supabaseAPI.getCategories(),
-        supabase.from('category_translations').select('*').eq('language', activeLanguage),
+        supabaseAPI.getAllCategoryTranslations(activeLanguage),
         supabaseAPI.getBlogPosts('published'),
-        supabase.from('blog_post_translations').select('*').eq('language', activeLanguage),
-        supabase.from('blog_categories').select('*, blog_category_translations(*)').eq('blog_category_translations.language', activeLanguage)
+        supabaseAPI.getAllBlogPostTranslations(activeLanguage)
       ]);
 
-      const productTranslationsMap = (productTranslations.data || []).reduce((acc: any, t: any) => { acc[t.product_id] = t; return acc; }, {});
+      const productTranslationsMap = (productTranslations || []).reduce((acc: any, t: any) => { acc[t.product_id] = t; return acc; }, {});
       setAllProducts(products.map(p => ({ ...p, translation: productTranslationsMap[p.id] || null })));
 
-      const memberTranslationsMap = (memberTranslations.data || []).reduce((acc: any, t: any) => { acc[t.member_id] = t; return acc; }, {});
+      const memberTranslationsMap = (memberTranslations || []).reduce((acc: any, t: any) => { acc[t.member_id] = t; return acc; }, {});
       setAllEcosystemMembers(members.map(m => ({ ...m, translation: memberTranslationsMap[m.id] || null })));
 
-      const categoryTranslationsMap = (categoryTranslations.data || []).reduce((acc: any, t: any) => { acc[t.category_id] = t; return acc; }, {});
+      const categoryTranslationsMap = (categoryTranslations || []).reduce((acc: any, t: any) => { acc[t.category_id] = t; return acc; }, {});
       setAllCategories(categories.map(c => ({ ...c, name: categoryTranslationsMap[c.id]?.name || c.id })));
 
       // Blog posts normalization for preview
-      const blogTranslationsMap = (blogTranslations.data || []).reduce((acc: any, t: any) => { acc[t.post_id] = t; return acc; }, {});
+      const blogTranslationsMap = (blogTranslations || []).reduce((acc: any, t: any) => { acc[t.post_id] = t; return acc; }, {});
       const enrichedBlogPosts = blogPosts.map(post => ({
         ...post,
         translation: blogTranslationsMap[post.id] || { title: 'Untitled', excerpt: '' },

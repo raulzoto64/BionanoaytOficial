@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LeadStatus } from '../../components/popups/types';
-import { supabase } from '../../data/supabase';
+import { supabaseAPI } from '../../data/supabase';
 
 interface LeadItem {
   id: number;
@@ -37,21 +37,13 @@ export function LeadsActions({ lead, onUpdate }: LeadsActionsProps) {
     setError(null);
 
     try {
-      const { error } = await supabase
-        .from('leads')
-        .update({
-          status,
-          notes: notes || null
-        })
-        .eq('id', lead.id);
-
-      if (error) {
-        setError(error.message);
-      } else {
-        onUpdate();
-      }
-    } catch (err) {
-      setError('Error al actualizar el lead');
+      await supabaseAPI.updateLead(String(lead.id), {
+        status,
+        notes: notes || null
+      });
+      onUpdate();
+    } catch (err: any) {
+      setError(err.message || 'Error al actualizar el lead');
     } finally {
       setLoading(false);
     }

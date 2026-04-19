@@ -1,0 +1,10 @@
+RewriteEngine On
+
+
+# Redirigir todo lo que empiece con /api/ a index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ index.php?path=$1 [QSA,L]
+
+# Silenciar el listado de directorios y negociacion de contenido
+Options -Indexes -MultiViews

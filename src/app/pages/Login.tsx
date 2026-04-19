@@ -47,10 +47,8 @@ export function Login() {
           return;
         }
 
-        const user = await supabaseAPI.loginUser(formData.email, formData.password);
-
-        // Guardar sesión usando el hook (Ahora esperamos que termine la migración del carrito)
-        await login(user);
+        // Usar el método login del contexto directamente
+        const user = await login(formData.email, formData.password);
 
         toast.success(`¡Bienvenido ${user.name}!`);
 

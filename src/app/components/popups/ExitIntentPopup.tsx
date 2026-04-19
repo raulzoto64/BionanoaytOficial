@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { LeadData } from './types';
 import { PopupBase } from './PopupBase';
 import { ThankYouStep } from './ThankYouStep';
-import { supabaseAPI, Form } from '../../data/supabase';
+import { supabaseAPI, Form, FormField } from '../../data/supabase';
 import { Loader2, Mail, User, ChevronRight, Check } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -189,7 +189,7 @@ export function ExitIntentPopup({ popupId, onClose, onSubmit }: ExitIntentPopupP
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              {formConfig?.fields.map((field) => {
+              {(formConfig?.fields || []).map((field: FormField) => {
                 const label = (language === 'es' ? field.label_es : field.label_en) || field.name || 'Campo';
                 const placeholder = language === 'es' ? field.placeholder_es : field.placeholder_en;
                 const fallbackPlaceholder = `${language === 'es' ? 'Introduce' : 'Enter'} ${label.toLowerCase()}...`;
@@ -215,7 +215,7 @@ export function ExitIntentPopup({ popupId, onClose, onSubmit }: ExitIntentPopupP
                           onChange={(e) => handleChange(field.name, e.target.value)}
                         >
                           <option value="">{language === 'es' ? 'Selecciona...' : 'Select...'}</option>
-                          {field.options?.map(opt => (
+                          {field.options?.map((opt: string) => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
                         </select>

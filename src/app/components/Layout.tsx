@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { BackgroundPreload } from "../data/BackgroundPreload";
 import { ExitIntentPopup } from "./popups/ExitIntentPopup";
 import { useExitIntent } from "./popups/hooks/useExitIntent";
-import { supabase, supabaseAPI } from "../data/supabase";
+import { supabaseAPI } from "../data/supabase";
 import { useAnalytics } from "../hooks/useAnalytics";
 
 // Default contact information in case page content doesn't provide it
@@ -21,8 +21,18 @@ const defaultContactInfo = {
 function LayoutInner() {
   const { language } = useLanguage();
   const { showPopupId, setShowPopupId } = useExitIntent();
-  const { trackEvent } = useAnalytics(); // 🚀 Silently tracks page_views and session durations
+  useAnalytics(); // 🚀 Silently tracks page_views and session durations
   
+  useEffect(() => {
+    // Si detectamos que todavía hay rastro de Supabase en el caché local, limpiamos una vez
+    if (localStorage.getItem('bionano_cache_products') || localStorage.getItem('supabase.auth.token')) {
+      supabaseAPI.clearCache();
+      localStorage.removeItem('supabase.auth.token');
+      // Recargar solo si es necesario limpiar, para asegurar que el estado sea fresco
+      window.location.reload();
+    }
+  }, []);
+
   useEffect(() => {
     BackgroundPreload.start(language);
   }, [language]);
@@ -60,9 +70,8 @@ function LayoutInner() {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
-    const { error } = await supabase
-      .from('leads')
-      .insert({
+    try {
+      await supabaseAPI.createLead({
         // Campos de identidad
         ...knownFields,
         // Enriquecimiento automático
@@ -80,11 +89,9 @@ function LayoutInner() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
-
-    if (error) {
-      console.error('❌ Error guardando lead del popup:', error);
-    } else {
       console.log('✅ Lead CRM guardado correctamente');
+    } catch (err) {
+      console.error('❌ Error guardando lead del popup:', err);
     }
   };
 

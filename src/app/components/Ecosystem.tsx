@@ -1,7 +1,7 @@
 "use client";
 
 import { useLanguage } from "../contexts/LanguageContext";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { supabaseAPI, EcosystemMember, EcosystemMemberTranslation } from "../data/supabase";
 import { Button } from "../components/ui/button";
@@ -19,6 +19,9 @@ import { ecosystemPreloadCache } from "../data/BackgroundPreload";
 interface EcosystemProps {
   title?: string;
   subtitle?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  ctaActionType?: string;
   sectionId?: string; // Nuevo: ID de la sección para el scroll
   items?: Array<{
     title?: string;
@@ -29,8 +32,9 @@ interface EcosystemProps {
   }>;
 }
 
-export function Ecosystem({ title, subtitle, items, sectionId }: EcosystemProps) {
+export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink, ctaActionType }: EcosystemProps) {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   
   // Inicialización instantánea desde caché si existe
   const [members, setMembers] = useState<EcosystemMember[]>(() => 
@@ -171,10 +175,12 @@ export function Ecosystem({ title, subtitle, items, sectionId }: EcosystemProps)
               ))}
             </div>
 
-            <Button size="lg" className="hidden md:inline-flex bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12" asChild>
-              <Link to="/ecosystem">
-                {language === 'es' ? 'Conocer Más' : 'Learn More'}
-              </Link>
+            <Button 
+              size="lg" 
+              className="hidden md:inline-flex bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
+              onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate)}
+            >
+              {ctaText || (language === 'es' ? 'Conocer Más' : 'Learn More')}
             </Button>
           </div>
 
@@ -249,10 +255,12 @@ export function Ecosystem({ title, subtitle, items, sectionId }: EcosystemProps)
 
         {/* Botón visible solo en móviles, debajo del carrusel */}
         <div className="mt-6 flex justify-center md:hidden">
-          <Button size="lg" className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12" asChild>
-            <Link to="/ecosystem">
-              {language === 'es' ? 'Conocer Más' : 'Learn More'}
-            </Link>
+          <Button 
+            size="lg" 
+            className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
+            onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate)}
+          >
+            {ctaText || (language === 'es' ? 'Conocer Más' : 'Learn More')}
           </Button>
         </div>
       </div>

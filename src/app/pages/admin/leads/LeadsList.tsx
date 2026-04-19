@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LeadData, LeadStatus } from '../../../components/popups/types';
-import { supabase } from '../../../data/supabase';
+import { supabaseAPI } from '../../../data/supabase';
 
 interface LeadItem {
   id: number;
@@ -31,45 +31,13 @@ export function LeadsList() {
 
   const fetchLeads = async () => {
     try {
-      console.log('🔍 [DEBUG LEADS] Iniciando carga de leads...');
       setLoading(true);
-      
-      console.log('📡 [DEBUG LEADS] Realizando consulta a Supabase...');
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      console.log('📦 [DEBUG LEADS] Respuesta completa de Supabase:', { data, error });
-      
-      if (error) {
-        console.error('❌ [DEBUG LEADS] ERROR en la consulta:', error);
-        console.error('❌ [DEBUG LEADS] Codigo de error:', error.code);
-        console.error('❌ [DEBUG LEADS] Detalle:', error.details);
-        console.error('❌ [DEBUG LEADS] Mensaje:', error.message);
-        setError(error.message);
-      } else {
-        console.log('✅ [DEBUG LEADS] Exito! Datos recibidos:', data);
-        console.log('📊 [DEBUG LEADS] Cantidad de leads obtenidos:', data ? data.length : 0);
-        
-        if (data && data.length > 0) {
-          console.log('📄 [DEBUG LEADS] Primer lead de ejemplo:', data[0]);
-        } else {
-          console.warn('⚠️ [DEBUG LEADS] NO SE OBTUVIERON LEADS - La tabla esta vacia o no hay permisos');
-        }
-        
-        setLeads(data as LeadItem[]);
-      }
+      const data = await supabaseAPI.getAllLeads();
+      setLeads(data as LeadItem[]);
     } catch (err) {
-      console.error('💥 [DEBUG LEADS] EXCEPCION CAPTURADA:', err);
-      console.error('💥 [DEBUG LEADS] Tipo de error:', typeof err);
-      if (err instanceof Error) {
-        console.error('💥 [DEBUG LEADS] Mensaje de excepcion:', err.message);
-        console.error('💥 [DEBUG LEADS] Stack:', err.stack);
-      }
+      console.error('Error al cargar leads:', err);
       setError('Error al cargar los leads');
     } finally {
-      console.log('🏁 [DEBUG LEADS] Finalizando carga, loading = false');
       setLoading(false);
     }
   };

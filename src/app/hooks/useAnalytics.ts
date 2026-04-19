@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabaseAPI } from '../data/supabase';
-import { useAuthContext } from './AuthContext'; // Or AuthProvider, depending on Bionano's setup. Check if this handles `user`.
-// Assuming we fetch user manually if context isn't available everywhere
-import { supabase } from '../data/supabase';
+import { useAuth } from './useAuth';
 
 export function useAnalytics() {
   const location = useLocation();
+  const { user } = useAuth();
   const startTimeRef = useRef<number>(Date.now());
   const currentUrlRef = useRef<string>(window.location.href);
   const isEnabled = true;
@@ -36,8 +35,6 @@ export function useAnalytics() {
     const handleBeforeUnload = () => {
       const timeSpentSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
       if (timeSpentSeconds > 2) {
-        // En un onUnload, fetch y await no siempre funcionan. Navigator.sendBeacon es mejor, 
-        // pero usaremos trackEvent y cruzaremos los dedos si el navegador lo permite
         trackEvent('time_on_page', { session_duration_seconds: timeSpentSeconds }, currentUrlRef.current);
       }
     };
@@ -61,8 +58,6 @@ export function useAnalytics() {
         guestId = crypto.randomUUID();
         localStorage.setItem('guest_id', guestId);
       }
-
-      const { data: { user } } = await supabase.auth.getUser();
 
       await supabaseAPI.trackAnalyticsEvent({
         visitor_id: guestId,

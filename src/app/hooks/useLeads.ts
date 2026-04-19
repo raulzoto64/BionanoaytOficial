@@ -1,30 +1,23 @@
-import { LeadData, LeadType } from '../components/popups/types';
-import { supabase } from '../data/supabase';
+import { LeadData } from '../components/popups/types';
+import { supabaseAPI } from '../data/supabase';
 import { useVisitor } from './useVisitor';
+import { useAuth } from './useAuth';
 
 export function useLeads() {
   const { visitorId } = useVisitor();
+  const { user } = useAuth();
+
   const createLead = async (data: LeadData) => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      const { data: leadData, error } = await supabase
-        .from('leads')
-        .insert([{
-          ...data,
-          page_url: window.location.href,
-          referrer: document.referrer,
-          user_agent: navigator.userAgent,
-          ip_address: (await supabase.rpc('get_ip_address')).data.ip,
-          is_anonymous: !user,
-          user_id: user?.user?.id || null,
-          visitor_id: visitorId || null
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
+      const leadData = await supabaseAPI.createLead({
+        ...data,
+        page_url: window.location.href,
+        referrer: document.referrer || null,
+        user_agent: navigator.userAgent,
+        is_anonymous: !user,
+        user_id: user?.id || null,
+        visitor_id: visitorId || null
+      });
 
       return leadData;
     } catch (error) {

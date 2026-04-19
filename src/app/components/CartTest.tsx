@@ -32,10 +32,10 @@ export function CartTest() {
       await supabaseAPI.clearCart(testUser.id);
       
       // 4. Agregar producto con embase "Botella" (1 a 10 unidades a 25,000)
-      const botellaItem = await supabaseAPI.addToCart(testUser.id, testProduct.id, 5, 'Botella');
+      const botellaItem = await supabaseAPI.addToCart(testProduct.id, 5, testUser.id, null, 'Botella');
       
       // 5. Agregar el mismo producto con embase "Galón" (1 a 20 unidades a 50,000)
-      await supabaseAPI.addToCart(testUser.id, testProduct.id, 3, 'Galón');
+      await supabaseAPI.addToCart(testProduct.id, 3, testUser.id, null, 'Galón');
       
       // 6. Verificar que los items están en el carrito como separados
       const cartItems = await supabaseAPI.getCartItems(testUser.id);

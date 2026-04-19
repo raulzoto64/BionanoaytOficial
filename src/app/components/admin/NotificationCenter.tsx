@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, Loader2, Info } from 'lucide-react';
-import { supabase } from '../../data/supabase';
+import { Bell, Loader2, Info } from 'lucide-react';
+import { supabaseAPI } from '../../data/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import {
   Popover,
@@ -39,33 +39,24 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
       console.log('[NOTIFICATIONS] Aborting: No user found');
       return;
     }
-    
+
     setLoading(true);
     try {
+      const data = await supabaseAPI.getNotifications();
+      console.log('[NOTIFICATIONS] API Response:', data ? data.length : 0, 'rows');
+
+      // Filtrar por rol en el frontend si es necesario (ya que el PHP devuelve todo por ahora)
       const role = user.user_metadata?.role || 'admin';
-      console.log('[NOTIFICATIONS] User role:', role);
+      let filteredData = data;
       
-      let query = supabase
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(30);
-      
-      // Si el rol es admin o superadmin, ve TODO. Si es otro rol (sales, marketing), solo su rol, id o 'all'.
       if (role !== 'admin' && role !== 'superadmin') {
-        console.log('[NOTIFICATIONS] Applying role filter for:', role);
-        query = query.or(`target_role.eq.all,target_role.eq.${role},target_role.eq.${user.id}`);
-      } else {
-        console.log('[NOTIFICATIONS] Admin/Superadmin bypass - fetching all targeted notifications');
+        filteredData = data.filter((n: any) => 
+          n.target_role === 'all' || n.target_role === role || n.target_role === user.id
+        );
       }
 
-      const { data, error } = await query;
-      
-      console.log('[NOTIFICATIONS] RPC Response:', data ? data.length : 0, 'rows. Error:', error);
-        
-      if (error) throw error;
       // Filtrar las leídas para que desaparezcan de la lista
-      const unreadData = (data as Notification[]).filter(n => !n.read_by.includes(user.id));
+      const unreadData = (filteredData as Notification[]).filter(n => !n.read_by.includes(user.id));
       setNotifications(unreadData);
     } catch (e) {
       console.error('[NOTIFICATIONS] Error fetching notifications:', e);
@@ -77,29 +68,25 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
   useEffect(() => {
     if (user) {
       loadNotifications();
-      // En un entorno de producción, aquí podrías enganchar un Realtime Listener de Supabase
     }
   }, [user]);
 
   const markAsRead = async (id: string, currentReadBy: string[], actionUrl?: string | null) => {
     if (!user) return;
     if (currentReadBy.includes(user.id)) {
-        if (actionUrl) {
-           setOpen(false);
-           navigate(actionUrl);
-        }
-        return;
+      if (actionUrl) {
+        setOpen(false);
+        navigate(actionUrl);
+      }
+      return;
     }
 
     const newReadBy = [...currentReadBy, user.id];
-    
+
     // UI estético optimizado (Optimistic UI): DESAPARECER de la lista
     setNotifications((prev) => prev.filter((n) => n.id !== id));
 
-    await supabase
-      .from('notifications')
-      .update({ read_by: newReadBy })
-      .eq('id', id);
+    await supabaseAPI.markNotificationAsRead(id, newReadBy);
 
     if (actionUrl) {
       setOpen(false); // Cerramos el popover de las notificaciones
@@ -109,10 +96,10 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
 
   const markAllAsRead = async () => {
     if (!user || unreadCount === 0) return;
-    
+
     // Obtenemos todos los IDs no leídos
     const unreadIds = notifications.map(n => n.id);
-      
+
     // UI optimizado: Limpiar toda la tabla
     setNotifications([]);
 
@@ -120,18 +107,15 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
     for (const id of unreadIds) {
       const note = notifications.find(n => n.id === id);
       if (note) {
-        await supabase
-          .from('notifications')
-          .update({ read_by: [...note.read_by, user.id] })
-          .eq('id', id);
+        await supabaseAPI.markNotificationAsRead(id, [...note.read_by, user.id]);
       }
     }
   };
 
   return (
     <Popover open={open} onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (isOpen) loadNotifications();
+      setOpen(isOpen);
+      if (isOpen) loadNotifications();
     }}>
       <PopoverTrigger asChild>
         <button className="text-white hover:text-[#19FF00] relative p-2 rounded-lg transition-colors hover:bg-white/10 outline-none">
@@ -141,10 +125,10 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
           )}
         </button>
       </PopoverTrigger>
-      
-      <PopoverContent 
-        className="w-80 p-0 rounded-2xl shadow-2xl border border-gray-100 mt-2 z-[9999]" 
-        align="start" 
+
+      <PopoverContent
+        className="w-80 p-0 rounded-2xl shadow-2xl border border-gray-100 mt-2 z-[9999]"
+        align="start"
         side="right"
         sideOffset={25}
       >
@@ -158,8 +142,8 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
             )}
           </div>
           {unreadCount > 0 && (
-            <button 
-              onClick={markAllAsRead} 
+            <button
+              onClick={markAllAsRead}
               className="text-[10px] hover:text-[#19FF00] transition-colors border border-white/20 px-2 py-1 rounded"
             >
               Marcar todo leído
@@ -182,9 +166,9 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
             <div className="divide-y divide-[#1C5D15]/5">
               {notifications.map((n) => {
                 const isRead = user?.id ? n.read_by.includes(user.id) : false;
-                
+
                 return (
-                  <div 
+                  <div
                     key={n.id}
                     onClick={() => markAsRead(n.id, n.read_by, n.action_url)}
                     className={`block p-4 transition-colors cursor-pointer hover:bg-white ${isRead ? 'opacity-60 bg-transparent' : 'bg-white'}`}

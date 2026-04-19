@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { supabase } from "../../../data/supabase";
+import { supabaseAPI } from "../../../data/supabase";
 import { CreditCard, User, Mail, Phone, MapPin, Search, Loader2, Calendar, Eye, Trash2, Filter, ShoppingBag } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -20,14 +19,11 @@ export function CheckoutLeads() {
   const loadLeads = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .in('lead_type', ['Checkout Lead', 'Cart Checkout Progress', 'Cart Progress'])
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setLeads(data || []);
+      const data = await supabaseAPI.getAllLeads();
+      // Filtrar por tipos de checkout en el cliente
+      const checkoutTypes = ['Checkout Lead', 'Cart Checkout Progress', 'Cart Progress'];
+      const filtered = (data || []).filter((l: any) => checkoutTypes.includes(l.lead_type));
+      setLeads(filtered);
     } catch (err) {
       toast.error("Error al cargar leads de pago");
     } finally {

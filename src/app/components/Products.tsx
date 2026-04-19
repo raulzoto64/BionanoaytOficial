@@ -103,7 +103,7 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
                 </p>
 
                 {/* Features */}
-                {product.translation.features && product.translation.features.length > 0 && (
+                {Array.isArray(product.translation.features) && product.translation.features.length > 0 && (
                   <ul className="space-y-2 mb-6">
                     {product.translation.features.slice(0, 3).map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
