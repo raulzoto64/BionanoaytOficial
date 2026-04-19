@@ -5,6 +5,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { handleAction } from "../utils/actions";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router";
 import {
   Carousel,
   CarouselContent,
@@ -59,9 +62,9 @@ const TextWithTooltip = ({
               }
             : {}
         }
-      >
-        {text}
-      </p>
+        dangerouslySetInnerHTML={{ __html: text }}
+      />
+
     </div>
   );
 };
@@ -78,10 +81,14 @@ interface TimelineProps {
   title?: string;
   subtitle?: string;
   description?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  ctaActionType?: string;
 }
 
-export function Timeline({ milestones, title, subtitle, description }: TimelineProps) {
+export function Timeline({ milestones, title, subtitle, description, ctaText, ctaLink, ctaActionType }: TimelineProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
@@ -97,72 +104,93 @@ export function Timeline({ milestones, title, subtitle, description }: TimelineP
   };
 
   return (
-    <section className="py-20 bg-[#1C5D15] text-white pb-24 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-5 lg:px-6">
+    <section className="py-24 bg-gradient-to-b from-[#1C5D15] to-[#0A2E07] relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#19FF00]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#19FF00]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            {title || t("timeline.title")}
-          </h2>
+          <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-6 text-[10px] font-black uppercase tracking-[0.2em] animate-fade-in">
+            {t("timeline.label") || "Nuestra Historia"}
+          </div>
+          <h2 
+            className="text-5xl md:text-6xl font-black text-white mb-6 tracking-tight"
+            dangerouslySetInnerHTML={{ __html: title || t("timeline.title") }}
+          />
           {subtitle && (
-            <h3 className="text-xl text-white/90 mb-4">{subtitle}</h3>
+            <p 
+              className="text-xl text-white/70 max-w-2xl mx-auto leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: subtitle }}
+            />
           )}
           {description && (
-            <div 
-              className="text-lg text-white/80 max-w-3xl mx-auto prose prose-invert"
+            <p 
+              className="mt-4 text-[#19FF00]/80 font-medium max-w-xl mx-auto"
               dangerouslySetInnerHTML={{ __html: description }}
             />
           )}
+
         </div>
 
-        <div className="px-2 sm:px-16 w-full max-w-full">
+        <div className="relative">
           <Carousel
             opts={{
               align: "start",
-              loop: true,
+              loop: false,
             }}
-            pauseOnHover={false}
-            className="w-full relative"
+            className="w-full"
           >
             <CarouselContent className="-ml-4">
-              {milestones
-                .filter((m) => m.title?.trim() && m.description?.trim())
-                .map((milestone, index) => {
-                  const IconComponent = getIconComponent(milestone.icon);
-                  return (
-                    <CarouselItem
-                      key={index}
-                      className="pl-4 basis-full md:basis-1/2 lg:basis-1/3"
-                    >
-                      <div className="bg-[#629960]/30 rounded-2xl p-8 hover:bg-[#629960]/40 transition-all duration-300 h-80 flex flex-col items-center justify-center border border-white/10 shadow-xl">
-                        <div className="flex items-center justify-center w-16 h-16 mb-4 bg-[#19FF00] rounded-full shrink-0 shadow-inner">
-                          <IconComponent className="w-8 h-8 text-[#1C5D15]" />
-                        </div>
-
-                        <div className="text-[#19FF00] font-bold text-2xl mb-2">
+              {milestones.map((milestone, index) => {
+                const IconComponent = getIconComponent(milestone.icon);
+                return (
+                  <CarouselItem
+                    key={index}
+                    className="pl-4 md:basis-1/2 lg:basis-1/3"
+                  >
+                    <div className="h-full p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-500 group">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="text-4xl font-black text-[#19FF00] opacity-40 group-hover:opacity-100 transition-opacity">
                           {milestone.year}
                         </div>
-
-                        <TextWithTooltip
-                          text={milestone.title}
-                          lines={1}
-                          className="text-xl font-semibold mb-3 text-center cursor-default"
-                        />
-
-                        <TextWithTooltip
-                          text={milestone.description}
-                          lines={3}
-                          className="text-white/80 text-center text-sm leading-relaxed"
-                        />
+                        <div className="w-12 h-12 bg-[#19FF00] text-[#1C5D15] rounded-2xl flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
+                          <IconComponent size={24} />
+                        </div>
                       </div>
-                    </CarouselItem>
-                  );
-                })}
+                      <h3 
+                        className="text-xl font-bold text-white mb-4 group-hover:text-[#19FF00] transition-colors"
+                        dangerouslySetInnerHTML={{ __html: milestone.title }}
+                      />
+
+                      <TextWithTooltip
+                        text={milestone.description}
+                        className="text-white/60 leading-relaxed text-sm"
+                        lines={3}
+                      />
+                    </div>
+                  </CarouselItem>
+                );
+              })}
             </CarouselContent>
-            <CarouselPrevious className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
-            <CarouselNext className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
+            <div className="flex justify-center mt-12 gap-4">
+              <CarouselPrevious className="static translate-y-0 bg-white/10 border-white/20 text-white hover:bg-[#19FF00] hover:text-[#1C5D15]" />
+              <CarouselNext className="static translate-y-0 bg-white/10 border-white/20 text-white hover:bg-[#19FF00] hover:text-[#1C5D15]" />
+            </div>
             <CarouselDots dotClassName="bg-white/20" />
           </Carousel>
         </div>
+
+        {ctaText && (
+          <div className="text-center mt-12">
+            <Button 
+                onClick={() => handleAction(ctaActionType, ctaLink, navigate)}
+                className="bg-[#19FF00] text-[#1C5D15] hover:bg-white px-10 py-4 rounded-full font-bold uppercase text-sm tracking-widest shadow-xl transition-all duration-300"
+            >
+                {ctaText}
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

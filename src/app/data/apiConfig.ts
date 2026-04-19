@@ -25,16 +25,8 @@ export const getApiHeaders = () => {
  * Helper para manejar errores de respuesta fetch
  */
 export const handleApiResponse = async (response: Response) => {
-  console.log(`🌐 [FETCH] Llamando a: ${response.url} | Status: ${response.status}`);
     if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    
-    // Loguear todo el cuerpo del error para diagnóstico profundo
-    console.error(`❌ [API-ERROR] en ${response.url}:`, {
-      status: response.status,
-      message: errorData.message || errorData.error || 'Error desconocido',
-      details: errorData
-    });
     
     throw new Error(errorData.message || errorData.error || `Error del servidor: ${response.status}`);
   }

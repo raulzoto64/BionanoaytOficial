@@ -45,7 +45,7 @@ if ($method === 'GET') {
             if ($row) {
                 $row['social_media'] = json_decode($row['social_media'] ?? '{}', true) ?: (object)[];
                 $row['youtube_videos'] = json_decode($row['youtube_videos'] ?? '[]', true) ?: [];
-                $row['short_videos'] = json_decode($item['short_videos'] ?? '[]', true) ?: [];
+                $row['short_videos'] = json_decode($row['short_videos'] ?? '[]', true) ?: [];
             }
             echo json_encode($row ?: (object)[]);
         }

@@ -79,7 +79,9 @@ export function ProductDetail() {
   }, [user]);
 
   const handleBack = () => {
-    navigate("/store");
+    const from = (location.state as any)?.from;
+    const sectionId = (location.state as any)?.sectionId;
+    navigate("/store", { state: { from, sectionId } });
   };
 
   // Manejar el guardado del contexto para el botón atrás del navegador
@@ -152,7 +154,7 @@ export function ProductDetail() {
       setPrices(pricesData);
       
       const pkgMap = new Map<string, string>();
-      pricesData.forEach(p => {
+      pricesData.forEach((p: any) => {
         const raw = p.packaging || 'Sin embase';
         if (!pkgMap.has(raw)) {
           pkgMap.set(raw, formatPackaging(raw));
@@ -343,10 +345,7 @@ export function ProductDetail() {
             </Button>
 
             <Button
-              onClick={() => {
-                navigate("/");
-                sessionStorage.setItem('bx_return_section', 'products');
-              }}
+              onClick={() => navigate("/")}
               className="bg-white/10 text-white hover:bg-white hover:text-[#1C5D15]"
             >
               Volver a la Home

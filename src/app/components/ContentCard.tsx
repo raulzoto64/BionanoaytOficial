@@ -39,9 +39,11 @@ interface EcosystemMemberData {
 interface ContentCardProps {
   type: 'blog' | 'ecosystem';
   data: BlogPostData | EcosystemMemberData;
+  sectionId?: string;
+  from?: string;
 }
 
-export function ContentCard({ type, data }: ContentCardProps) {
+export function ContentCard({ type, data, sectionId, from }: ContentCardProps) {
   const { language } = useLanguage();
 
   // Blog/News Post Card
@@ -108,7 +110,7 @@ export function ContentCard({ type, data }: ContentCardProps) {
           <div className="mt-auto">
             <Link 
               to={`/blog/${post.slug}`}
-              state={{ from: 'blog', sectionId: `post-${post.id}` }}
+              state={{ from: from || 'blog', sectionId: sectionId || `post-${post.id}` }}
               className="text-[#1C5D15] text-sm font-semibold flex items-center gap-1 hover:text-[#19FF00] transition-colors"
             >
               {language === 'es' ? 'Leer más' : 'Read more'}
@@ -132,6 +134,7 @@ export function ContentCard({ type, data }: ContentCardProps) {
         <div className="p-5 flex flex-col h-full">
           <Link 
             to={member.slug ? `/ecosystem/${member.slug}` : '#'}
+            state={{ from: from || 'ecosystem', sectionId: sectionId || 'ecosystem' }}
             className="flex flex-col h-full group"
           >
             <div className="flex items-center gap-4 mb-3 shrink-0">

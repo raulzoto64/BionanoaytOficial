@@ -25,6 +25,8 @@ import {
   ShoppingCart,
   Target,
   LineChart,
+  MessageCircle,
+  Database,
   ShoppingCart as CartIcon
 } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
@@ -90,6 +92,7 @@ export function AdminSidebar() {
 
   const marketingSubItems = [
     { path: '/admin/leads', icon: UserPlus, label: 'Leads / Contactos' },
+    { path: '/admin/chats', icon: MessageCircle, label: 'Chat de Usuarios' },
     { path: '/admin/forms', icon: ListTodo, label: 'Formularios' },
   ];
 
@@ -101,6 +104,7 @@ export function AdminSidebar() {
 
   const cmsSubItems = [
     { path: '/admin/content', icon: Globe, label: 'Páginas' },
+    { path: '/admin/sections', icon: Database, label: 'Secciones' },
     { path: '/admin/blog/posts', icon: FileEdit, label: 'Blog' },
     { path: '/admin/legal', icon: Scale, label: 'Páginas Legales' },
     { path: '/admin/footer', icon: Footprints, label: 'Footer' },

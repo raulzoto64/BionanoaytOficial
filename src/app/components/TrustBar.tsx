@@ -50,14 +50,15 @@ export function TrustBar({ partners, title, subtitle }: TrustBarProps) {
         {(title || subtitle) ? (
           <div className="text-center mb-10">
             {title && (
-              <h2 className="text-white text-3xl md:text-4xl font-bold mb-3">
-                {title}
-              </h2>
+              <h2 className="text-white text-3xl md:text-4xl font-bold mb-3" dangerouslySetInnerHTML={{ __html: title }} />
+
             )}
             {subtitle && (
-              <p className="text-[#19FF00] text-lg opacity-90 max-w-2xl mx-auto">
-                {subtitle}
-              </p>
+              <p 
+                className="text-[#19FF00] text-lg opacity-90 max-w-2xl mx-auto"
+                dangerouslySetInnerHTML={{ __html: subtitle }}
+              />
+
             )}
           </div>
         ) : (
@@ -105,9 +106,9 @@ export function TrustBar({ partners, title, subtitle }: TrustBarProps) {
                     <span
                       className="text-white text-[11px] font-bold block truncate text-center group-hover:text-[#19FF00] transition-colors"
                       title={partner.name}
-                    >
-                      {partner.name}
-                    </span>
+                      dangerouslySetInnerHTML={{ __html: partner.name }}
+                    />
+
                   </div>
                 </div>
               </CarouselItem>
@@ -180,8 +181,9 @@ export function TrustBar({ partners, title, subtitle }: TrustBarProps) {
                         {selectedPartner.details.map((detail, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm text-[#629960] bg-white/30 p-2 rounded-lg border border-white/50">
                             <span className="text-[#19FF00] font-bold">✓</span>
-                            {detail}
+                            <span dangerouslySetInnerHTML={{ __html: detail }} />
                           </li>
+
                         ))}
                       </ul>
                     </div>

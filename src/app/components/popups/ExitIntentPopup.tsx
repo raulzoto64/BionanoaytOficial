@@ -21,6 +21,10 @@ export function ExitIntentPopup({ popupId, onClose, onSubmit }: ExitIntentPopupP
   const [showThankYou, setShowThankYou] = useState(false);
 
   useEffect(() => {
+    if (popupId) {
+      setShowThankYou(false); // Reset state when opening a new one
+    }
+
     if (popupId && popupId !== 'exit-intent') {
       loadFormConfig(popupId);
     } else if (popupId === 'exit-intent') {

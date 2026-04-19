@@ -17,9 +17,10 @@ interface Feature {
 
 interface FeaturedProductProps {
   content: Record<string, any>;
+  sectionId?: string;
 }
 
-export function FeaturedProduct({ content }: FeaturedProductProps) {
+export function FeaturedProduct({ content, sectionId }: FeaturedProductProps) {
   const navigate = useNavigate();
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
@@ -79,7 +80,7 @@ export function FeaturedProduct({ content }: FeaturedProductProps) {
             <Button 
               size="lg"
               className="mt-4 bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
-              onClick={() => handleAction(content.ctaActionType, content.ctaLink, navigate)}
+              onClick={() => handleAction(content.ctaActionType, content.ctaLink, navigate, { from: 'home', sectionId: sectionId || 'featured' })}
             >
               {content.ctaText}
             </Button>

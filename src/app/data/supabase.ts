@@ -92,6 +92,16 @@ export interface Section {
   visible: boolean;
   content: Record<string, any>;
   page_id?: string;
+  is_reusable?: boolean;
+}
+
+export interface ReusableSection {
+  id: string;
+  name: string;
+  type: string;
+  content: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SiteSettings {
@@ -197,6 +207,31 @@ export interface EcosystemMemberTranslation {
   language: "es" | "en";
   name: string;
   description: string;
+}
+
+export interface Chat {
+  id: string;
+  visitor_id: string;
+  user_id?: string;
+  status: 'open' | 'closed' | 'archived';
+  unread_count_admin: number;
+  unread_count_visitor: number;
+  last_message: string;
+  created_at: string;
+  updated_at: string;
+  lead_name?: string;
+  lead_email?: string;
+  lead_status?: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  chat_id: string;
+  sender_type: 'visitor' | 'admin';
+  sender_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 export const supabaseAPI = {
@@ -372,6 +407,88 @@ export const supabaseAPI = {
     supabaseAPI._invalidateCache(`page-content-${id}-${lang}`);
     return content;
   },
+  getUniversalContent: async (type: string, id: string, lang: string) => {
+    switch (type) {
+      case 'page':
+        const pageContent = await supabaseAPI.getPageContent(id, lang);
+        return pageContent?.sections || [];
+      case 'blog':
+        const blogTrans = await supabaseAPI.getBlogPostTranslation(id, lang);
+        try {
+          return JSON.parse(blogTrans.content);
+        } catch (e) {
+          return blogTrans.content ? [{ id: 'legacy-content', type: 'rich-text', content: { html: blogTrans.content } }] : [];
+        }
+      case 'legal':
+        const legalPages = await supabaseAPI.getLegalPages();
+        const legalPage = legalPages.find((p: any) => p.id === id || p.slug === id);
+        const content = lang === 'es' ? legalPage?.content_es : legalPage?.content_en;
+        try {
+          return JSON.parse(content);
+        } catch (e) {
+          return content ? [{ id: 'legacy-content', type: 'rich-text', content: { html: content } }] : [];
+        }
+      case 'footer':
+        const footer = await supabaseAPI.getFooterSettings();
+        return footer;
+      case 'product':
+        const prodTrans = await supabaseAPI.getProductTranslation(id, lang);
+        try {
+          return JSON.parse(prodTrans.description);
+        } catch (e) {
+          return prodTrans.description ? [{ id: 'legacy-content', type: 'rich-text', content: { html: prodTrans.description } }] : [];
+        }
+      default:
+        return [];
+    }
+  },
+  saveUniversalContent: async (type: string, id: string, lang: string, content: any) => {
+    switch (type) {
+      case 'page':
+        return await supabaseAPI.updatePageContent(id, lang, content);
+      case 'blog':
+        return await supabaseAPI.updateBlogPostTranslation(id, lang, { content: JSON.stringify(content) });
+      case 'legal':
+        const updateData = lang === 'es' ? { content_es: JSON.stringify(content) } : { content_en: JSON.stringify(content) };
+        return await supabaseAPI.updateLegalPage(id, updateData);
+      case 'footer':
+        return await supabaseAPI.updateFooterSettings(content);
+      case 'product':
+        return await supabaseAPI.updateProductTranslation(id, lang, { description: JSON.stringify(content) });
+      default:
+        throw new Error(`Unsupported entity type: ${type}`);
+    }
+  },
+  createPage: async (data: Partial<Page>) => {
+    const res = await fetch(`${API_BASE_URL}/pages`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    return handleApiResponse(res);
+  },
+  deletePage: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/pages/${id}`, { method: 'DELETE', headers: getApiHeaders() });
+    return handleApiResponse(res);
+  },
+
+  // REUSABLE SECTIONS
+  getReusableSections: async () => {
+    return supabaseAPI._fetchWithCache("reusable-sections", async () => {
+      const res = await fetch(`${API_BASE_URL}/reusable_sections`, { headers: getApiHeaders() });
+      return handleApiResponse(res);
+    });
+  },
+  saveReusableSection: async (data: { id?: string, name: string, type: string, content: any }) => {
+    const res = await fetch(`${API_BASE_URL}/reusable_sections`, { 
+        method: 'POST', 
+        headers: getApiHeaders(), 
+        body: JSON.stringify(data) 
+    });
+    supabaseAPI._invalidateCache("reusable-sections");
+    return handleApiResponse(res);
+  },
+  deleteReusableSection: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/reusable_sections/${id}`, { method: 'DELETE', headers: getApiHeaders() });
+    supabaseAPI._invalidateCache("reusable-sections");
+    return handleApiResponse(res);
+  },
 
   // CART
   mergeGuestCart: async (userId: string, guestId: string) => {
@@ -491,6 +608,14 @@ export const supabaseAPI = {
       return handleApiResponse(res);
     });
   },
+  getEcosystemMemberById: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/ecosystem/${id}`, { headers: getApiHeaders() });
+    return handleApiResponse(res).catch(() => null);
+  },
+  getEcosystemMemberBySlug: async (slug: string) => {
+    const res = await fetch(`${API_BASE_URL}/ecosystem/${slug}`, { headers: getApiHeaders() });
+    return handleApiResponse(res).catch(() => null);
+  },
   getAllEcosystemMembers: async () => {
     // Admin version: no cache
     const res = await fetch(`${API_BASE_URL}/ecosystem/members?all=true`, { headers: getApiHeaders() });
@@ -524,6 +649,10 @@ export const supabaseAPI = {
   getBlogPostTranslation: async (id: string, lang: string) => {
     const res = await fetch(`${API_BASE_URL}/blog/${id}/translation/${lang}`, { headers: getApiHeaders() });
     return handleApiResponse(res).catch(() => null);
+  },
+  updateBlogPostTranslation: async (id: string, lang: string, data: any) => {
+    const res = await fetch(`${API_BASE_URL}/blog/${id}/translation/${lang}`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    return handleApiResponse(res);
   },
   getAllBlogPostTranslations: async (lang: string) => {
     const res = await fetch(`${API_BASE_URL}/blog/translations/${lang}`, { headers: getApiHeaders() });
@@ -622,9 +751,27 @@ export const supabaseAPI = {
     const res = await fetch(`${API_BASE_URL}/legal`, { headers: getApiHeaders() });
     return handleApiResponse(res);
   },
+  getLegalPageById: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/legal/${id}`, { headers: getApiHeaders() });
+    return handleApiResponse(res).catch(() => null);
+  },
   getLegalPageBySlug: async (slug: string) => {
     const res = await fetch(`${API_BASE_URL}/legal/${slug}`, { headers: getApiHeaders() });
     return handleApiResponse(res).catch(() => null);
+  },
+  updateLegalPage: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE_URL}/legal/${id}`, { method: 'PUT', headers: getApiHeaders(), body: JSON.stringify(data) });
+    return handleApiResponse(res);
+  },
+  updateFooterSettings: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/settings/footer`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    supabaseAPI._invalidateCache("footer-settings");
+    return handleApiResponse(res);
+  },
+  updateSiteSettings: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/settings/site`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    supabaseAPI._invalidateCache("site-settings");
+    return handleApiResponse(res);
   },
 
   // NOTIFICATIONS
@@ -637,6 +784,54 @@ export const supabaseAPI = {
       method: 'PUT', 
       headers: getApiHeaders(), 
       body: JSON.stringify({ read_by: readBy }) 
+    });
+    return handleApiResponse(res);
+  },
+
+  // CHATS
+  getChats: async () => {
+    const res = await fetch(`${API_BASE_URL}/chats`, { headers: getApiHeaders() });
+    return handleApiResponse(res);
+  },
+  getChatHistory: async (id: string, role: 'admin' | 'visitor' = 'visitor') => {
+    // id can be chat_id or visitor_id
+    const res = await fetch(`${API_BASE_URL}/chats/${id}?role=${role}`, { headers: getApiHeaders() });
+    return handleApiResponse(res);
+  },
+  sendChatMessage: async (data: { 
+    visitor_id?: string; 
+    sender_type: 'visitor' | 'admin'; 
+    content: string; 
+    sender_id?: string 
+  }) => {
+    const res = await fetch(`${API_BASE_URL}/chats`, { 
+      method: 'POST', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify(data) 
+    });
+    return handleApiResponse(res);
+  },
+  markChatAsRead: async (chatId: string, target: 'admin' | 'visitor' = 'admin') => {
+    const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, { 
+      method: 'PUT', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify({ target }) 
+    });
+    return handleApiResponse(res);
+  },
+  setTypingStatus: async (chatId: string, isTyping: boolean, role: 'admin' | 'visitor' = 'admin') => {
+    const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, { 
+      method: 'PATCH', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify({ action: 'typing', role, is_typing: isTyping }) 
+    });
+    return handleApiResponse(res).catch(() => null); // Silently ignore typing errors
+  },
+
+  // ANALYTICS
+  getFunnelStats: async (startDate: string, endDate: string) => {
+    const res = await fetch(`${API_BASE_URL}/analytics/funnel?start_date=${startDate}&end_date=${endDate}`, { 
+      headers: getApiHeaders() 
     });
     return handleApiResponse(res);
   },

@@ -38,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser && token) {
       try {
         const parsedUser = JSON.parse(savedUser) as User;
-        console.log('🔄 [AuthContext] Usuario recuperado de localStorage:', parsedUser.email);
         setUser(parsedUser);
       } catch (e) {
         localStorage.removeItem('user');
@@ -64,17 +63,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (!pass) {
-      console.error('❌ [AuthContext] Intento de login sin contraseña detectado.', { email, emailOrUser });
       throw new Error('La contraseña es requerida para autenticar');
     }
-
-    console.log('🔵 [AuthContext] Llamando a la API de autenticación:', email);
 
     try {
       // 1. Usar el nuevo método de login que se conecta a la API MySQL
       const userData = await supabaseAPI.loginUser(email, pass);
-
-      console.log('✅ Usuario autenticado:', userData.name);
 
       // 2. Actualizamos el estado local
       setUser(userData);
@@ -95,25 +89,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       window.dispatchEvent(new CustomEvent("cart-updated"));
-      console.log('✅ LOGIN COMPLETADO EXITOSAMENTE');
       
       return userData;
 
     } catch (error: any) {
-      console.error('❌ Error en login:', error.message);
       throw error;
     }
   };
 
   const logout = async () => {
-    console.log('🔵 [AuthContext] Iniciando logout...');
     try {
       setUser(null);
       localStorage.removeItem("user");
       localStorage.removeItem("auth_token");
       getGuestId(); 
       window.dispatchEvent(new CustomEvent("cart-updated"));
-      console.log('✅ [AuthContext] Sesión cerrada correctamente.');
     } catch (error) {
       console.error("❌ [AuthContext] Error durante el logout:", error);
     }

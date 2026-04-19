@@ -1,6 +1,9 @@
 import { useLanguage } from "../contexts/LanguageContext";
 import { Linkedin } from "lucide-react";
 import { ensureExternalLink } from "../utils/url";
+import { Button } from "./ui/button";
+import { handleAction } from "../utils/actions";
+import { useNavigate } from "react-router";
 import {
   Carousel,
   CarouselContent,
@@ -19,8 +22,11 @@ interface TeamMember {
 
 interface LeadershipProps {
   members: TeamMember[];
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  ctaActionType?: string;
 }
 
 // Tarjeta de miembro reutilizable
@@ -54,16 +60,20 @@ function MemberCard({ member }: { member: TeamMember }) {
           </div>
         </div>
       </div>
-      <h3 className="text-xl font-bold text-[#1C5D15] group-hover:text-[#3AC026] transition-colors duration-300 text-center">
-        {member.name}
-      </h3>
-      <p className="text-[#629960] font-medium text-center">{member.role}</p>
+      <h3 
+        className="text-xl font-bold text-[#1C5D15] group-hover:text-[#3AC026] transition-colors duration-300 text-center"
+        dangerouslySetInnerHTML={{ __html: member.name }}
+      />
+
+      <p className="text-[#629960] font-medium text-center" dangerouslySetInnerHTML={{ __html: member.role }} />
+
     </div>
   );
 }
 
-export function Leadership({ members, title, subtitle }: LeadershipProps) {
+export function Leadership({ members, title, subtitle, ctaText, ctaLink, ctaActionType }: LeadershipProps) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const useCarousel = members.length > 3;
 
   return (
@@ -74,12 +84,16 @@ export function Leadership({ members, title, subtitle }: LeadershipProps) {
           <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4 font-bold text-sm">
             {t('leadership.title')}
           </div>
-          <h2 className="text-4xl md:text-5xl mb-4 text-[#1C5D15] font-bold">
-            {title}
-          </h2>
-          <p className="text-xl text-[#629960] max-w-3xl mx-auto">
-            {subtitle}
-          </p>
+          <h2 
+            className="text-4xl md:text-5xl mb-4 text-[#1C5D15] font-bold"
+            dangerouslySetInnerHTML={{ __html: title || '' }}
+          />
+
+          <p 
+            className="text-xl text-[#629960] max-w-3xl mx-auto"
+            dangerouslySetInnerHTML={{ __html: subtitle || '' }}
+          />
+
         </div>
 
         {/* ── Móvil: siempre grid ──────────────────────────────────────── */}
@@ -127,6 +141,17 @@ export function Leadership({ members, title, subtitle }: LeadershipProps) {
                 <MemberCard member={member} />
               </div>
             ))}
+          </div>
+        )}
+
+        {ctaText && (
+          <div className="text-center mt-12">
+            <Button 
+                onClick={() => handleAction(ctaActionType, ctaLink, navigate)}
+                className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+            >
+                {ctaText}
+            </Button>
           </div>
         )}
       </div>

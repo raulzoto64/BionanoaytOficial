@@ -4,7 +4,8 @@ import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { ImageUpload } from '../../ImageUpload';
-import { Trash2, Plus, X, Globe, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
+import { Trash2, Plus, X, Globe, CheckCircle2, AlertCircle, Zap, Database, Copy, Save } from 'lucide-react';
+import { supabaseAPI } from '../../../data/supabase';
 import { toast } from 'sonner';
 import { RichTextEditor } from '../RichTextEditor';
 
@@ -104,48 +105,52 @@ export function VisualEditorSidebar({
                 // Valor por defecto según el tipo
                 if (newType === 'popup') handleContentChange(`${fieldPrefix}Link`, 'exit-intent', 'both');
                 else if (newType === 'route') handleContentChange(`${fieldPrefix}Link`, '/', 'both');
+                else if (newType === 'chat') handleContentChange(`${fieldPrefix}Link`, 'chat', 'both');
               }}
             >
               <option value="url">🌐 URL Externa (Nueva Pestaña)</option>
               <option value="route">📍 Página / Ruta (Interna)</option>
               <option value="popup">📩 Abrir Popup / Formulario</option>
+              <option value="chat">💬 Abrir Burbuja de Chat</option>
             </select>
           </div>
 
-          <div>
-            <Label className="text-[9px] text-gray-400 uppercase font-bold mb-1 block">
-              {isPopup ? 'Seleccionar Popup' : 'Destino / Enlace'}
-            </Label>
-            
-            {isPopup ? (
-              <select
-                className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
-                value={value}
-                onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
-              >
-                {AVAILABLE_POPUPS.map(p => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
-                ))}
-              </select>
-            ) : isRoute ? (
-              <select
-                className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
-                value={value}
-                onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
-              >
-                {AVAILABLE_ROUTES.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </select>
-            ) : (
-              <Input
-                className="text-[10px] h-8 focus:ring-1 focus:ring-[#19FF00]"
-                placeholder="https://..."
-                value={value}
-                onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
-              />
-            )}
-          </div>
+          {actionType !== 'chat' && (
+            <div>
+              <Label className="text-[9px] text-gray-400 uppercase font-bold mb-1 block">
+                {isPopup ? 'Seleccionar Popup' : 'Destino / Enlace'}
+              </Label>
+              
+              {isPopup ? (
+                <select
+                  className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+                  value={value}
+                  onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+                >
+                  {AVAILABLE_POPUPS.map(p => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+              ) : isRoute ? (
+                <select
+                  className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+                  value={value}
+                  onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+                >
+                  {AVAILABLE_ROUTES.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  className="text-[10px] h-8 focus:ring-1 focus:ring-[#19FF00]"
+                  placeholder="https://..."
+                  value={value}
+                  onChange={(e) => handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both')}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -154,6 +159,35 @@ export function VisualEditorSidebar({
   if (!sectionES || !sectionEN) {
     return null;
   }
+
+  const handleSaveToLibrary = async () => {
+    try {
+      const name = prompt('Nombre para esta sección en la biblioteca:', `${sectionES.type.toUpperCase()} - ${new Date().toLocaleDateString()}`);
+      if (!name) return;
+
+      const toastId = toast.loading('Guardando en biblioteca...');
+      
+      // Guardamos la versión ES como base (o podríamos guardar ambas, pero la tabla reusable_sections
+      // según mi implementación actual guarda un 'content' JSON).
+      // Para hacerlo pro, podríamos guardar un objeto que contenga ambos idiomas si quisiéramos,
+      // pero por ahora guardaremos el contenido actual seleccionado o ambos en un wrapper.
+      const payload = {
+        name,
+        type: sectionES.type,
+        content: {
+          es: sectionES.content,
+          en: sectionEN.content
+        }
+      };
+
+      await supabaseAPI.saveReusableSection(payload);
+      toast.dismiss(toastId);
+      toast.success('Sección guardada en la biblioteca con éxito');
+    } catch (error) {
+      console.error('Error saving to library:', error);
+      toast.error('Error al guardar en la biblioteca');
+    }
+  };
 
   const handleContentChange = (field: string, value: any, lang: 'es' | 'en' | 'both') => {
     console.log(`🔵 [DEBUG VISUAL EDITOR] handleContentChange:`, {
@@ -208,13 +242,29 @@ export function VisualEditorSidebar({
 
   return (
     <div className="flex flex-col gap-6 p-2">
-      <div className="bg-[#1C5D15]/5 rounded-lg p-3 border border-[#1C5D15]/20">
-        <h3 className="font-bold text-[#1C5D15] uppercase tracking-wider text-xs flex items-center gap-2">
-          <Globe className="w-3 h-3 text-[#19FF00]" />
-          Tipo: {sectionES.type}
-        </h3>
-        <p className="text-[10px] text-[#629960] mt-1 font-medium italic">ID: {sectionES.id}</p>
-        <p className="text-[10px] text-[#629960] mt-1 font-medium">Edición Pro: Multi-idioma Inline activo</p>
+      <div className="bg-[#1C5D15]/5 rounded-xl p-4 border border-[#1C5D15]/20 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <h3 className="font-black text-[#1C5D15] uppercase tracking-widest text-[11px] flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5 text-[#19FF00]" />
+              Sección: {sectionES.type}
+            </h3>
+            <p className="text-[10px] text-[#629960] font-bold uppercase tracking-tighter opacity-70">ID: {sectionES.id.split('-')[0]}...</p>
+          </div>
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={handleSaveToLibrary}
+            className="h-8 text-[10px] font-black uppercase tracking-tighter border-[#1C5D15]/30 text-[#1C5D15] hover:bg-[#1C5D15] hover:text-white transition-all gap-1.5 shadow-sm rounded-lg"
+          >
+            <Database className="w-3.5 h-3.5" />
+            Guardar en Biblioteca
+          </Button>
+        </div>
+        <div className="flex items-center gap-2 bg-white/50 p-1.5 rounded-lg border border-[#1C5D15]/5">
+           <Zap className="w-3 h-3 text-[#19FF00] fill-[#19FF00]" />
+           <p className="text-[9px] text-[#1C5D15] font-bold uppercase tracking-tight">Editor Pro: Multi-idioma Sincronizado</p>
+        </div>
       </div>
 
       {/* Tipo HERO BLOG */}
@@ -977,16 +1027,14 @@ export function VisualEditorSidebar({
                 onChange={(e) => handleContentChange("title", e.target.value, getFieldLang('list-title'))}
               />
             </div>
-            {sectionES.content.subtitle !== undefined && (
-              <div>
-                <LanguageToggle fieldKey="list-subtitle" label="Subtítulo" />
-                <RichTextEditor
-                  value={(getFieldLang('list-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
-                  onChange={(val) => handleContentChange("subtitle", val, getFieldLang('list-subtitle'))}
-                  minHeight="80px"
-                />
-              </div>
-            )}
+            <div>
+              <LanguageToggle fieldKey="list-subtitle" label="Subtítulo" />
+              <RichTextEditor
+                value={(getFieldLang('list-subtitle') === 'es' ? sectionES.content.subtitle : sectionEN.content.subtitle) || ""}
+                onChange={(val) => handleContentChange("subtitle", val, getFieldLang('list-subtitle'))}
+                minHeight="80px"
+              />
+            </div>
           </div>
 
           {/* Si es Store y tipo trust, permitimos selección de ecosistema */}
@@ -1496,16 +1544,14 @@ export function VisualEditorSidebar({
                 placeholder="Hitos importantes"
               />
             </div>
-            {sectionES.content.description !== undefined && (
-              <div>
-                <LanguageToggle fieldKey="time-desc" label="Descripción Principal" />
-                <RichTextEditor
-                  value={(getFieldLang('time-desc') === 'es' ? sectionES.content.description : sectionEN.content.description) || ""}
-                  onChange={(val) => handleContentChange("description", val, getFieldLang('time-desc'))}
-                  minHeight="100px"
-                />
-              </div>
-            )}
+            <div>
+              <LanguageToggle fieldKey="time-desc" label="Descripción Principal" />
+              <RichTextEditor
+                value={(getFieldLang('time-desc') === 'es' ? sectionES.content.description : sectionEN.content.description) || ""}
+                onChange={(val) => handleContentChange("description", val, getFieldLang('time-desc'))}
+                minHeight="100px"
+              />
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -2651,39 +2697,41 @@ export function VisualEditorSidebar({
           </div>
 
           <div className="p-3 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4">
-            <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2">Botones de Acción</h4>
-            <div>
-              <LanguageToggle fieldKey="cta-primary" label="Botón Primario" />
-              <Input
-                placeholder="Texto del Botón"
-                value={(getFieldLang('cta-primary') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
-                onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('cta-primary'))}
-                className="text-xs h-9 mb-2"
-              />
-              <Input
-                placeholder="Enlace URL"
-                value={(getFieldLang('cta-primary') === 'es' ? sectionES.content.ctaLink : sectionEN.content.ctaLink) || ""}
-                onChange={(e) => handleContentChange('ctaLink', e.target.value, getFieldLang('cta-primary'))}
-                className="text-xs h-9"
-              />
-            </div>
+            <div className="pt-4 border-t border-[#1C5D15]/10 space-y-4">
+              <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest pb-2">Botones de Acción</h4>
+              <div>
+                <LanguageToggle fieldKey="cta-primary" label="Botón Primario" />
+                <Input
+                  placeholder="Texto del Botón"
+                  value={(getFieldLang('cta-primary') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
+                  onChange={(e) => handleContentChange('ctaText', e.target.value, getFieldLang('cta-primary'))}
+                  className="text-xs h-9 mb-2"
+                />
+                <ActionSelector 
+                  label="Acción del Botón Primario"
+                  value={sectionES.content.ctaLink || ''}
+                  actionType={sectionES.content.ctaActionType}
+                  fieldPrefix="cta"
+                />
+              </div>
 
-            <div className="h-px bg-gray-100" />
+              <div className="h-px bg-gray-100" />
 
-            <div>
-              <LanguageToggle fieldKey="cta-secondary" label="Botón Secundario" />
-              <Input
-                placeholder="Texto del Botón"
-                value={(getFieldLang('cta-secondary') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ""}
-                onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('cta-secondary'))}
-                className="text-xs h-9 mb-2"
-              />
-              <Input
-                placeholder="Enlace URL"
-                value={(getFieldLang('cta-secondary') === 'es' ? sectionES.content.secondaryCtaLink : sectionEN.content.secondaryCtaLink) || ""}
-                onChange={(e) => handleContentChange('secondaryCtaLink', e.target.value, getFieldLang('cta-secondary'))}
-                className="text-xs h-9"
-              />
+              <div>
+                <LanguageToggle fieldKey="cta-secondary" label="Botón Secundario" />
+                <Input
+                  placeholder="Texto del Botón"
+                  value={(getFieldLang('cta-secondary') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ""}
+                  onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('cta-secondary'))}
+                  className="text-xs h-9 mb-2"
+                />
+                <ActionSelector 
+                  label="Acción del Botón Secundario"
+                  value={sectionES.content.secondaryCtaLink || ''}
+                  actionType={sectionES.content.secondaryCtaActionType}
+                  fieldPrefix="secondaryCta"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -2796,6 +2844,54 @@ export function VisualEditorSidebar({
                 ✅ Este componente carga automáticamente las categorías del sistema. No requiere configuración manual de contenido.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tipo Hero / Blog Posts - Botones adicionales */}
+      {sectionES.type === "hero" && (
+         <div className="mt-8 pt-6 border-t border-[#1C5D15]/10 space-y-4">
+            <h4 className="font-extrabold text-[#1C5D15] text-xs uppercase tracking-widest px-1">Botón Secundario Hero</h4>
+            <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+              <div>
+                <LanguageToggle fieldKey="hero-secondary-cta" label="Botón Secundario" />
+                <Input
+                  placeholder="Texto (Ej. Ver Catálogo)"
+                  value={(getFieldLang('hero-secondary-cta') === 'es' ? sectionES.content.secondaryCtaText : sectionEN.content.secondaryCtaText) || ""}
+                  onChange={(e) => handleContentChange('secondaryCtaText', e.target.value, getFieldLang('hero-secondary-cta'))}
+                  className="text-xs h-9 mb-2"
+                />
+                <ActionSelector 
+                  label="Acción del Botón Secundario"
+                  value={sectionES.content.secondaryCtaLink || ''}
+                  actionType={sectionES.content.secondaryCtaActionType}
+                  fieldPrefix="secondaryCta"
+                />
+              </div>
+            </div>
+         </div>
+      )}
+
+      {/* Configuración Genérica de CTA Button para otras secciones */}
+      {!["hero", "ecosystem", "news", "products", "featured", "flipcards", "category-filter", "clientes", "certifications", "stats", "cta", "custom"].includes(sectionES.type) && (
+        <div className="mt-8 pt-6 border-t border-[#1C5D15]/10 space-y-4">
+          <h4 className="font-extrabold text-[#1C5D15] text-xs uppercase tracking-widest px-1">Botón de Acción Final (CTA) - Opcional</h4>
+          <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">
+             <div>
+                <LanguageToggle fieldKey="generic-cta-text" label="Texto del Botón" />
+                <Input
+                  value={(getFieldLang('generic-cta-text') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
+                  onChange={(e) => handleContentChange("ctaText", e.target.value, getFieldLang('generic-cta-text'))}
+                  placeholder="Ej: Ver más"
+                  className="text-xs h-9"
+                />
+             </div>
+             <ActionSelector
+                 label="Acción del Botón"
+                 value={sectionES.content.ctaLink || ''}
+                 actionType={sectionES.content.ctaActionType}
+                 fieldPrefix="cta"
+             />
           </div>
         </div>
       )}

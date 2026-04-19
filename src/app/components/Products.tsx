@@ -22,9 +22,10 @@ interface ProductsProps {
   ctaLink?: string;
   ctaActionType?: string;
   sectionId?: string;
+  isStoreLayout?: boolean;
 }
 
-export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActionType, sectionId }: ProductsProps) {
+export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActionType, sectionId, isStoreLayout }: ProductsProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   
@@ -63,12 +64,15 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
           <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4">
             {t('products.catalog')}
           </div>
-          <h2 className="text-4xl md:text-5xl mb-4 text-[#1C5D15]">
-            {title}
-          </h2>
-          <p className="text-xl text-[#629960] max-w-3xl mx-auto">
-            {subtitle}
-          </p>
+          <h2 
+            className="text-4xl md:text-5xl mb-4 text-[#1C5D15]"
+            dangerouslySetInnerHTML={{ __html: title }}
+          />
+          <p 
+            className="text-xl text-[#629960] max-w-3xl mx-auto"
+            dangerouslySetInnerHTML={{ __html: subtitle }}
+          />
+
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -89,7 +93,7 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
               <div className="relative h-56 overflow-hidden bg-gradient-to-br from-[#1C5D15] to-[#629960]">
                 <img
                   src={product.image}
-                  alt={product.translation.name}
+                  alt={product.translation?.name || 'Product'}
                   className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-300"
                 />
               </div>
@@ -97,18 +101,21 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
               {/* Product Details */}
               <div className="p-6 flex flex-col flex-grow">
                 <div className="text-[#629960] text-sm mb-2">{(product as any).categoryName || product.category}</div>
-                <h3 className="text-2xl mb-3 text-[#1C5D15]">{product.translation.name}</h3>
-                <p className="text-[#629960] mb-6 leading-relaxed line-clamp-3">
-                  {product.translation.short_description || product.translation.description}
-                </p>
+                <h3 className="text-2xl mb-3 text-[#1C5D15]" dangerouslySetInnerHTML={{ __html: product.translation?.name || 'Untitled' }} />
+
+                <p 
+                  className="text-[#629960] mb-6 leading-relaxed line-clamp-3"
+                  dangerouslySetInnerHTML={{ __html: product.translation?.short_description || product.translation?.description || '' }}
+                />
+
 
                 {/* Features */}
-                {Array.isArray(product.translation.features) && product.translation.features.length > 0 && (
+                {Array.isArray(product.translation?.features) && (product.translation as any).features.length > 0 && (
                   <ul className="space-y-2 mb-6">
-                    {product.translation.features.slice(0, 3).map((feature, index) => (
+                    {(product.translation as any).features.slice(0, 3).map((feature: string, index: number) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="w-5 h-5 text-[#19FF00] flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-[#629960]">{feature}</span>
+                        <span className="text-sm text-[#629960]" dangerouslySetInnerHTML={{ __html: feature }} />
                       </li>
                     ))}
                   </ul>
@@ -136,7 +143,7 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
           <Button 
             size="lg"
             className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
-            onClick={() => handleAction(ctaActionType, ctaLink || "/store", navigate)}
+            onClick={() => handleAction(ctaActionType, ctaLink || "/store", navigate, { from: 'home', sectionId: sectionId || 'products' })}
           >
             {ctaText || t('btn.view_full_catalog')}
           </Button>

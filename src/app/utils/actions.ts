@@ -34,7 +34,7 @@ export const resolveCtaAction = (value: string | undefined): 'popup' | 'route' |
  *
  * If `type` is omitted it is auto-detected from `value`.
  */
-export const handleAction = (type: string | undefined, value: string | undefined, navigate: any) => {
+export const handleAction = (type: string | undefined, value: string | undefined, navigate: any, state?: any) => {
   if (!value) {
     console.warn('⚠️ [ACTION] Attempted to trigger action without value');
     return;
@@ -42,7 +42,7 @@ export const handleAction = (type: string | undefined, value: string | undefined
 
   const normalizedType = type || resolveCtaAction(value) || 'url';
 
-  console.log('🔘 [ACTION] Triggering:', { type: normalizedType, value });
+  console.log('🔘 [ACTION] Triggering:', { type: normalizedType, value, state });
 
   if (normalizedType === 'popup') {
     // OPEN POPUP — fire custom event; Layout's useExitIntent listens to this
@@ -53,7 +53,10 @@ export const handleAction = (type: string | undefined, value: string | undefined
       const el = document.getElementById(value.slice(1));
       if (el) { el.scrollIntoView({ behavior: 'smooth' }); return; }
     }
-    navigate(value);
+    navigate(value, { state });
+  } else if (normalizedType === 'chat') {
+    // OPEN CHAT BUBBLE
+    window.dispatchEvent(new CustomEvent('chat:open'));
   } else {
     // EXTERNAL URL
     let url = value;

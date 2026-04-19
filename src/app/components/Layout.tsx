@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { BackgroundPreload } from "../data/BackgroundPreload";
 import { ExitIntentPopup } from "./popups/ExitIntentPopup";
 import { useExitIntent } from "./popups/hooks/useExitIntent";
+import { ChatBubble } from "./popups/ChatBubble";
 import { supabaseAPI } from "../data/supabase";
 import { useAnalytics } from "../hooks/useAnalytics";
 
@@ -24,11 +25,13 @@ function LayoutInner() {
   useAnalytics(); // 🚀 Silently tracks page_views and session durations
   
   useEffect(() => {
-    // Si detectamos que todavía hay rastro de Supabase en el caché local, limpiamos una vez
-    if (localStorage.getItem('bionano_cache_products') || localStorage.getItem('supabase.auth.token')) {
+    // Limpieza de rastro antiguo de Supabase (Solo una vez)
+    const hasCleaned = localStorage.getItem('bionano_auth_cleaned');
+    if (!hasCleaned && localStorage.getItem('supabase.auth.token')) {
       supabaseAPI.clearCache();
       localStorage.removeItem('supabase.auth.token');
-      // Recargar solo si es necesario limpiar, para asegurar que el estado sea fresco
+      localStorage.setItem('bionano_auth_cleaned', 'true');
+      console.log('🔄 [AUTH] Rastro de Supabase antiguo detectado y limpiado. Reiniciando...');
       window.location.reload();
     }
   }, []);
@@ -103,6 +106,7 @@ function LayoutInner() {
       </div>
       <Footer contactInfo={defaultContactInfo} />
       <Toaster />
+      {!window.location.pathname.startsWith('/admin') && <ChatBubble />}
 
       {/* ✅ Exit Intent Popup GLOBAL - Ahora SI sale en TODAS las páginas */}
       <ExitIntentPopup 

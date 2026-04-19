@@ -6,7 +6,8 @@ import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ExternalLi
 import { toast } from "sonner";
 import { useLanguage } from "../contexts/LanguageContext";
 import { DatabaseManager } from "../data/DatabaseManager";
-import { supabaseAPI } from "../data/supabase";
+import { supabaseAPI, FooterSettings } from "../data/supabase";
+
 interface ContactInfo {
   phone: string;
   email: string;
@@ -58,21 +59,15 @@ export function Footer({ contactInfo }: FooterProps) {
     e.preventDefault();
     
     try {
-      const { error } = await supabase
-        .from('leads')
-        .insert({
-          ...formData,
-          lead_type: 'Footer Contact',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          is_anonymous: true,
-          page_url: window.location.href,
-          referrer: document.referrer,
-          visitor_id: localStorage.getItem('guest_id'),
-          metadata: { source: 'footer', language }
-        });
-
-      if (error) throw error;
+      await supabaseAPI.createLead({
+        ...formData,
+        lead_type: 'Footer Contact',
+        is_anonymous: true,
+        page_url: window.location.href,
+        referrer: document.referrer,
+        visitor_id: localStorage.getItem('guest_id'),
+        metadata: { source: 'footer', language }
+      });
 
       toast.success(language === 'es' 
         ? "¡Mensaje enviado! Nos pondremos en contacto pronto."

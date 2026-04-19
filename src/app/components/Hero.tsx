@@ -35,9 +35,11 @@ export function Hero({ content }: HeroProps) {
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-5 lg:px-6 text-center text-white">
-        <h1 className={`${content.height ? 'text-3xl md:text-4xl mb-3' : 'text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6'} leading-tight`}>
-          {content.title}
-        </h1>
+        <h1 
+          className={`${content.height ? 'text-3xl md:text-4xl mb-3' : 'text-[2rem] sm:text-[2.5rem] md:text-[3.5rem] mb-6'} leading-tight`}
+          dangerouslySetInnerHTML={{ __html: content.title || '' }}
+        />
+
         <div 
           className={`${content.height ? 'text-lg md:text-xl mb-4' : 'text-xl md:text-2xl mb-10'} max-w-3xl mx-auto opacity-95 [&_p]:m-0`}
           dangerouslySetInnerHTML={{ __html: content.subtitle || '' }}

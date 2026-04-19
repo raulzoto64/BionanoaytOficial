@@ -192,7 +192,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           en: { ...defaultTranslations.en },
         };
 
-        translationsData.forEach(translation => {
+        translationsData.forEach((translation: any) => {
           if (newTranslations.es[translation.key]) {
             newTranslations.es[translation.key] = translation.es;
           }
@@ -203,8 +203,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
         setTranslations(newTranslations);
       } catch (error) {
-        console.error('Error al cargar las traducciones:', error);
-        // Si hay error, se mantienen las traducciones predeterminadas
+        // En caso de error de red o base de datos, las traducciones predeterminadas se mantienen.
       } finally {
         setIsLoading(false);
       }
@@ -234,7 +233,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
-    console.error('useLanguage called outside of LanguageProvider. Returning fallback to prevent complete page unmount.');
     return {
       language: 'es' as Language,
       setLanguage: () => {},

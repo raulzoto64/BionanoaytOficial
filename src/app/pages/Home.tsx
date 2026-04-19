@@ -28,94 +28,82 @@ export function Home() {
   // Sistema de Renderizado Progresivo Temporal
   const [renderedSectionsCount, setRenderedSectionsCount] = useState(0);
   const startTime = performance.now();
+  
+  // ✅ Detectar si estamos en modo retorno
+  const returnSectionId = typeof window !== 'undefined' ? sessionStorage.getItem('bx_return_section') : null;
 
-  // ✅ Renderizado Progresivo Inteligente
+  // ✅ 1. Renderizado Progresivo Inteligente
   useEffect(() => {
     // Si NO tenemos datos cargados aun: no hacemos nada
     if (!pageContent || homeProducts.length === 0) return;
 
-    console.log(`\n🚀 [HOME-PROGRESSIVE] Iniciando renderizado progresivo`, {
-      tiempoDesdeInicio: `${Math.round(performance.now() - startTime)}ms`,
-      totalSecciones: pageContent.sections.filter(s => s.visible && s.type !== "hero").length,
-      productosCargados: homeProducts.length
-    });
-
     const totalSections = pageContent.sections.filter(s => s.visible && s.type !== "hero").length;
     let current = 0;
-
-    // ✅ SI TENEMOS CACHE: MOSTRAMOS TODO INMEDIATAMENTE
-    if (navigationType === 'POP' || navigationType === 'PUSH') {
-      console.log(`✅ [HOME-CACHE] Regresando, mostrando TODO instantaneamente 0ms`);
-      setRenderedSectionsCount(totalSections);
-      return;
-    }
-
-    // ✅ PRIMERA CARGA: Mostramos 2 secciones inmediatamente
-    setRenderedSectionsCount(2);
-    console.log(`✅ [HOME] Secciones 0 y 1 mostradas en ${Math.round(performance.now() - startTime)}ms`);
     
-    // ✅ El resto se van agregando una cada 75ms en segundo plano
-    const interval = setInterval(() => {
-      current++;
-      const next = Math.min(2 + current, totalSections);
-      
-      setRenderedSectionsCount(next);
-      console.log(`✅ [HOME] Seccion ${next-1} mostrada en ${Math.round(performance.now() - startTime)}ms`);
-      
-      if (next >= totalSections) {
-        clearInterval(interval);
-        console.log(`🏁 [HOME] Renderizado completo total: ${Math.round(performance.now() - startTime)}ms\n`);
-      }
-    }, 75);
+    // ✅ SI ESTAMOS REGRESANDO A UNA SECCIÓN ESPECÍFICA: MOSTRAR TODO YA
+    // No queremos animaciones que cambien la altura de la página mientras hacemos scroll
+    if (returnSectionId || (navigationType === 'POP' || navigationType === 'PUSH')) {
+      setRenderedSectionsCount(totalSections);
+    } else {
 
-    return () => clearInterval(interval);
-  }, [pageContent, homeProducts, navigationType]);
+      // ✅ PRIMERA CARGA: Mostramos 2 secciones inmediatamente
+      setRenderedSectionsCount(2);
+      
+      // ✅ El resto se van agregando una cada 75ms en segundo plano
+      const interval = setInterval(() => {
+        current++;
+        const next = Math.min(2 + current, totalSections);
+        
+        setRenderedSectionsCount(next);
+        
+        if (next >= totalSections) {
+          clearInterval(interval);
+        }
+      }, 75);
 
-  // ✅ Scroll automatico SOLO cuando viene explicitamente desde el boton Ver en Home
+      return () => clearInterval(interval);
+    }
+  }, [pageContent, homeProducts, navigationType, returnSectionId]);
+
+  // ✅ 2. Scroll automático al regresar de un detalle (Producto o Ecosystem)
   useEffect(() => {
-    const sectionId = sessionStorage.getItem('bx_return_section');
+    if (!pageContent || !returnSectionId) return;
 
-    if (!pageContent || !sectionId) return;
-
-    // ✅ BUSCAMOS LA SECCION INMEDIATAMENTE, NO ESPERAMOS A TODAS
-    // Empezamos a chequear cada 40ms hasta que aparezca en el DOM
     let attempts = 0;
     const checkInterval = setInterval(() => {
       attempts++;
-      const element = document.querySelector(`[data-section-type="${sectionId}"]`);
+      const element = document.getElementById(returnSectionId) || 
+                     document.querySelector(`[data-section-type="${returnSectionId}"]`);
 
-      if (element || attempts > 25) {
+      if (element) {
         clearInterval(checkInterval);
         
-        if (element) {
-            const rect = element.getBoundingClientRect();
-            const isMobile = window.innerWidth < 768;
-            const offset = isMobile ? 1100 : 600;
-            const absoluteTop = rect.top + window.pageYOffset + offset;
-            
-            // ✅ Esperamos a que React Router termine de restaurar el scroll
-            setTimeout(() => {
-              window.scrollTo({
-                top: absoluteTop,
-                behavior: 'smooth'
-              });
-            }, 200);
-        }
-        
-        // Limpiar siempre despues de intentar
-        sessionStorage.removeItem('bx_return_section');
-        sessionStorage.removeItem('bx_return_from');
-      }
-    }, 40);
+        // Pequeño delay para que el navegador termine de calcular el layout total
+        setTimeout(() => {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          });
+          
+          // Limpiar para que no se repita
+          sessionStorage.removeItem('bx_return_section');
+          sessionStorage.removeItem('bx_return_from');
+        }, 700); // Aumentado a 700ms para dar tiempo a componentes pesados (Ecosystem)
 
-  }, [pageContent]);
+      } else if (attempts > 50) {
+        clearInterval(checkInterval);
+        sessionStorage.removeItem('bx_return_section');
+      }
+    }, 50);
+
+    return () => clearInterval(checkInterval);
+  }, [pageContent, renderedSectionsCount, returnSectionId]);
 
   useEffect(() => {
     loadPageContent();
     loadHomeProducts();
   }, [language, updateTrigger]);
-
-
 
   const loadPageContent = async () => {
     try {
@@ -129,10 +117,10 @@ export function Home() {
   const loadHomeProducts = async () => {
     try {
       const products = await supabaseAPI.getProducts();
-      const activeProducts = products.filter(p => p.status === 'active');
+      const activeProducts = products.filter((p: any) => p.status === 'active');
 
       const productsWithTranslations = await Promise.all(
-        activeProducts.map(async (product) => {
+        activeProducts.map(async (product: Product) => {
           const translation = await supabaseAPI.getProductTranslation(product.id, language);
           const categoryTranslation = await supabaseAPI.getCategoryTranslation(product.category, language);
           return {
@@ -183,7 +171,7 @@ export function Home() {
         <>
           {pageContent.sections
             .filter((s: Section) => s.visible && s.type !== "hero")
-            .filter((section: Section, index: number) => index < renderedSectionsCount)
+            .filter((_: Section, index: number) => index < renderedSectionsCount)
             .map((section: Section, index: number) => (
               <DynamicSection
                 key={section.id}
@@ -191,6 +179,7 @@ export function Home() {
                 products={homeProducts}
                 language={language}
                 index={index}
+                returnSectionId={returnSectionId}
               />
             ))}
         </>

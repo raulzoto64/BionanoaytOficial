@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useLocation } from "react-router";
 import { useLanguage } from "../contexts/LanguageContext";
 import { supabaseAPI, type BlogPost, type BlogPostTranslation } from "../data/supabase";
 import { SEO } from "../components/SEO";
@@ -35,7 +35,7 @@ export function BlogPost() {
     const loadPost = async () => {
       try {
         const allPosts = await supabaseAPI.getBlogPosts('published');
-        const postFound = allPosts.find(p => p.slug === slug);
+        const postFound = allPosts.find((p: any) => p.slug === slug);
 
         if (!postFound) {
           setError('Post no encontrado');
@@ -45,7 +45,7 @@ export function BlogPost() {
 
         const translation = await supabaseAPI.getBlogPostTranslation(postFound.id, language);
         const relations = await supabaseAPI.getBlogPostCategories(postFound.id);
-        const allCategories = await supabaseAPI.getBlogCategories('active');
+        const allCategories = await supabaseAPI.getBlogCategories();
 
         const categoryNames: Record<string, string> = {};
         for (const category of allCategories) {
@@ -71,6 +71,20 @@ export function BlogPost() {
 
     loadPost();
   }, [slug, language]);
+
+  // ✅ Persistir el contexto de retorno para la Home
+  const location = useLocation();
+  useEffect(() => {
+    const from = (location.state as any)?.from;
+    const sectionId = (location.state as any)?.sectionId;
+    
+    if (from === 'home') {
+      sessionStorage.setItem('bx_return_from', 'home');
+      if (sectionId) {
+        sessionStorage.setItem('bx_return_section', sectionId);
+      }
+    }
+  }, [location.state]);
 
   if (loading) {
     return (

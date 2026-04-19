@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Globe, PanelLeftClose, PanelLeftOpen, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare, FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare } from 'lucide-react';
-import { Section } from '../../../data/supabase';
+import { Globe, PanelLeftClose, PanelLeftOpen, Layout, BarChart, Users, ShoppingBag, Newspaper, HelpCircle, Zap, Type, Quote, Clock, History, Star, Handshake, Award, BadgeCheck, Layers, MessageSquare, FolderKanban, UsersRound, FileText, Sparkles, Target, CheckSquare, Database, Plus } from 'lucide-react';
+import { Section, supabaseAPI, ReusableSection } from '../../../data/supabase';
 import { VisualEditorSidebar } from '../../../components/admin/visual-editor/VisualEditorSidebar';
 
 // Helper component for dynamic icons
@@ -25,6 +25,7 @@ interface SidebarProps {
   allEcosystemMembers: any[];
   availableForms?: any[];
   pageSlug?: string;
+  onAddLibrarySection?: (section: ReusableSection) => void;
 }
 
 export function Sidebar({
@@ -37,9 +38,24 @@ export function Sidebar({
   allProducts,
   allEcosystemMembers,
   availableForms = [],
-  pageSlug
+  pageSlug,
+  onAddLibrarySection
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<'sections' | 'config'>('sections');
+  const [librarySections, setLibrarySections] = useState<ReusableSection[]>([]);
+
+  // Cargar secciones de la biblioteca
+  useEffect(() => {
+    const fetchLibrary = async () => {
+      try {
+        const data = await supabaseAPI.getReusableSections();
+        setLibrarySections(data || []);
+      } catch (error) {
+        console.error("Error fetching library sections:", error);
+      }
+    };
+    fetchLibrary();
+  }, [activeTab]);
 
   // Auto cambiar a pestaña configuracion cuando seleccionas una seccion
   useEffect(() => {
@@ -138,24 +154,62 @@ export function Sidebar({
 
           {/* TAB SECCIONES - GRID PERMANENTE CON TODOS LOS ICONOS */}
           {activeTab === 'sections' && (
-            <div className="p-4">
-              <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-4">Añadir nueva sección</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {sectionTypes.map((item) => (
-                  <button
-                    key={item.type}
-                    onClick={() => {
-                      onAddSection?.(item.type);
-                      setActiveTab('config');
-                    }}
-                    className="flex flex-col items-center justify-center p-4 rounded-3xl border-2 border-[#F7F9CE] hover:border-[#19FF00] hover:bg-[#F7F9CE]/20 transition-all group"
-                  >
-                    <div className="w-10 h-10 bg-[#19FF00]/10 rounded-2xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <Icon name={item.icon} className="w-5 h-5 text-[#1C5D15]" />
-                    </div>
-                    <span className="text-[10px] font-bold text-[#1C5D15] text-center leading-tight">{item.label}</span>
-                  </button>
-                ))}
+            <div className="p-4 space-y-6">
+              <div>
+                <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#19FF00]" />
+                  Biblioteca de Secciones
+                </h3>
+                {librarySections.length === 0 ? (
+                  <p className="text-[10px] text-[#629960] italic bg-gray-50 p-4 rounded-2xl border text-center">
+                    No hay secciones guardadas en la biblioteca todavía.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {librarySections.map((libSection: ReusableSection) => (
+                      <button
+                        key={libSection.id}
+                        onClick={() => {
+                           // El contenido guardado en la biblioteca tiene estructura {es: content, en: content}
+                           // necesitamos insertarlo correctamente.
+                           onAddLibrarySection?.(libSection);
+                           setActiveTab('config');
+                        }}
+                        className="flex items-center gap-3 p-3 rounded-2xl border-2 border-emerald-50 hover:border-[#1C5D15]/30 hover:bg-emerald-50/30 transition-all text-left shadow-sm bg-white group"
+                      >
+                         <div className="w-8 h-8 bg-[#1C5D15]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Database className="w-4 h-4 text-[#1C5D15]" />
+                         </div>
+                         <div className="flex-1 min-w-0">
+                            <h4 className="text-[11px] font-black text-[#1C5D15] truncate uppercase tracking-tighter">{libSection.name}</h4>
+                            <p className="text-[9px] text-[#629960] font-bold uppercase tracking-widest opacity-60">{libSection.type}</p>
+                         </div>
+                         <Plus className="w-4 h-4 text-[#1C5D15]/20 group-hover:text-[#1C5D15] transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-[#1C5D15] font-black uppercase text-xs tracking-widest mb-4">Añadir nueva sección (Base)</h3>
+                <div className="grid grid-cols-2 gap-3 pb-8">
+                  {sectionTypes.map((item) => (
+                    <button
+                      key={item.type}
+                      onClick={() => {
+                        onAddSection?.(item.type);
+                        setActiveTab('config');
+                      }}
+                      className="flex flex-col items-center justify-center p-4 rounded-3xl border-2 border-[#F7F9CE] hover:border-[#19FF00] hover:bg-[#F7F9CE]/20 transition-all group shadow-sm bg-white"
+                    >
+                      <div className="w-10 h-10 bg-[#19FF00]/10 rounded-2xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                        <Icon name={item.icon} className="w-5 h-5 text-[#1C5D15]" />
+                      </div>
+                      <span className="text-[10px] font-bold text-[#1C5D15] text-center leading-tight uppercase tracking-tighter">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

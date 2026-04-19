@@ -31,6 +31,7 @@ interface NewsSectionProps {
   ctaLink?: string;
   ctaActionType?: string;
   isEditor?: boolean;
+  sectionId?: string;
 }
 
 // Caché global para evitar recargas (mismo patrón que Ecosystem.tsx)
@@ -39,7 +40,7 @@ let newsSectionCache: {
   language: string;
 } | null = null;
 
-export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, isEditor = false }: NewsSectionProps) {
+export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, isEditor = false, sectionId }: NewsSectionProps) {
   const { language } = useLanguage();
   const navigate = useNavigate();
   
@@ -59,15 +60,14 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, 
       if (newsPreloadCache && newsPreloadCache.language === language) {
         setFeaturedPosts(newsPreloadCache.posts);
         setLoading(false);
-        console.log('[NewsSection] Cargado desde caché (instantáneo)');
         return;
       }
 
       try {
         const allPosts = await supabaseAPI.getBlogPosts('published');
-        const featured = allPosts.filter(post => post.featured).slice(0, 5);
+        const featured = allPosts.filter((post: any) => post.featured).slice(0, 5);
         
-        const allCategories = await supabaseAPI.getBlogCategories('active');
+        const allCategories = await supabaseAPI.getBlogCategories();
 
         const categoryNames: Record<string, string> = {};
         for (const category of allCategories) {
@@ -94,7 +94,7 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, 
         setNewsPreloadCache({ posts: postsWithTranslations, language });
         setFeaturedPosts(postsWithTranslations);
       } catch (error) {
-        console.error('Error loading featured blog posts:', error);
+        // En caso de fallo, se ignora silenciosamente para no interrumpir la navegación principal.
       } finally {
         setLoading(false);
       }
@@ -173,13 +173,15 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, 
               key={post.id} 
               type="blog" 
               data={post} 
+              sectionId={sectionId || 'news'}
+              from="home"
             />
           ))}
         </div>
 
         <div className="text-center mt-12">
           <button
-            onClick={() => handleAction(ctaActionType, ctaLink || "/blog", navigate)}
+            onClick={() => handleAction(ctaActionType, ctaLink || "/blog", navigate, { from: 'home', sectionId: sectionId || 'news' })}
             className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white font-bold rounded-full hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg uppercase text-sm tracking-wider"
           >
             {ctaText || (language === 'es' ? 'Ver todas las noticias' : 'View all news')}

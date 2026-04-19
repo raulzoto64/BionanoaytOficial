@@ -15,6 +15,7 @@ import {
   type CarouselApi 
 } from "../components/ui/carousel";
 import { ecosystemPreloadCache } from "../data/BackgroundPreload";
+import { handleAction } from "../utils/actions";
 
 interface EcosystemProps {
   title?: string;
@@ -67,7 +68,6 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
       setMembers(ecosystemPreloadCache.members);
       setTranslations(ecosystemPreloadCache.translations);
       setLoading(false);
-      console.log('[Ecosystem] Cargado desde caché del preloader (instantáneo)');
       return;
     }
 
@@ -138,15 +138,19 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
             <div className="inline-block px-4 py-1.5 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4 font-bold text-sm tracking-wide shadow-sm">
               {language === 'es' ? 'Ecosistema' : 'Ecosystem'}
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1C5D15] tracking-tight">
-              {title || (language === 'es' ? 'Nuestro Ecosistema' : 'Our Ecosystem')}
-            </h2>
-            <p className="text-lg md:text-xl mb-6 text-[#629960] leading-relaxed max-w-lg mx-auto md:mx-0">
-              {subtitle || (language === 'es' 
+            <h2 
+              className="text-4xl md:text-5xl font-bold mb-6 text-[#1C5D15] tracking-tight"
+              dangerouslySetInnerHTML={{ __html: title || (language === 'es' ? 'Nuestro Ecosistema' : 'Our Ecosystem') }}
+            />
+
+            <p 
+              className="text-lg md:text-xl mb-6 text-[#629960] leading-relaxed max-w-lg mx-auto md:mx-0"
+              dangerouslySetInnerHTML={{ __html: subtitle || (language === 'es' 
                 ? 'Conectamos innovadores, empresarios y profesionales para construir un ecosistema sostenible y tecnológico.' 
                 : 'We connect innovators, entrepreneurs, and professionals to build a sustainable and technological ecosystem.')
-              }
-            </p>
+              }}
+            />
+
             
             <div className="space-y-4 md:space-y-5 mb-0 md:mb-8 w-full">
               {(items && items.length > 0 ? items : [
@@ -168,9 +172,10 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-[#1C5D15] font-bold text-base md:text-lg">{item.title || item.label}</h4>
-                    <p className="text-[#629960] text-sm md:text-base">{item.description || item.desc}</p>
+                    <h4 className="text-[#1C5D15] font-bold text-base md:text-lg" dangerouslySetInnerHTML={{ __html: item.title || item.label || '' }} />
+                    <p className="text-[#629960] text-sm md:text-base" dangerouslySetInnerHTML={{ __html: item.description || item.desc || '' }} />
                   </div>
+
                 </div>
               ))}
             </div>
@@ -178,7 +183,7 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
             <Button 
               size="lg" 
               className="hidden md:inline-flex bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
-              onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate)}
+              onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate, { from: 'home', sectionId: sectionId || 'ecosystem' })}
             >
               {ctaText || (language === 'es' ? 'Conocer Más' : 'Learn More')}
             </Button>
@@ -206,9 +211,6 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
                         to={member.slug ? `/ecosystem/${member.slug}` : '#'}
                         state={{ from: 'home', sectionId }}
                         className="block h-full group"
-                        onClick={() => {
-                          console.log('[EcosystemCard] Clicked member, saving state:', { from: 'home', sectionId });
-                        }}
                       >
                         <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#629960]/10 group-hover:border-[#19FF00] flex flex-col h-full mx-1">
                           <div className="flex items-center gap-4 mb-3">
@@ -220,14 +222,17 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
                               )}
                             </div>
                             <div className="min-w-0">
-                              <h3 className="text-base md:text-lg font-bold text-[#1C5D15] truncate">{translation?.name || 'Miembro'}</h3>
+                              <h3 className="text-base md:text-lg font-bold text-[#1C5D15] truncate" dangerouslySetInnerHTML={{ __html: translation?.name || 'Miembro' }} />
+
                               <p className="text-[10px] text-[#19FF00] font-bold bg-[#1C5D15] px-2 py-0.5 rounded-md inline-block uppercase tracking-wider">{member.sector}</p>
                             </div>
                           </div>
                           
-                          <p className="text-xs md:text-sm text-[#629960] line-clamp-none md:line-clamp-2 mb-3 flex-1">
-                            {translation?.description}
-                          </p>
+                          <p 
+                            className="text-xs md:text-sm text-[#629960] line-clamp-none md:line-clamp-2 mb-3 flex-1"
+                            dangerouslySetInnerHTML={{ __html: translation?.description || '' }}
+                          />
+
                           
                           <div className="flex items-center text-[#1C5D15] font-bold text-xs group-hover:text-[#629960] transition-colors pt-2 border-t border-gray-50">
                             {language === 'es' ? 'Ver detalles' : 'View details'}
@@ -258,7 +263,7 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
           <Button 
             size="lg" 
             className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
-            onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate)}
+            onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate, { from: 'home', sectionId: sectionId || 'ecosystem' })}
           >
             {ctaText || (language === 'es' ? 'Conocer Más' : 'Learn More')}
           </Button>

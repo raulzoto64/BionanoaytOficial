@@ -60,16 +60,6 @@ if ($method === 'GET' && $id) {
         $userId = trim($userId);
         $userIdNoHyphens = str_replace('-', '', $userId);
         
-        // --- LOG DE DIAGNÓSTICO ---
-        $allUsersRaw = $pdo->query("SELECT id FROM users")->fetchAll(PDO::FETCH_COLUMN);
-        $debugLog = [
-            "received_user_id" => $userId,
-            "received_length"  => strlen($userId),
-            "received_no_hyphens" => $userIdNoHyphens,
-            "total_users_in_db" => count($allUsersRaw),
-            "db_ids" => $allUsersRaw,
-        ];
-        
         // Búsqueda flexible: exacto, sin guiones, o case-insensitive
         $check = $pdo->prepare("
             SELECT id FROM users 
@@ -81,19 +71,15 @@ if ($method === 'GET' && $id) {
         $check->execute([$userId, $userIdNoHyphens, $userId]);
         $dbUser = $check->fetch();
         
-        $debugLog["found_in_db"] = $dbUser ? $dbUser['id'] : false;
-        
         if (!$dbUser) {
             http_response_code(403);
             echo json_encode([
                 "success" => false, 
-                "error" => "Usuario no encontrado en la base de datos.",
-                "debug" => $debugLog
+                "error" => "Usuario no encontrado en la base de datos."
             ]);
             exit;
         }
         $userId = $dbUser['id'];
-        $debugLog["using_id"] = $userId;
     }
 
     // Si viene guest_id, asegurarse de que existe en la tabla guests (FK constraint)
@@ -106,7 +92,6 @@ if ($method === 'GET' && $id) {
                 $pdo->prepare("INSERT IGNORE INTO guests (id) VALUES (?)")->execute([$guestId]);
             } catch (PDOException $ge2) {
                 // Si no se puede registrar el guest, continuar sin guest_id (evitar bloqueo total)
-                error_log("CARTO-WARN: No se pudo registrar guest '$guestId': " . $ge2->getMessage());
                 $guestId = null;
             }
         }

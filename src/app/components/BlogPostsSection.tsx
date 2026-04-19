@@ -21,7 +21,7 @@ interface PostWithTranslation {
   type: 'article' | 'news';
 }
 
-interface BlogPostsSectionProps {
+export interface BlogPostsSectionProps {
   posts?: PostWithTranslation[];
   loading?: boolean;
   language?: string;
@@ -30,6 +30,8 @@ interface BlogPostsSectionProps {
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  sectionId?: string;
+  from?: string;
 }
 
 export function BlogPostsSection({
@@ -40,7 +42,9 @@ export function BlogPostsSection({
   onFilterChange = () => {},
   currentPage = 1,
   totalPages = 1,
-  onPageChange = () => {}
+  onPageChange = () => {},
+  sectionId,
+  from
 }: BlogPostsSectionProps) {
   const [filteredPosts, setFilteredPosts] = useState<PostWithTranslation[]>(posts);
   const [currentPageState, setCurrentPageState] = useState(currentPage);
@@ -132,6 +136,8 @@ return (
               key={post.id} 
               type="blog" 
               data={post} 
+              sectionId={sectionId}
+              from={from}
             />
           ))}
         </div>

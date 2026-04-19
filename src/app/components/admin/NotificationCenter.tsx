@@ -34,16 +34,13 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
 
   // Cargar Notificaciones
   const loadNotifications = async () => {
-    console.log('[NOTIFICATIONS] loadNotifications initiated');
     if (!user) {
-      console.log('[NOTIFICATIONS] Aborting: No user found');
       return;
     }
 
     setLoading(true);
     try {
       const data = await supabaseAPI.getNotifications();
-      console.log('[NOTIFICATIONS] API Response:', data ? data.length : 0, 'rows');
 
       // Filtrar por rol en el frontend si es necesario (ya que el PHP devuelve todo por ahora)
       const role = user.user_metadata?.role || 'admin';

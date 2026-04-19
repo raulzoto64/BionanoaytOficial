@@ -4,6 +4,7 @@ import { DynamicSection } from "../components/DynamicSection";
 import { Hero } from "../components/Hero";
 import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
+import { useNavigate } from "react-router";
 import { 
   Microscope, Atom, Shield, Leaf, TrendingUp, 
   ChevronDown, ChevronUp, Quote, BarChart3, Zap,
@@ -41,6 +42,7 @@ function FaqItem({ item }: { item: { question: string; answer: string } }) {
 
 export function Technology() {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const [pageContent, setPageContent] = useState<PageContent | null>(() => 
     supabaseAPI.getCachedData(`page-content-page-technology-${language}`)
   );
@@ -81,8 +83,22 @@ export function Technology() {
       {/* Secciones dinámicas generadas desde el Editor Visual */}
       {pageContent.sections.map((section: Section, index: number) => {
         if (!section.visible) return null;
-        
-        switch (section.type) {
+        return (
+          <TechnologySectionPreview
+            key={section.id}
+            section={section}
+            index={index}
+            language={language}
+            navigate={navigate}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+export function TechnologySectionPreview({ section, index, language, navigate }: any) {
+  switch (section.type) {
           // ── HERO ──────────────────────────────────────────────────────────
           case 'hero':
             return (
@@ -314,14 +330,4 @@ export function Technology() {
               />
             );
         }
-      })}
-
-      {/* 
-        ✅ CTA ELIMINADO (HARDCODED) 
-        Ahora se maneja como una sección dinámica de tipo 'cta' o 'hero' 
-        dentro del map de arriba. Si necesitas este CTA, añádelo desde 
-        el Editor Visual.
-      */}
-    </div>
-  );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { supabaseAPI, PageWithContent, Section } from '../../../data/supabase';
+import { supabaseAPI, PageWithContent, Section, ReusableSection } from '../../../data/supabase';
 import { toast } from 'sonner';
 
 import { Toolbar } from './Toolbar';
@@ -108,7 +108,7 @@ export function AdminVisualEditor() {
     setLoading(true);
     try {
       const allPages = await supabaseAPI.getAllPages();
-      const page = allPages.find(p => p.id === pageId);
+      const page = allPages.find((p: any) => p.id === pageId);
 
       if (!page) {
         toast.error('Página no encontrada');
@@ -173,17 +173,17 @@ export function AdminVisualEditor() {
       ]);
 
       const productTranslationsMap = (productTranslations || []).reduce((acc: any, t: any) => { acc[t.product_id] = t; return acc; }, {});
-      setAllProducts(products.map(p => ({ ...p, translation: productTranslationsMap[p.id] || null })));
+      setAllProducts(products.map((p: any) => ({ ...p, translation: productTranslationsMap[p.id] || null })));
 
       const memberTranslationsMap = (memberTranslations || []).reduce((acc: any, t: any) => { acc[t.member_id] = t; return acc; }, {});
-      setAllEcosystemMembers(members.map(m => ({ ...m, translation: memberTranslationsMap[m.id] || null })));
+      setAllEcosystemMembers(members.map((m: any) => ({ ...m, translation: memberTranslationsMap[m.id] || null })));
 
       const categoryTranslationsMap = (categoryTranslations || []).reduce((acc: any, t: any) => { acc[t.category_id] = t; return acc; }, {});
-      setAllCategories(categories.map(c => ({ ...c, name: categoryTranslationsMap[c.id]?.name || c.id })));
+      setAllCategories(categories.map((c: any) => ({ ...c, name: categoryTranslationsMap[c.id]?.name || c.id })));
 
       // Blog posts normalization for preview
       const blogTranslationsMap = (blogTranslations || []).reduce((acc: any, t: any) => { acc[t.post_id] = t; return acc; }, {});
-      const enrichedBlogPosts = blogPosts.map(post => ({
+      const enrichedBlogPosts = blogPosts.map((post: any) => ({
         ...post,
         translation: blogTranslationsMap[post.id] || { title: 'Untitled', excerpt: '' },
         category_name: 'General'
@@ -278,6 +278,35 @@ export function AdminVisualEditor() {
     setActiveSectionId(newId);
   };
 
+  const handleAddLibrarySection = (libSection: ReusableSection) => {
+    const newId = `${libSection.type}-${Date.now()}`;
+    
+    // El contenido de la biblioteca es { es: ..., en: ... }
+    const contentES = libSection.content.es || libSection.content; // fallback si no hay estructura idiomatica
+    const contentEN = libSection.content.en || libSection.content;
+
+    const newSectionES: Section = {
+      id: newId,
+      type: libSection.type as any,
+      order: sectionsES.length * 10,
+      visible: true,
+      content: contentES
+    };
+
+    const newSectionEN: Section = {
+      id: newId,
+      type: libSection.type as any,
+      order: sectionsEN.length * 10,
+      visible: true,
+      content: contentEN
+    };
+
+    setSectionsES(prev => [...prev, newSectionES]);
+    setSectionsEN(prev => [...prev, newSectionEN]);
+    setActiveSectionId(newId);
+    toast.success(`Sección "${libSection.name}" añadida desde la biblioteca`);
+  };
+
   const handleViewLive = () => {
     if (!page) return;
     const slug = page.slug.replace(/^page-/, '');
@@ -327,6 +356,7 @@ export function AdminVisualEditor() {
             activeSectionEN={activeSectionEN}
             handleUpdateSection={handleUpdateSection}
             onAddSection={handleAddSection}
+            onAddLibrarySection={handleAddLibrarySection}
             allProducts={allProducts}
             allEcosystemMembers={allEcosystemMembers}
             availableForms={allForms}

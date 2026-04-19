@@ -37,47 +37,19 @@ export function Blog() {
   const [loading, setLoading] = useState(!pageData);
 
   // --- RENDERIZADOR DE SECCIONES ---
-  const renderSection = (section: any) => {
+  const renderSection = (section: any, index: number) => {
     if (!section.visible) return null;
-
-    switch (section.type) {
-      case "hero":
-        return <HeroBlog key={section.id} content={section.content} />;
-
-      case "hero-blog":
-        return <HeroBlog key={section.id} content={section.content} />;
-
-      case "header":
-        return (
-          <div key={section.id} className="max-w-6xl mx-auto px-4 text-center mb-16 pt-12">
-            <div className="inline-block px-4 py-1.5 bg-[#19FF00]/20 text-[#1C5D15] rounded-full mb-4 font-bold text-sm uppercase tracking-widest">
-              {section.content.badge || "Blog"}
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-6">
-              {section.content.title}
-            </h1>
-            <p className="text-lg text-[#629960] max-w-2xl mx-auto">
-              {section.content.description}
-            </p>
-          </div>
-        );
-
-      case "blog-posts":
-        // Si la sección viene de la DB, usamos el componente de listado
-        return (
-          <BlogPostsSection 
-            key={section.id}
-            posts={filteredPosts}
-            language={language}
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            totalPages={Math.ceil(filteredPosts.length / 8)}
-          />
-        );
-
-      default:
-        return null;
-    }
+    return (
+      <BlogSectionPreview
+        key={section.id}
+        section={section}
+        index={index}
+        language={language}
+        filteredPosts={filteredPosts}
+        activeFilter={activeFilter}
+        setActiveFilter={setActiveFilter}
+      />
+    );
   };
 
   // --- CARGA DE DATOS ---
@@ -88,7 +60,7 @@ export function Blog() {
         // Asegúrate de que el slug 'page-blog' sea el correcto en tu base de datos
         const [allPosts, allCategories, pageContent] = await Promise.all([
           supabaseAPI.getBlogPosts('published'),
-          supabaseAPI.getBlogCategories('active'),
+          supabaseAPI.getBlogCategories(),
           supabaseAPI.getPageContent('page-blog', language)
         ]);
         
@@ -96,12 +68,12 @@ export function Blog() {
 
         // Mapa de categorías para no repetir peticiones
         const categoryNamesMap: Record<string, string> = {};
-        await Promise.all(allCategories.map(async (cat) => {
+        await Promise.all(allCategories.map(async (cat: any) => {
           const trans = await supabaseAPI.getBlogCategoryTranslation(cat.id, language);
           categoryNamesMap[cat.id] = trans?.name || cat.slug;
         }));
 
-        const postsWithTranslations = await Promise.all(allPosts.map(async (post) => {
+        const postsWithTranslations = await Promise.all(allPosts.map(async (post: any) => {
           const [translation, relations] = await Promise.all([
             supabaseAPI.getBlogPostTranslation(post.id, language),
             supabaseAPI.getBlogPostCategories(post.id)
@@ -184,4 +156,47 @@ export function Blog() {
       )}
     </div>
   );
+}
+
+export function BlogSectionPreview({ 
+  section, language, index, 
+  filteredPosts = [], activeFilter = 'all', setActiveFilter = () => {} 
+}: any) {
+  switch (section.type) {
+    case "hero":
+      return <HeroBlog key={section.id} content={section.content} />;
+
+    case "hero-blog":
+      return <HeroBlog key={section.id} content={section.content} />;
+
+    case "header":
+      return (
+        <div key={section.id} className="max-w-6xl mx-auto px-4 text-center mb-16 pt-12">
+          <div className="inline-block px-4 py-1.5 bg-[#19FF00]/20 text-[#1C5D15] rounded-full mb-4 font-bold text-sm uppercase tracking-widest">
+            {section.content.badge || "Blog"}
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-6">
+            {section.content.title}
+          </h1>
+          <p className="text-lg text-[#629960] max-w-2xl mx-auto">
+            {section.content.description}
+          </p>
+        </div>
+      );
+
+    case "blog-posts":
+      return (
+        <BlogPostsSection 
+          key={section.id}
+          posts={filteredPosts}
+          language={language}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          totalPages={Math.ceil(filteredPosts.length / 8)}
+        />
+      );
+
+    default:
+      return null;
+  }
 }

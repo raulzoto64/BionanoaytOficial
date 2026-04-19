@@ -63,4 +63,39 @@ if ($method === 'GET' && $slugOrId) {
     $upsertStmt->execute([$pageId, $lang, $sectionsJson]);
 
     echo json_encode(["success" => true]);
+} else if ($method === 'POST') {
+    // Create new page
+    $data = json_decode(file_get_contents('php://input'), true);
+    $slug = $data['slug'] ?? 'nueva-pagina-' . time();
+    $type = $data['type'] ?? 'custom';
+    $status = $data['status'] ?? 'published';
+    $id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0x0fff) | 0x4000,
+        mt_rand(0, 0x3fff) | 0x8000,
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+    );
+
+    // Verify if slug exists
+    $checkStmt = $pdo->prepare("SELECT id FROM pages WHERE slug = ?");
+    $checkStmt->execute([$slug]);
+    if ($checkStmt->fetch()) {
+        $slug = $slug . '-' . time();
+    }
+
+    $stmt = $pdo->prepare("INSERT INTO pages (id, slug, type, status) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$id, $slug, $type, $status]);
+
+    // Retrieve the created page
+    $getStmt = $pdo->prepare("SELECT * FROM pages WHERE id = ?");
+    $getStmt->execute([$id]);
+    echo json_encode($getStmt->fetch());
+} else if ($method === 'DELETE' && $slugOrId) {
+    // Delete a page and its content (cascade might handle content, but just in case)
+    $pdo->prepare("DELETE FROM page_contents WHERE page_id = ?")->execute([$slugOrId]);
+    $stmt = $pdo->prepare("DELETE FROM pages WHERE id = ? OR slug = ?");
+    $stmt->execute([$slugOrId, $slugOrId]);
+    echo json_encode(["success" => true]);
 }
+

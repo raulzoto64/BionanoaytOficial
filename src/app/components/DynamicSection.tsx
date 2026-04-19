@@ -16,6 +16,80 @@ import { BlogPostsSection } from './BlogPostsSection';
 import { useNavigate } from 'react-router';
 import { handleAction } from '../utils/actions';
 import { Button } from './ui/button';
+import {
+  Quote,
+  Shield,
+  CheckCircle2,
+  Users,
+  Cloud,
+  Zap,
+  Sprout,
+  Globe,
+  Clock,
+  FileText,
+  AlertCircle,
+  Truck,
+  Building,
+  Factory,
+  FlaskConical,
+  Microscope,
+  TrendingUp,
+  AlertTriangle,
+  Building2,
+  Fish,
+  Apple,
+  HeartPulse,
+  Shirt,
+  Warehouse,
+} from 'lucide-react';
+
+// Mapeo de nombres de iconos a componentes
+const IconMap: Record<string, any> = {
+  Quote,
+  Shield,
+  CheckCircle2,
+  Users,
+  Cloud,
+  Zap,
+  Sprout,
+  Globe,
+  Clock,
+  FileText,
+  AlertCircle,
+  Truck,
+  Building,
+  Factory,
+  FlaskConical,
+  Microscope,
+  TrendingUp,
+  AlertTriangle,
+  Building2,
+  Fish,
+  Apple,
+  HeartPulse,
+  Shirt,
+  Warehouse
+};
+
+const Icon = ({ name, className }: { name: string; className?: string }) => {
+  const IconComp = IconMap[name] || Globe;
+  return <IconComp className={className} />;
+};
+
+function FaqPreviewItem({ item }: { item: any }) {
+  return (
+    <div className="border border-gray-100 rounded-xl p-4 bg-white shadow-sm">
+      <h3 className="font-bold text-[#1C5D15] flex items-center gap-2">
+        <div className="w-1.5 h-1.5 bg-[#19FF00] rounded-full" />
+        {item.question}
+      </h3>
+      <div
+        className="mt-2 text-sm text-[#629960] leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: item.answer }}
+      />
+    </div>
+  );
+}
 
 // ══════════════════════════════════════════════════════════════
 // RENDERIZADOR UNIVERSAL DE SECCIONES
@@ -24,10 +98,12 @@ import { Button } from './ui/button';
 // ══════════════════════════════════════════════════════════════
 
 // Wrapper para Lazy Loading: solo carga cuando está por entrar en pantalla
-function LazySectionWrapper({ children, sectionType, forceVisible }: { children: React.ReactNode, sectionType: string, forceVisible: boolean }) {
+function LazySectionWrapper({ children, sectionType, forceVisible, isEditor }: { children: React.ReactNode | (() => React.ReactNode), sectionType: string, forceVisible: boolean, isEditor?: boolean }) {
   // Siempre forzamos hero o lo visible. Para el resto, inicia falso.
-  const [isVisible, setIsVisible] = useState(forceVisible || sectionType === 'hero');
+  // En el editor SIEMPRE es visible para evitar parpadeos y lag al editar props
+  const [isVisible, setIsVisible] = useState(isEditor || forceVisible || sectionType === 'hero');
   const domRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (isVisible) return;
@@ -37,7 +113,8 @@ function LazySectionWrapper({ children, sectionType, forceVisible }: { children:
         setIsVisible(true);
         if (domRef.current) observer.unobserve(domRef.current);
       }
-    }, { rootMargin: '800px 0px' }); // Cargar 800px ANTES de que aparezca
+    }, { rootMargin: '400px 0px' }); // Cargar 400px ANTES de que aparezca
+
 
     if (domRef.current) {
       observer.observe(domRef.current);
@@ -50,7 +127,9 @@ function LazySectionWrapper({ children, sectionType, forceVisible }: { children:
     return <div ref={domRef} className="w-full min-h-[300px] flex items-center justify-center opacity-0"><span className="hidden">Loading {sectionType}...</span></div>;
   }
 
-  return <>{children}</>;
+  // Solo ejecutamos el renderizado del contenido cuando es visible
+  return <>{typeof children === 'function' ? (children as Function)() : children}</>;
+
 }
 
 
@@ -59,63 +138,215 @@ interface DynamicSectionProps {
   products?: any[];
   language?: string;
   index?: number;
+  returnSectionId?: string | null;
+  isEditor?: boolean;
+  availableCategories?: any[];
+  availableEcosystemMembers?: any[];
+  availableBlogPosts?: any[];
+  availableProducts?: any[];
+  pageSlug?: string;
+  onSectionClick?: (id: string) => void;
 }
 
-export function DynamicSection({ section, products = [], language = 'es', index = 0 }: DynamicSectionProps) {
+export function DynamicSection({
+  section,
+  products = [],
+  language = 'es',
+  index = 0,
+  returnSectionId,
+  isEditor = false,
+  availableCategories = [],
+  availableEcosystemMembers = [],
+  availableBlogPosts = [],
+  availableProducts = [],
+  pageSlug = '',
+  onSectionClick
+}: DynamicSectionProps) {
   const navigate = useNavigate();
-  if (!section.visible) return null;
+  if (!section.visible && !isEditor) return null;
+
 
   // Renderizar la seccion por tipo
   const renderSectionContent = () => {
     switch (section.type) {
-    // ── HERO ─────────────────────────────────────
-    case 'hero':
-      return (
-        <div key={section.id}>
-          <Hero content={section.content} />
-        </div>
-      );
+      // ── HERO ─────────────────────────────────────
+      case 'hero':
+        {
+          const isEcosystem = pageSlug?.includes('ecosystem');
+          if (isEcosystem) {
+            return (
+              <section key={section.id} id={section.id} className="relative h-[300px] flex items-center justify-center overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('${section.content.backgroundImage}')` }}
+                >
+                  <div className="absolute inset-0 bg-[#1C5D15]/85"></div>
+                </div>
+                <div className="relative z-10 max-w-6xl mx-auto px-5 text-center text-white">
+                  <h1 className="text-3xl md:text-5xl font-black mb-3">
+                    {section.content.title}
+                  </h1>
+                  <p
+                    className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: section.content.subtitle || '' }}
+                  />
 
-    // ── TRUST BAR ────────────────────────────────
-    case 'trust':
-      return (
-        <div key={section.id}>
-          <TrustBar 
-            partners={section.content.partners || []} 
-            title={section.content.title} 
-            subtitle={section.content.subtitle} 
-          />
-        </div>
-      );
+                </div>
+              </section>
+            );
+          }
 
-    // ── FEATURES / PURPOSE ──────────────────────
-    case 'features':
-      return (
-        <div key={section.id}>
-          <Purpose purposes={section.content.items} />
-        </div>
-      );
+          return (
+            <div key={section.id}>
+              <Hero content={section.content} />
+            </div>
+          );
+        }
 
-    // ── FEATURED PRODUCT ────────────────────────
-    case 'featured':
-      return (
-        <div key={section.id}>
-          <FeaturedProduct content={section.content} />
-        </div>
-      );
+      // ── TRUST BAR ────────────────────────────────
+      case 'trust':
+        {
+          if (pageSlug?.includes('store') && section.content.selectedMemberIds?.length > 0) {
+            const selectedIds = section.content.selectedMemberIds;
+            const filtered = availableEcosystemMembers.filter(m => selectedIds.includes(m.id));
+            return (
+              <section key={section.id} id={section.id} className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-6 text-center">
+                  <h2 className="text-[#1C5D15] text-4xl font-bold mb-4">{section.content.title}</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {filtered.map(m => (
+                      <div key={m.id} className="bg-[#F7F9CE] p-4 rounded-xl border border-[#1C5D15]/10">
+                        <img src={m.image} className="h-16 w-16 mx-auto mb-2 object-contain" />
+                        <div className="text-[#1C5D15] font-bold text-xs">{m.translation?.name || m.slug}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+          }
+          return (
+            <div key={section.id}>
+              <TrustBar
+                partners={section.content.partners || []}
+                title={section.content.title}
+                subtitle={section.content.subtitle}
+              />
+            </div>
+          );
+        }
 
-    // ── PRODUCTS ─────────────────────────────────
-    case 'products':
-      {
-        const selectedIds = section.content.selectedProductIds || [];
-        const displayProducts = selectedIds.length > 0
-          ? products.filter(p => selectedIds.includes(p.id))
-          : products.filter(p => p.featured).slice(0, 3);
-
+      // ── FEATURES / PURPOSE ───────────────────────
+      case 'features':
         return (
           <div key={section.id}>
-            <Products
-              products={displayProducts}
+            <Purpose
+              purposes={section.content.items || []}
+              title={section.content.title}
+              subtitle={section.content.subtitle}
+              ctaText={section.content.ctaText}
+              ctaLink={section.content.ctaLink}
+              ctaActionType={section.content.ctaActionType}
+            />
+          </div>
+        );
+
+      // ── FEATURED PRODUCT ─────────────────────────
+      case 'featured':
+        return (
+          <div key={section.id}>
+            <FeaturedProduct content={section.content} sectionId={section.id} />
+          </div>
+        );
+
+
+      // ── PRODUCTS CATALOG ─────────────────────────
+      case 'products':
+        {
+          const isStore = pageSlug?.includes('store');
+          const selectedIds = section.content.selectedProductIds || [];
+          // En el editor usamos availableProducts si se pasan, si no, products de la prop (que vienen del contexto en vivo)
+          const productsSource = availableProducts.length > 0 ? availableProducts : products;
+
+          const displayProducts = isStore
+            ? productsSource
+            : (selectedIds.length > 0
+              ? productsSource.filter(p => selectedIds.includes(p.id))
+              : productsSource.filter(p => p.featured).slice(0, 3));
+
+          return (
+            <div key={section.id} id={section.id}>
+              <Products
+                title={section.content.title}
+                subtitle={section.content.subtitle}
+                products={displayProducts}
+                ctaText={section.content.ctaText}
+                ctaLink={section.content.ctaLink}
+                ctaActionType={section.content.ctaActionType}
+                isStoreLayout={isStore}
+                sectionId={section.id}
+              />
+            </div>
+          );
+
+        }
+
+      // ── HISTORY / TIMELINE ───────────────────────
+      case 'history':
+      case 'timeline':
+        return (
+          <div key={section.id} id={section.id}>
+            <Timeline
+              milestones={section.content.milestones || []}
+              title={section.content.title}
+              subtitle={section.content.subtitle}
+              description={section.content.description}
+              ctaText={section.content.ctaText}
+              ctaLink={section.content.ctaLink}
+              ctaActionType={section.content.ctaActionType}
+            />
+          </div>
+        );
+
+      // ── TEAM / LEADERSHIP ───────────────────────
+      case 'team':
+        return (
+          <div key={section.id}>
+            <Leadership
+              members={section.content.members || []}
+              title={section.content.title}
+              subtitle={section.content.subtitle}
+              ctaText={section.content.ctaText}
+              ctaLink={section.content.ctaLink}
+              ctaActionType={section.content.ctaActionType}
+            />
+          </div>
+        );
+
+
+      // ── ECOSYSTEM ────────────────────────────────
+      case 'ecosystem':
+        return (
+          <div key={section.id} id={section.id}>
+            <div id="allies">
+              <Ecosystem
+                title={section.content.title}
+                subtitle={section.content.subtitle}
+                items={section.content.items}
+                ctaText={section.content.ctaText}
+                ctaLink={section.content.ctaLink}
+                ctaActionType={section.content.ctaActionType}
+                sectionId={section.id}
+              />
+            </div>
+          </div>
+        );
+
+      // ── NEWS ─────────────────────────────────────
+      case 'news':
+        return (
+          <div key={section.id} id={section.id}>
+            <NewsSection
               title={section.content.title}
               subtitle={section.content.subtitle}
               ctaText={section.content.ctaText}
@@ -125,291 +356,442 @@ export function DynamicSection({ section, products = [], language = 'es', index 
             />
           </div>
         );
-      }
 
-    // ── TIMELINE ─────────────────────────────────
-    case 'timeline':
-      return (
-        <div key={section.id} id={section.id}>
-          <Timeline 
-            milestones={section.content.milestones}
-            title={section.content.title}
-            subtitle={section.content.subtitle}
-            description={section.content.description}
-          />
-        </div>
-      );
-
-    // ── TEAM / LEADERSHIP ───────────────────────
-    case 'team':
-      return (
-        <div key={section.id}>
-          <Leadership
-            members={section.content.members}
-            title={section.content.title}
-            subtitle={section.content.subtitle}
-          />
-        </div>
-      );
-
-    // ── ECOSYSTEM ────────────────────────────────
-    case 'ecosystem':
-      return (
-        <div key={section.id} id={section.id}>
-          <div id="allies">
-            <Ecosystem 
-              title={section.content.title} 
-              subtitle={section.content.subtitle} 
-              items={section.content.items}
-              ctaText={section.content.ctaText}
-              ctaLink={section.content.ctaLink}
-              ctaActionType={section.content.ctaActionType}
-              sectionId={section.id}
+      // ── STATS ────────────────────────────────────
+      case 'stats':
+        return (
+          <div key={section.id} id={section.id}>
+            <StatsCards
+              title={section.content.title}
+              subtitle={section.content.subtitle}
+              stats={section.content.stats || []}
             />
           </div>
-        </div>
-      );
+        );
 
-    // ── NEWS ─────────────────────────────────────
-    case 'news':
-      return (
-        <div key={section.id} id={section.id}>
-          <NewsSection 
-            title={section.content.title} 
-            subtitle={section.content.subtitle}
-            ctaText={section.content.ctaText}
-            ctaLink={section.content.ctaLink}
-            ctaActionType={section.content.ctaActionType}
-          />
-        </div>
-      );
+      // ── TEXT BLOCK ────────────────────────────────
+      case 'text':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-20 bg-[#F7F9CE]/30">
+              <div className="max-w-4xl mx-auto px-6 text-center">
+                <h2 className="text-4xl font-black text-[#1C5D15] mb-8">{section.content.title}</h2>
+                <div
+                  className="text-lg text-[#629960] leading-loose mb-10"
+                  dangerouslySetInnerHTML={{ __html: section.content.text || section.content.subtitle || '' }}
+                />
+                {section.content.ctaText && (
+                  <div className="mt-4">
+                    <Button
+                      onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                    >
+                      {section.content.ctaText}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        );
 
-    // ── STATS ────────────────────────────────────
-    case 'stats':
-      return (
-        <div key={section.id} id={section.id}>
-          <StatsCards
-            title={section.content.title}
-            subtitle={section.content.subtitle}
-            stats={section.content.stats || []}
-          />
-        </div>
-      );
+      // ── CTA ──────────────────────────────────────
+      case 'cta':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-16 bg-[#1C5D15] text-white text-center">
+              <div className="max-w-3xl mx-auto px-6">
+                {section.content.title && <h2 className="text-3xl font-bold mb-3">{section.content.title}</h2>}
+                {section.content.subtitle && (
+                  <p
+                    className="text-white/80 text-lg mb-8"
+                    dangerouslySetInnerHTML={{ __html: section.content.subtitle }}
+                  />
+                )}
 
-    // ── TEXT BLOCK ────────────────────────────────
-    case 'text':
-      return (
-        <div key={section.id} id={section.id}>
-          <section className="py-20 bg-[#F7F9CE]/30">
-            <div className="max-w-4xl mx-auto px-6 text-center">
-              <h2 className="text-4xl font-black text-[#1C5D15] mb-8">{section.content.title}</h2>
-              <div 
-                className="text-lg text-[#629960] leading-loose"
-                dangerouslySetInnerHTML={{ __html: section.content.text || section.content.subtitle || '' }}
+                {section.content.ctaText && (
+                  <Button
+                    onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                    className="bg-[#19FF00] text-[#1C5D15] hover:bg-white px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                  >
+                    {section.content.ctaText}
+                  </Button>
+                )}
+              </div>
+            </section>
+          </div>
+        );
+
+      // ── FAQ ──────────────────────────────────────
+      case 'faq':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-20 bg-white">
+              <div className="max-w-4xl mx-auto px-6">
+                {section.content.title && (
+                  <div className="text-center mb-12">
+                    <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
+                    {section.content.subtitle && <p className="text-[#629960] text-lg">{section.content.subtitle}</p>}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  {(section.content.items || []).map((item: any, i: number) => (
+                    <details key={i} className="group border border-[#1C5D15]/10 rounded-2xl overflow-hidden">
+                      <summary className="flex items-center justify-between p-5 cursor-pointer bg-white hover:bg-[#F7F9CE]/30 transition-colors">
+                        <span className="font-bold text-[#1C5D15]" dangerouslySetInnerHTML={{ __html: item.question }} />
+                        <span className="text-[#19FF00] text-2xl group-open:rotate-45 transition-transform">+</span>
+                      </summary>
+
+                      <div className="p-5 pt-0 text-[#629960] leading-relaxed" dangerouslySetInnerHTML={{ __html: item.answer }} />
+                    </details>
+                  ))}
+                </div>
+
+                {section.content.ctaText && (
+                  <div className="text-center mt-12">
+                    <Button
+                      onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                    >
+                      {section.content.ctaText}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        );
+
+      // ── FLIPCARDS ────────────────────────────────
+      case 'flipcards':
+        return (
+          <div key={section.id} id={section.id}>
+            <FlipCards items={section.content.items || []} />
+          </div>
+        );
+
+      // ── HERO BLOG ───────────────────────────────
+      case 'hero-blog':
+        return (
+          <div key={section.id} id={section.id}>
+            <HeroBlog content={section.content} />
+          </div>
+        );
+
+      case 'blog-posts':
+        {
+          const displayPosts = availableBlogPosts.length > 0 ? availableBlogPosts : [];
+          return (
+            <div key={section.id}>
+              <BlogPostsSection
+                posts={displayPosts}
+                language={language}
+                activeFilter="all"
+                onFilterChange={() => { }}
+                totalPages={1}
+                sectionId={section.id}
+                from="home"
               />
             </div>
-          </section>
-        </div>
-      );
+          );
+        }
 
-    // ── CTA ──────────────────────────────────────
-    case 'cta':
-      return (
-        <div key={section.id} id={section.id}>
-          <section className="py-16 bg-[#1C5D15] text-white text-center">
-            <div className="max-w-3xl mx-auto px-6">
-              {section.content.title && <h2 className="text-3xl font-bold mb-3">{section.content.title}</h2>}
-              {section.content.subtitle && <p className="text-white/80 text-lg mb-8">{section.content.subtitle}</p>}
-              {section.content.ctaText && (
-                <Button 
-                  onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
-                  className="bg-[#19FF00] text-[#1C5D15] hover:bg-white px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
-                >
-                  {section.content.ctaText}
-                </Button>
-              )}
-            </div>
-          </section>
-        </div>
-      );
+      // ── CATEGORY FILTER (Ecosystem Directory) ───
+      case 'category-filter':
+        {
+          if (!isEditor) return null; // El filtro real se maneja en el componente de página Ecosystem
 
-    // ── FAQ ──────────────────────────────────────
-    case 'faq':
-      return (
-        <div key={section.id} id={section.id}>
-          <section className="py-20 bg-white">
-            <div className="max-w-4xl mx-auto px-6">
-              {section.content.title && (
-                <div className="text-center mb-12">
-                  <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
-                  {section.content.subtitle && <p className="text-[#629960] text-lg">{section.content.subtitle}</p>}
+          const displayMembers = availableEcosystemMembers.slice(0, 3);
+          return (
+            <section key={section.id} id={section.id} className="py-20 bg-[#629960]/5 border-y border-[#E8F0E2]">
+              <div className="max-w-7xl mx-auto px-6">
+                {section.content.title && (
+                  <div className="text-center mb-12">
+                    <h2 className="text-4xl font-black text-[#1C5D15] mb-4">{section.content.title}</h2>
+                    {section.content.subtitle && (
+                      <p
+                        className="text-[#629960] text-lg max-w-2xl mx-auto"
+                        dangerouslySetInnerHTML={{ __html: section.content.subtitle }}
+                      />
+                    )}
+
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2.5 justify-center mb-12">
+                  <span className="px-5 py-2 rounded-full text-xs font-bold bg-[#1C5D15] text-white shadow-lg">Todas las Categorías</span>
+                  {(availableCategories || []).slice(0, 5).map((category: any) => (
+                    <span key={category.id} className="px-5 py-2 rounded-full text-xs font-bold bg-white text-[#1C5D15] border border-[#1C5D15]/10 transition-colors">
+                      {category.name}
+                    </span>
+                  ))}
                 </div>
-              )}
-              <div className="space-y-4">
-                {(section.content.items || []).map((item: any, i: number) => (
-                  <details key={i} className="group border border-[#1C5D15]/10 rounded-2xl overflow-hidden">
-                    <summary className="flex items-center justify-between p-5 cursor-pointer bg-white hover:bg-[#F7F9CE]/30 transition-colors">
-                      <span className="font-bold text-[#1C5D15]">{item.question}</span>
-                      <span className="text-[#19FF00] text-2xl group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="p-5 pt-0 text-[#629960] leading-relaxed" dangerouslySetInnerHTML={{ __html: item.answer }} />
-                  </details>
-                ))}
-              </div>
-            </div>
-          </section>
-        </div>
-      );
 
-    // ── FLIPCARDS ────────────────────────────────
-    case 'flipcards':
-      return (
-        <div key={section.id} id={section.id}>
-          <FlipCards items={section.content.items || []} />
-        </div>
-      );
-
-    // ── HERO BLOG ───────────────────────────────
-    case 'hero-blog':
-      return (
-        <div key={section.id} id={section.id}>
-          <HeroBlog content={section.content} />
-        </div>
-      );
-
-    // ── BLOG POSTS ──────────────────────────────
-    case 'blog-posts':
-      return (
-        <div key={section.id} id={section.id}>
-          <BlogPostsSection
-            posts={[]}
-            language={language}
-            activeFilter="all"
-            onFilterChange={() => {}}
-            totalPages={1}
-          />
-        </div>
-      );
-
-    // ── CATEGORY FILTER (Ecosystem Directory) ───
-    case 'category-filter':
-      // Este se renderiza normalmente por el componente de la página
-      return null;
-
-    // ── CLIENTES ─────────────────────────────────
-    case 'clientes':
-      return null; // Se maneja específicamente por cada página
-
-    // ── BENTO GRID ──────────────────────────────
-    case 'bento':
-      return (
-        <div key={section.id} id={section.id}>
-          <section className="py-16 bg-[#629960]/5">
-            <div className="max-w-6xl mx-auto px-6">
-              {section.content.title && (
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold text-[#1C5D15] mb-2">{section.content.title}</h2>
-                  {section.content.subtitle && <p className="text-[#629960]">{section.content.subtitle}</p>}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {displayMembers.map((member: any) => (
+                    <div key={member.id} className="bg-white rounded-3xl p-6 shadow-sm border border-[#1C5D15]/5">
+                      <div className="h-40 bg-gray-50 rounded-2xl mb-4 overflow-hidden">
+                        {member.image ? <img src={member.image} alt="" className="w-full h-full object-cover opacity-80" /> : <div className="w-full h-full flex items-center justify-center text-[#1C5D15]/20"><Globe size={48} /></div>}
+                      </div>
+                      <div className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded w-fit mb-2">{member.sector || "Miembro"}</div>
+                      <h3 className="text-lg font-bold text-[#1C5D15] mb-2 truncate">{member.translation?.name || member.slug}</h3>
+                      <div className="w-full h-1 bg-[#F7F9CE] rounded-full"></div>
+                    </div>
+                  ))}
                 </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(section.content.items || []).map((item: any, i: number) => (
-                  <div key={i} className={`${item.size === 'large' ? 'md:col-span-2' : ''} bg-white rounded-2xl p-6 border-2 border-[#629960]/10 hover:border-[#19FF00] transition-all`}>
-                    <h3 className="text-base font-bold text-[#1C5D15] mb-2">{item.title}</h3>
-                    <div className="text-[#629960] text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: item.description || '' }} />
-                  </div>
-                ))}
               </div>
-            </div>
-          </section>
-        </div>
-      );
+            </section>
+          );
+        }
 
-    // ── QUOTE ────────────────────────────────────
-    case 'quote':
-      return (
-        <div key={section.id} id={section.id}>
-          <section className="py-16 bg-[#F7F9CE]/50">
-            <div className="max-w-4xl mx-auto px-6 text-center">
-              <div className="text-6xl text-[#19FF00] mb-4">"</div>
-              <blockquote className="text-2xl md:text-3xl font-bold text-[#1C5D15] italic leading-relaxed mb-6">
-                {section.content.quote || section.content.title}
-              </blockquote>
-              {section.content.author && (
-                <p className="text-[#629960] font-bold uppercase tracking-wider text-sm">— {section.content.author}</p>
-              )}
-            </div>
-          </section>
-        </div>
-      );
+      // ── CLIENTES ─────────────────────────────────
+      case 'clientes':
+        {
+          if (!isEditor) return null; // En vivo se maneja por Custom Component de página
 
-    // ── SECTORS ──────────────────────────────────
-    case 'sectors':
-      return (
-        <div key={section.id} id={section.id}>
-          <section className="py-16 bg-[#1C5D15] text-white">
-            <div className="max-w-6xl mx-auto px-6 text-center">
-              {section.content.title && <h2 className="text-3xl font-bold mb-2">{section.content.title}</h2>}
-              {section.content.subtitle && <p className="text-white/70 mb-10">{section.content.subtitle}</p>}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {(section.content.items || []).map((item: any, i: number) => (
-                  <div key={i} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all group">
-                    <h3 className="font-bold text-sm">{item.title}</h3>
-                    {item.description && <p className="text-xs mt-1 opacity-70">{item.description}</p>}
-                  </div>
-                ))}
+          const selectedMemberIds = section.content.selectedMemberIds || [];
+          const filteredMembers = availableEcosystemMembers.filter((m: any) => selectedMemberIds.includes(m.id));
+
+          return (
+            <section key={section.id} id={section.id} className="py-20 bg-white">
+              <div className="max-w-6xl mx-auto px-6">
+                <div className="text-center mb-16">
+                  <h2 className="text-4xl md:text-5xl font-bold text-[#1C5D15] mb-4">{section.content.title || 'Nuestros Aliados'}</h2>
+                  <p
+                    className="text-xl text-[#629960] max-w-3xl mx-auto"
+                    dangerouslySetInnerHTML={{ __html: section.content.subtitle || '' }}
+                  />
+
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredMembers.length > 0 ? (
+                    filteredMembers.map((m: any) => (
+                      <div key={m.id} className="bg-[#F7F9CE] rounded-2xl overflow-hidden p-6 text-center border border-[#1C5D15]/5">
+                        <img src={m.image} className="h-20 w-auto mx-auto mb-4 object-contain" alt={m.slug} />
+                        <h3 className="font-bold text-[#1C5D15]">{m.translation?.name || m.slug}</h3>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-10 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl text-center text-gray-400 font-bold uppercase text-xs tracking-widest">Sin aliados seleccionados</div>
+                  )}
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
-      );
+            </section>
+          );
+        }
 
-    // ── PROBLEMS ─────────────────────────────────
-    case 'problems':
-      return (
-        <div key={section.id} id={section.id}>
-          <section className="py-16 bg-gray-50">
-            <div className="max-w-6xl mx-auto px-6 text-center">
-              {section.content.title && <h2 className="text-3xl font-bold text-[#1C5D15] mb-2">{section.content.title}</h2>}
-              {section.content.subtitle && <p className="text-[#629960] mb-10">{section.content.subtitle}</p>}
-              <div className="grid md:grid-cols-3 gap-5">
-                {(section.content.items || []).map((item: any, i: number) => (
-                  <div key={i} className="bg-white border-l-4 border-red-400 rounded-xl p-5 text-left shadow-sm">
-                    <h3 className="font-bold text-[#1C5D15] mb-1">{item.title}</h3>
-                    <p className="text-[#629960] text-xs leading-relaxed">{item.description}</p>
-                  </div>
-                ))}
+      // ── CERTIFICATIONS ───────────────────────────
+      case 'certifications':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-16 bg-white">
+              <div className="max-w-6xl mx-auto px-6 text-center">
+                {section.content.title && <h2 className="text-3xl font-bold text-[#1C5D15] mb-2">{section.content.title}</h2>}
+                {section.content.subtitle && <p className="text-[#629960] mb-10 max-w-2xl mx-auto">{section.content.subtitle}</p>}
+                <div className="grid md:grid-cols-3 gap-5">
+                  {(section.content.items || []).map((item: any, i: number) => (
+                    <div key={i} className="p-6 bg-[#629960]/5 border-2 border-[#629960]/15 rounded-2xl hover:border-[#19FF00] transition-all group">
+                      <div className="text-3xl font-black text-[#19FF00] mb-2">{item.acronym}</div>
+                      <h3 className="font-bold text-[#1C5D15] mb-1">{item.name}</h3>
+                      <p className="text-[#629960] text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: item.description }} />
+
+                      {item.year && <div className="mt-2 text-xs text-[#629960]/50">Obtenida: {item.year}</div>}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
-      );
+            </section>
+          </div>
+        );
 
-    // ── DEFAULT: Si no se reconoce, no rompe nada
-    default:
-      console.warn(`⚠️ Tipo de sección desconocido: "${section.type}" (id: ${section.id})`);
-      return null;
-  }
+      // ── BENTO GRID ──────────────────────────────
+      case 'bento':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-16 bg-[#629960]/5">
+              <div className="max-w-6xl mx-auto px-6">
+                {section.content.title && (
+                  <div className="text-center mb-10">
+                    <h2 className="text-3xl font-bold text-[#1C5D15] mb-2">{section.content.title}</h2>
+                    {section.content.subtitle && <p className="text-[#629960]">{section.content.subtitle}</p>}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {(section.content.items || []).map((item: any, i: number) => (
+                    <div key={i} className={`${item.size === 'large' ? 'md:col-span-2' : ''} bg-white rounded-2xl p-6 border-2 border-[#629960]/10 hover:border-[#19FF00] transition-all`}>
+                      <h3 className="text-base font-bold text-[#1C5D15] mb-2">{item.title}</h3>
+                      <div className="text-[#629960] text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: item.description || '' }} />
+                    </div>
+                  ))}
+                </div>
+
+                {section.content.ctaText && (
+                  <div className="text-center mt-12">
+                    <Button
+                      onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                    >
+                      {section.content.ctaText}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        );
+
+      // ── QUOTE ────────────────────────────────────
+      case 'quote':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-16 bg-[#F7F9CE]/50">
+              <div className="max-w-4xl mx-auto px-6 text-center">
+                <div className="text-6xl text-[#19FF00] mb-4">"</div>
+                <blockquote
+                  className="text-2xl md:text-3xl font-bold text-[#1C5D15] italic leading-relaxed mb-6"
+                  dangerouslySetInnerHTML={{ __html: section.content.quote || section.content.title || '' }}
+                />
+
+                {section.content.author && (
+                  <p className="text-[#629960] font-bold uppercase tracking-wider text-sm">— {section.content.author}</p>
+                )}
+
+                {section.content.ctaText && (
+                  <div className="mt-10">
+                    <Button
+                      onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                    >
+                      {section.content.ctaText}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        );
+
+      // ── SECTORS ──────────────────────────────────
+      case 'sectors':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-16 bg-[#1C5D15] text-white">
+              <div className="max-w-6xl mx-auto px-6 text-center">
+                {section.content.title && <h2 className="text-3xl font-bold mb-2">{section.content.title}</h2>}
+                {section.content.subtitle && <p className="text-white/70 mb-10">{section.content.subtitle}</p>}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {(section.content.items || []).map((item: any, i: number) => (
+                    <div key={i} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all group">
+                      <h3 className="font-bold text-sm">{item.title}</h3>
+                      {item.description && <p className="text-xs mt-1 opacity-70">{item.description}</p>}
+                    </div>
+                  ))}
+                </div>
+
+                {section.content.ctaText && (
+                  <div className="mt-12">
+                    <Button
+                      onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                      className="bg-[#19FF00] text-[#1C5D15] hover:bg-white px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                    >
+                      {section.content.ctaText}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        );
+
+      // ── PROBLEMS ─────────────────────────────────
+      case 'problems':
+        return (
+          <div key={section.id} id={section.id}>
+            <section className="py-16 bg-gray-50">
+              <div className="max-w-6xl mx-auto px-6 text-center">
+                {section.content.title && <h2 className="text-3xl font-bold text-[#1C5D15] mb-2">{section.content.title}</h2>}
+                {section.content.subtitle && <p className="text-[#629960] mb-10">{section.content.subtitle}</p>}
+                <div className="grid md:grid-cols-3 gap-5">
+                  {(section.content.items || []).map((item: any, i: number) => (
+                    <div key={i} className="bg-white border-l-4 border-red-400 rounded-xl p-5 text-left shadow-sm">
+                      <h3 className="font-bold text-[#1C5D15] mb-1">{item.title}</h3>
+                      <p className="text-[#629960] text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: item.description }} />
+
+                    </div>
+                  ))}
+                </div>
+
+                {section.content.ctaText && (
+                  <div className="mt-12 text-center">
+                    <Button
+                      onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
+                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                    >
+                      {section.content.ctaText}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        );
+
+      // ── BLOG ─────────────────────────────────────
+      case 'blog':
+        return (
+          <div key={section.id} id={section.id}>
+             <section className="py-20 bg-white">
+               <div className="max-w-6xl mx-auto px-6">
+                 <div className="text-center mb-12">
+                   <h2 className="text-4xl font-bold text-[#1C5D15] mb-2">{section.content.title}</h2>
+                   <p className="text-[#629960]">{section.content.subtitle}</p>
+                 </div>
+                 <div className="grid md:grid-cols-3 gap-8">
+                   {(availableBlogPosts || []).slice(0, 3).map((post: any) => (
+                     <div key={post.id} className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 p-4">
+                       <div className="h-40 bg-gray-200 rounded-xl mb-4 overflow-hidden">
+                         <img src={post.image} className="w-full h-full object-cover" />
+                       </div>
+                       <h3 className="font-bold text-[#1C5D15] mb-2">{post.translation?.title || 'Draft'}</h3>
+                       <p className="text-xs text-[#629960] line-clamp-2">{post.translation?.excerpt}</p>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             </section>
+          </div>
+        );
+
+      // ── DEFAULT: Si no se reconoce, no rompe nada
+      default:
+        console.warn(`⚠️ Tipo de sección desconocido: "${section.type}" (id: ${section.id})`);
+        return null;
+    }
   };
 
-  // Envolver el resultado de la seccion en el Lazy Loader.
-  // Forzamos carga inmediata para: primeras 2 secciones, hero, ecosystem, news y products
-  // porque tienen datos dinámicos que afectan la altura total de la página (scroll restoration)
-  const shouldForceLoad = index < 2 || 
-                        section.type === 'ecosystem' || 
-                        section.type === 'news' || 
-                        section.type === 'products';
-  
+  // Si estamos regresando a una sección específica, FORZAMOS la carga de TODAS las secciones
+  // para asegurar que la altura de la página sea 100% estable y el scroll sea preciso.
+  const isReturning = !!returnSectionId;
+
+  const shouldForceLoad = isReturning ||
+    index < 1 ||
+    section.id === returnSectionId ||
+    section.type === returnSectionId ||
+    section.type === 'hero';
+
+
   return (
-    <div 
-      id={section.id} 
+    <div
+      id={section.id}
       data-section-type={section.type}
-      key={section.id} 
+      key={section.id}
       style={{ scrollMarginTop: '80px' }}
+      className={!section.visible && isEditor ? 'opacity-50 grayscale' : ''}
     >
-      <LazySectionWrapper sectionType={section.type} forceVisible={shouldForceLoad}>
-        {renderSectionContent()}
+      <LazySectionWrapper sectionType={section.type} forceVisible={shouldForceLoad} isEditor={isEditor}>
+        {() => renderSectionContent()}
       </LazySectionWrapper>
     </div>
+
   );
 }

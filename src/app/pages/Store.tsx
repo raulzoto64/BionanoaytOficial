@@ -252,9 +252,36 @@ export function Store() {
       {pageContent.sections
         .filter((section: Section) => section.visible)
         .map((section: Section, index: number) => {
-          switch (section.type) {
-            // ── 1. HERO ──────────────────────────────────────────────────────
-          case 'hero':
+          return (
+            <StoreSectionPreview
+               key={section.id} 
+               section={section} 
+               index={index} 
+               language={language} 
+               navigate={navigate}
+               selectedPartner={selectedPartner}
+               setSelectedPartner={setSelectedPartner}
+               isScrolled={isScrolled}
+               setIsScrolled={setIsScrolled}
+               ecosystemMembers={ecosystemMembers}
+               selectedCategory={selectedCategory}
+               handleCategoryChange={handleCategoryChange}
+               categories={categories}
+               filteredProducts={filteredProducts}
+            />
+          );
+      })}
+    </div>
+  );
+}
+
+export function StoreSectionPreview({ 
+   section, index, language, navigate,
+   selectedPartner, setSelectedPartner, isScrolled, setIsScrolled, ecosystemMembers,
+   selectedCategory, handleCategoryChange, categories, filteredProducts
+}: any) {
+  switch (section.type) {
+    case 'hero':
             return (
               <section key={section.id} className="relative h-[290px] flex items-center justify-center overflow-hidden">
                 <div
@@ -724,7 +751,4 @@ export function Store() {
               />
             );
         }
-      })}
-    </div>
-  );
 }

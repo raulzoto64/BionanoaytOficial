@@ -65,7 +65,7 @@ const categoryNames: Record<string, string> = {};
 
         setRelatedPosts(postsWithTranslations);
       } catch (error) {
-        console.error('Error loading related posts:', error);
+        // En caso de fallo, se omite para no ensuciar la consola
       } finally {
         setLoading(false);
       }

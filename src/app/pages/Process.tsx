@@ -86,8 +86,22 @@ export function Process() {
 
       {pageContent.sections.map((section: Section, index: number) => {
         if (!section.visible) return null;
+        return (
+          <ProcessSectionPreview
+            key={section.id}
+            section={section}
+            index={index}
+            language={language}
+            navigate={navigate}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
-        switch (section.type) {
+export function ProcessSectionPreview({ section, index, language, navigate }: any) {
+  switch (section.type) {
           // ── 1. HERO (pantalla completa centrado) ─────────────────────────
           case 'hero':
             return (
@@ -462,7 +476,4 @@ export function Process() {
               />
             );
         }
-      })}
-    </div>
-  );
 }

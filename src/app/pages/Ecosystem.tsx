@@ -43,10 +43,10 @@ function EcosystemCatalog({ language }: { language: Language }) {
       setMembers(ecosystemMembers);
       setFilteredMembers(ecosystemMembers);
 
-      const uniqueCategories = Array.from(new Set(ecosystemMembers.map(member => member.sector)));
+      const uniqueCategories = Array.from(new Set(ecosystemMembers.map((member: any) => member.sector))) as string[];
       setCategories(uniqueCategories);
 
-      const translationPromises = ecosystemMembers.map(async (member) => {
+      const translationPromises = ecosystemMembers.map(async (member: any) => {
         const translation = await supabaseAPI.getEcosystemMemberTranslation(member.id, language);
         return { id: member.id, translation };
       });
@@ -218,8 +218,21 @@ export function EcosystemPage() {
 
       {pageContent.sections.map((section: Section, index: number) => {
         if (!section.visible) return null;
+        return (
+          <EcosystemSectionPreview
+            key={section.id}
+            section={section}
+            index={index}
+            language={language}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
-        switch (section.type) {
+export function EcosystemSectionPreview({ section, index, language }: any) {
+  switch (section.type) {
           case 'hero':
             return <EcosystemBanner key={section.id} content={section.content} />;
 
@@ -280,7 +293,4 @@ export function EcosystemPage() {
               />
             );
         }
-      })}
-    </div>
-  );
 }

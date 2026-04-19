@@ -18,6 +18,7 @@ const AdminDashboard = () => import("./pages/admin/AdminDashboard").then(m => ({
 const AdminProducts = () => import("./pages/admin/AdminProducts").then(m => ({ Component: m.AdminProducts }));
 const AdminPrices = () => import("./pages/admin/AdminPrices").then(m => ({ Component: m.AdminPrices }));
 const AdminContent = () => import("./pages/admin/content-management").then(m => ({ Component: m.AdminContent }));
+const AdminSections = () => import("./pages/admin/sections").then(m => ({ Component: m.AdminSections }));
 const AdminVisualEditor = () => import("./pages/admin/visual-editor-pro").then(m => ({ Component: m.AdminVisualEditor }));
 const AdminCategories = () => import("./pages/admin/AdminCategories").then(m => ({ Component: m.AdminCategories }));
 const AdminTranslations = () => import("./pages/admin/AdminTranslations").then(m => ({ Component: m.AdminTranslations }));
@@ -30,6 +31,7 @@ const AdminLegalPages = () => import("./pages/admin/AdminLegalPages").then(m => 
 const AdminFooterSettings = () => import("./pages/admin/AdminFooterSettings").then(m => ({ Component: m.AdminFooterSettings }));
 const AdminLeads = () => import("./pages/admin/leads").then(m => ({ Component: m.default }));
 const AdminForms = () => import("./pages/admin/AdminForms").then(m => ({ Component: m.AdminForms }));
+const AdminChats = () => import("./pages/admin/AdminChats").then(m => ({ Component: m.default }));
 const EcosystemMemberDetail = () => import("./pages/EcosystemMemberDetail").then(m => ({ Component: m.EcosystemMemberDetail }));
 const EcosystemPage = () => import("./pages/Ecosystem").then(m => ({ Component: m.EcosystemPage }));
 const LegalPage = () => import("./pages/LegalPage").then(m => ({ Component: m.LegalPage }));
@@ -108,6 +110,10 @@ export const router = createBrowserRouter([
     lazy: AdminVisualEditor,
   },
   {
+    path: "admin/visual-editor/:type/:id",
+    lazy: AdminVisualEditor,
+  },
+  {
     path: "admin/forms/edit/:id",
     lazy: AdminFormEditor,
   },
@@ -136,7 +142,10 @@ export const router = createBrowserRouter([
         path: "content",
         lazy: AdminContent,
       },
-
+      {
+        path: "sections",
+        lazy: AdminSections,
+      },
       {
         path: "categories",
         lazy: AdminCategories,
@@ -176,6 +185,10 @@ export const router = createBrowserRouter([
       {
         path: "forms",
         lazy: AdminForms,
+      },
+      {
+        path: "chats",
+        lazy: AdminChats,
       },
       {
         path: "sales/active-carts",

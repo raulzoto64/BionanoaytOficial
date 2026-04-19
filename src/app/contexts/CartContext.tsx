@@ -29,8 +29,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setItems([]);
       }
     } catch (error) {
-      console.error('Error refreshing cart:', error);
-      // Solo mostrar toast si no es un error de red común o similar si se desea
+      // Failed to refresh cart - fail silently or handle in UI
     } finally {
       setIsLoading(false);
     }
