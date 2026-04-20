@@ -138,7 +138,7 @@ interface DynamicSectionProps {
   products?: any[];
   language?: string;
   index?: number;
-  returnSectionId?: string | null;
+  targetAnchor?: string | null;
   isEditor?: boolean;
   availableCategories?: any[];
   availableEcosystemMembers?: any[];
@@ -154,7 +154,7 @@ export function DynamicSection({
   products = [],
   language = 'es',
   index = 0,
-  returnSectionId,
+  targetAnchor,
   isEditor = false,
   availableCategories = [],
   availableEcosystemMembers = [],
@@ -922,12 +922,12 @@ export function DynamicSection({
 
   // Si estamos regresando a una sección específica, FORZAMOS la carga de TODAS las secciones
   // para asegurar que la altura de la página sea 100% estable y el scroll sea preciso.
-  const isReturning = !!returnSectionId;
+  const isTargeting = !!targetAnchor;
 
-  const shouldForceLoad = isReturning ||
+  const shouldForceLoad = isTargeting ||
     index < 1 ||
-    section.id === returnSectionId ||
-    section.type === returnSectionId ||
+    section.id === targetAnchor ||
+    section.type === targetAnchor ||
     section.type === 'hero';
 
 

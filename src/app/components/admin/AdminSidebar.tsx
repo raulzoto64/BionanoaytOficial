@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import { API_BASE_URL, getApiHeaders } from '../../data/apiConfig';
+import { supabaseAPI } from '../../data/supabase';
 import { 
   LayoutDashboard, 
   Package, 
@@ -30,7 +33,6 @@ import {
   ShoppingCart as CartIcon
 } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
-import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   AlertDialog,
@@ -49,6 +51,8 @@ export function AdminSidebar() {
   const { logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [unreadLeads, setUnreadLeads] = useState(0);
+  const [unreadChats, setUnreadChats] = useState(0);
   
   // States para submenús
   const [cmsOpen, setCmsOpen] = useState(
@@ -60,7 +64,8 @@ export function AdminSidebar() {
   
   const [marketingOpen, setMarketingOpen] = useState(
     location.pathname.startsWith('/admin/leads') ||
-    location.pathname.startsWith('/admin/forms')
+    location.pathname.startsWith('/admin/forms') ||
+    location.pathname.startsWith('/admin/chats')
   );
 
   const [salesOpen, setSalesOpen] = useState(
@@ -72,6 +77,30 @@ export function AdminSidebar() {
     location.pathname.startsWith('/admin/prices') ||
     location.pathname.startsWith('/admin/categories')
   );
+  
+  // ✅ Sistema de Notificaciones en Tiempo Real
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [leads, chats] = await Promise.all([
+          fetch(`${API_BASE_URL}/leads`, { headers: getApiHeaders() }).then(r => r.json()),
+          supabaseAPI.getChats()
+        ]);
+
+        const newLeadsCount = Array.isArray(leads) ? leads.filter((l: any) => l.status === 'new').length : 0;
+        const pendingChatsCount = Array.isArray(chats) ? chats.filter((c: any) => c.unread_count_admin > 0).length : 0;
+        
+        setUnreadLeads(newLeadsCount);
+        setUnreadChats(pendingChatsCount);
+      } catch (e) {
+        console.warn('[SIDEBAR] Error fetching counts:', e);
+      }
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000); // Cada 30 seg
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -202,7 +231,7 @@ export function AdminSidebar() {
             <li>
               <button
                 onClick={() => !collapsed && setMarketingOpen(!marketingOpen)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors relative ${
                     marketingSubItems.some(i => isActive(i.path))
                     ? 'bg-[#19FF00] text-[#1C5D15]'
                     : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
@@ -212,19 +241,37 @@ export function AdminSidebar() {
                 {!collapsed && (
                   <>
                     <span className="truncate flex-1 text-left">Marketing</span>
+                    {(unreadLeads + unreadChats > 0) && !marketingOpen && (
+                      <span className="bg-[#19FF00] text-[#1C5D15] text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center animate-pulse border-2 border-[#1C5D15]">
+                        {unreadLeads + unreadChats}
+                      </span>
+                    )}
                     <ChevronDown className={`w-4 h-4 transition-transform ${marketingOpen ? 'rotate-180' : ''}`} />
                   </>
+                )}
+                {collapsed && (unreadLeads + unreadChats > 0) && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-[#19FF00] rounded-full border-2 border-[#1C5D15] animate-pulse"></span>
                 )}
               </button>
               {!collapsed && marketingOpen && (
                 <ul className="mt-1 ml-4 space-y-1 border-l-2 border-[#629960]/40 pl-3">
-                  {marketingSubItems.map((sub) => (
-                    <li key={sub.path}>
-                      <Link to={sub.path} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white hover:text-[#19FF00]'}`}>
-                        <sub.icon className="w-4 h-4" /> <span>{sub.label}</span>
-                      </Link>
-                    </li>
-                  ))}
+                  {marketingSubItems.map((sub) => {
+                    const count = sub.path.includes('leads') ? unreadLeads : (sub.path.includes('chats') ? unreadChats : 0);
+                    return (
+                      <li key={sub.path}>
+                        <Link to={sub.path} className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white hover:text-[#19FF00]'}`}>
+                          <div className="flex items-center gap-3">
+                            <sub.icon className="w-4 h-4" /> <span>{sub.label}</span>
+                          </div>
+                          {count > 0 && (
+                            <span className="bg-[#19FF00] text-[#1C5D15] text-[9px] font-black px-1.5 py-0.5 rounded-full border border-[#1C5D15]/20">
+                              {count}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </li>

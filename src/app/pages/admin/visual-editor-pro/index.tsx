@@ -191,6 +191,78 @@ export function AdminVisualEditor() {
           setActiveSectionId('page-header');
         }
         return; // Terminamos carga específica
+      } else if (type === 'product' && id) {
+        const [product, prodTransES, prodTransEN] = await Promise.all([
+          supabaseAPI.getProductById(id),
+          supabaseAPI.getProductTranslation(id, 'es'),
+          supabaseAPI.getProductTranslation(id, 'en')
+        ]);
+        
+        console.log(`📦 [EDITOR-LOAD] Producto:`, product);
+        console.log(`📖 [EDITOR-LOAD] Traducción ES:`, prodTransES);
+        
+        if (product) {
+          const pageData = { 
+            ...product, 
+            translationES: prodTransES, 
+            translationEN: prodTransEN,
+            translation: activeLanguage === 'es' ? prodTransES : prodTransEN
+          };
+          setPage(pageData as any);
+          entityTitle = product.slug || 'Producto';
+          
+          const headerContentES = {
+            name: prodTransES?.name || product.slug || '',
+            description: prodTransES?.description || '',
+            short_description: prodTransES?.short_description || '',
+            cover_image: product.image,
+            images: product.images || [],
+            category: product.category,
+            status: product.status,
+            featured: product.featured,
+            technical_specs: prodTransES?.technical_specs || {},
+            features: prodTransES?.features || [],
+            benefits: prodTransES?.benefits || [],
+            meta_title: prodTransES?.meta_title || '',
+            meta_description: prodTransES?.meta_description || ''
+          };
+
+          const headerContentEN = {
+            name: prodTransEN?.name || product.slug || '',
+            description: prodTransEN?.description || '',
+            short_description: prodTransEN?.short_description || '',
+            cover_image: product.image,
+            images: product.images || [],
+            category: product.category,
+            status: product.status,
+            featured: product.featured,
+            technical_specs: prodTransEN?.technical_specs || {},
+            features: prodTransEN?.features || [],
+            benefits: prodTransEN?.benefits || [],
+            meta_title: prodTransEN?.meta_title || '',
+            meta_description: prodTransEN?.meta_description || ''
+          };
+
+          const headerSectionES = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentES };
+          const headerSectionEN = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentEN };
+          
+          const [sES, sEN] = await Promise.all([
+            supabaseAPI.getUniversalContent(type, id, 'es'),
+            supabaseAPI.getUniversalContent(type, id, 'en')
+          ]);
+
+          const prepareSections = (rawContent: any, headerSection: any) => {
+            if (!Array.isArray(rawContent) || rawContent.length === 0) {
+               return [headerSection];
+            }
+            return [headerSection, ...rawContent];
+          };
+
+          setSectionsES(prepareSections(sES, headerSectionES));
+          setSectionsEN(prepareSections(sEN, headerSectionEN));
+          setActiveSectionId('page-header');
+        }
+        return;
       } else if (type === 'legal' && id) {
         let rawLegal = await supabaseAPI.getLegalPageById(id);
         let legalPage = Array.isArray(rawLegal) ? rawLegal[0] : rawLegal;
@@ -394,9 +466,37 @@ export function AdminVisualEditor() {
           // Limpiar caché para que el sitio público vea los cambios inmediatamente
           supabaseAPI._invalidateCache('blog-posts-all');
           supabaseAPI._invalidateCache('blog-posts-published');
-          supabaseAPI._invalidateCache(`blog-post-${finalId}`); // Invalida también el post específico
+          supabaseAPI._invalidateCache('blog-posts-ready-es');
+          supabaseAPI._invalidateCache('blog-posts-ready-en');
+          supabaseAPI._invalidateCache(`blog-post-${finalId}`); 
+          supabaseAPI._invalidateCache(`blog-translations-es`);
+          supabaseAPI._invalidateCache(`blog-translations-en`);
 
           console.log(`✅ [EDITOR-SAVE] Blog guardado.`);
+
+        } else if (type === 'product') {
+           console.log(`📦 [EDITOR-SAVE] Guardando producto ${finalId}...`);
+            await Promise.all([
+              supabaseAPI.updateProductTranslation(finalId, 'es', {
+                 ...headerES,
+                 sections: JSON.stringify(realSectionsES)
+              }),
+              supabaseAPI.updateProductTranslation(finalId, 'en', {
+                 ...headerEN,
+                 sections: JSON.stringify(realSectionsEN)
+              }),
+              supabaseAPI.updateProduct(finalId, {
+                image: headerES?.cover_image,
+                images: headerES?.images || [],
+                category: headerES?.category,
+                status: headerES?.status,
+                featured: headerES?.featured
+             })
+           ]);
+           
+           supabaseAPI._invalidateCache(`product-${finalId}`);
+           supabaseAPI._invalidateCache('all-products');
+           console.log(`✅ [EDITOR-SAVE] Producto guardado.`);
 
         } else if (type === 'legal') {
           if (headerES) {

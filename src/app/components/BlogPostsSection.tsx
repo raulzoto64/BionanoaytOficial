@@ -46,16 +46,8 @@ export function BlogPostsSection({
   sectionId,
   from
 }: BlogPostsSectionProps) {
-  const [filteredPosts, setFilteredPosts] = useState<PostWithTranslation[]>(posts);
+  // Usamos los props directamente para evitar conflictos de estado entre padre e hijo
   const [currentPageState, setCurrentPageState] = useState(currentPage);
-
-  useEffect(() => {
-    if (activeFilter === 'all') {
-      setFilteredPosts(posts);
-    } else {
-      setFilteredPosts(posts.filter(post => post.type === activeFilter));
-    }
-  }, [activeFilter, posts]);
 
   useEffect(() => {
     if (currentPage !== currentPageState) {
@@ -129,9 +121,9 @@ return (
       </div>
 
       {/* Grid de cartas */}
-      {filteredPosts.length > 0 ? (
+      {posts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-          {filteredPosts.slice((currentPageState - 1) * 8, currentPageState * 8).map((post) => (
+          {posts.slice((currentPageState - 1) * 12, currentPageState * 12).map((post) => (
             <ContentCard 
               key={post.id} 
               type="blog" 
@@ -153,7 +145,7 @@ return (
       )}
 
       {/* Paginación */}
-      {filteredPosts.length > 8 && (
+      {posts.length > 12 && (
         <div className="flex justify-center mt-12 gap-2">
           <button 
             onClick={() => handlePageChange(currentPageState - 1)}

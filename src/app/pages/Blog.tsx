@@ -57,9 +57,8 @@ export function Blog() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Asegúrate de que el slug 'page-blog' sea el correcto en tu base de datos
-        const [allPosts, allCategories, pageContent] = await Promise.all([
-          supabaseAPI.getBlogPosts('published'),
+        // Obtenemos todo el contenido de la página y las categorías
+        const [allCategories, pageContent] = await Promise.all([
           supabaseAPI.getBlogCategories(),
           supabaseAPI.getPageContent('page-blog', language)
         ]);
@@ -73,29 +72,41 @@ export function Blog() {
           categoryNamesMap[cat.id] = trans?.name || cat.slug;
         }));
 
-        const postsWithTranslations = await Promise.all(allPosts.map(async (post: any) => {
-          const [translation, relations] = await Promise.all([
-            supabaseAPI.getBlogPostTranslation(post.id, language),
-            supabaseAPI.getBlogPostCategories(post.id)
-          ]);
-
-          const category_id = relations.length > 0 ? relations[0].category_id : undefined;
+        // OPTIMIZACIÓN: Usar la API de traducciones masiva para evitar 100 peticiones individuales
+        // Bypasseamos el cache manual para asegurar que los cambios SQL se vean
+        const postsWithTranslationsRaw = await supabaseAPI.getAllBlogPostTranslations(language);
+        
+        const postsWithCategories = postsWithTranslationsRaw.map((post: any) => {
+          // Ya no descartamos artículos. Si falta traducción, usamos fallbacks.
+          const translation = post.title ? {
+            post_id: post.id,
+            language: language,
+            title: post.title,
+            excerpt: post.excerpt,
+            content: post.content,
+            meta_title: post.meta_title,
+            meta_description: post.meta_description,
+            meta_keywords: post.meta_keywords
+          } : (post.translation || { 
+            title: post.slug.replace(/-/g, ' ').toUpperCase(), 
+            excerpt: "Contenido en preparación...",
+            content: "[]" 
+          });
 
           return {
             ...post,
             translation,
-            category_id,
-            category_name: category_id 
-              ? categoryNamesMap[category_id] 
-              : (language === 'es' ? 'General' : 'General')
+            category_name: post.category_name || (post.category_id ? categoryNamesMap[post.category_id] : (language === 'es' ? 'General' : 'General'))
           };
-        }));
+        });
 
-        setPosts(postsWithTranslations);
-        setFilteredPosts(postsWithTranslations);
+        console.log(`📊 [BLOG] Artículos procesados (${language}):`, postsWithCategories.length);
         
-        // Guardar en caché para carga instantánea
-        supabaseAPI._saveToCache(`blog-posts-ready-${language}`, postsWithTranslations);
+        setPosts(postsWithCategories);
+        setFilteredPosts(postsWithCategories);
+        
+        // Guardar en caché local para persistencia rápida
+        supabaseAPI._saveToCache(`blog-posts-ready-${language}`, postsWithCategories);
         supabaseAPI._saveToCache(`page-content-page-blog-${language}`, pageContent);
       } catch (error) {
         console.error("Error cargando datos del blog:", error);
@@ -109,12 +120,38 @@ export function Blog() {
 
   // --- FILTRADO LÓGICO ---
   useEffect(() => {
+    console.log(`🔍 [FILTER] Aplicando filtro: ${activeFilter} sobre ${posts.length} posts`);
     if (activeFilter === 'all') {
       setFilteredPosts(posts);
     } else {
-      setFilteredPosts(posts.filter(post => post.type === activeFilter));
+      const filtered = posts.filter(post => post.type === activeFilter);
+      console.log(`✅ [FILTER] Resultado: ${filtered.length} posts tipo ${activeFilter}`);
+      setFilteredPosts(filtered);
     }
   }, [activeFilter, posts]);
+
+  // MECANISMO DE CURA: Si está vacío y no está cargando, intentamos una recarga forzada
+  useEffect(() => {
+    if (!loading && posts.length > 0) {
+      const counts = posts.reduce((acc: any, p) => {
+        acc[p.type] = (acc[p.type] || 0) + 1;
+        return acc;
+      }, {});
+      console.log("📊 [STATS] Distribución en memoria:", counts);
+    }
+
+    if (!loading && posts.length === 0) {
+      console.log("🔄 [BLOG] Sincronizando con la base de datos...");
+      const timer = setTimeout(() => {
+        // Bloqueamos el cache manual para esta petición de rescate
+        supabaseAPI._invalidateCache(`blog-posts-ready-${language}`);
+        supabaseAPI._invalidateCache(`blog-translations-${language}`);
+        // Forzamos la recarga de la página (estado)
+        setLoading(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [posts.length, loading, language]);
 
   if (loading) {
     return (
@@ -150,7 +187,7 @@ export function Blog() {
             language={language}
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
-            totalPages={Math.ceil(filteredPosts.length / 8)}
+            totalPages={Math.ceil(filteredPosts.length / 12)}
           />
         </>
       )}
@@ -192,7 +229,7 @@ export function BlogSectionPreview({
           language={language}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
-          totalPages={Math.ceil(filteredPosts.length / 8)}
+          totalPages={Math.ceil(filteredPosts.length / 12)}
         />
       );
 

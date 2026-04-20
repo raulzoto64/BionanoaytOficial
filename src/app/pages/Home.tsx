@@ -29,8 +29,10 @@ export function Home() {
   const [renderedSectionsCount, setRenderedSectionsCount] = useState(0);
   const startTime = performance.now();
   
-  // ✅ Detectar si estamos en modo retorno
-  const returnSectionId = typeof window !== 'undefined' ? sessionStorage.getItem('bx_return_section') : null;
+  // ✅ Detectar si estamos en modo retorno o carga por ancla (#)
+  const [targetAnchor] = useState(() => 
+    typeof window !== 'undefined' ? (sessionStorage.getItem('bx_return_section') || window.location.hash.replace('#', '')) : null
+  );
 
   // ✅ 1. Renderizado Progresivo Inteligente
   useEffect(() => {
@@ -40,45 +42,41 @@ export function Home() {
     const totalSections = pageContent.sections.filter(s => s.visible && s.type !== "hero").length;
     let current = 0;
     
-    // ✅ SI ESTAMOS REGRESANDO A UNA SECCIÓN ESPECÍFICA: MOSTRAR TODO YA
-    // No queremos animaciones que cambien la altura de la página mientras hacemos scroll
-    if (returnSectionId || (navigationType === 'POP' || navigationType === 'PUSH')) {
+    // ✅ SI HAY UN ANCLA O RETORNO: MOSTRAR TODO YA
+    if (targetAnchor || (navigationType === 'POP' || navigationType === 'PUSH')) {
       setRenderedSectionsCount(totalSections);
     } else {
-
-      // ✅ PRIMERA CARGA: Mostramos 2 secciones inmediatamente
-      setRenderedSectionsCount(2);
+      // ✅ PRIMERA CARGA LIMPIA: Mostramos 2 secciones inmediatamente
+      setRenderedSectionsCount(Math.min(2, totalSections));
       
       // ✅ El resto se van agregando una cada 75ms en segundo plano
       const interval = setInterval(() => {
         current++;
         const next = Math.min(2 + current, totalSections);
-        
         setRenderedSectionsCount(next);
-        
-        if (next >= totalSections) {
-          clearInterval(interval);
-        }
+        if (next >= totalSections) clearInterval(interval);
       }, 75);
 
       return () => clearInterval(interval);
     }
-  }, [pageContent, homeProducts, navigationType, returnSectionId]);
+  }, [pageContent, homeProducts, navigationType, targetAnchor]);
 
-  // ✅ 2. Scroll automático al regresar de un detalle (Producto o Ecosystem)
+  // ✅ 2. Scroll automático al ancla o retorno
   useEffect(() => {
-    if (!pageContent || !returnSectionId) return;
+    if (!pageContent || !targetAnchor) return;
 
     let attempts = 0;
     const checkInterval = setInterval(() => {
       attempts++;
-      const element = document.getElementById(returnSectionId) || 
-                     document.querySelector(`[data-section-type="${returnSectionId}"]`);
+      const element = document.getElementById(targetAnchor) || 
+                     document.querySelector(`[data-section-type="${targetAnchor}"]`) ||
+                     document.querySelector(`[data-section-id="${targetAnchor}"]`);
 
       if (element) {
         clearInterval(checkInterval);
         
-        // Pequeño delay para que el navegador termine de calcular el layout total
+        const delay = targetAnchor.includes('blog') || targetAnchor.includes('ecosystem') ? 800 : 400;
+
         setTimeout(() => {
           element.scrollIntoView({ 
             behavior: 'smooth', 
@@ -86,19 +84,19 @@ export function Home() {
             inline: 'nearest'
           });
           
-          // Limpiar para que no se repita
+          // Limpiar referencias
           sessionStorage.removeItem('bx_return_section');
           sessionStorage.removeItem('bx_return_from');
-        }, 700); // Aumentado a 700ms para dar tiempo a componentes pesados (Ecosystem)
+        }, delay);
 
-      } else if (attempts > 50) {
+      } else if (attempts > 60) {
         clearInterval(checkInterval);
         sessionStorage.removeItem('bx_return_section');
       }
     }, 50);
 
     return () => clearInterval(checkInterval);
-  }, [pageContent, renderedSectionsCount, returnSectionId]);
+  }, [pageContent, renderedSectionsCount, targetAnchor]);
 
   useEffect(() => {
     loadPageContent();
@@ -179,7 +177,7 @@ export function Home() {
                 products={homeProducts}
                 language={language}
                 index={index}
-                returnSectionId={returnSectionId}
+                targetAnchor={targetAnchor}
               />
             ))}
         </>

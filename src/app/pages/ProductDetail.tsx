@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { ProductTabs } from '../components/ProductTabs';
 import { useAuth } from '../hooks/useAuth';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { DynamicSection } from '../components/DynamicSection';
 
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -597,6 +598,24 @@ export function ProductDetail() {
           language={language}
           t={t}
         />
+
+        {/* SECCIONES DINÁMICAS (EDITOR VISUAL) */}
+        <div className="space-y-0 mb-16">
+          {(() => {
+            let sections = translation.sections || [];
+            if (typeof sections === 'string') {
+              try { sections = JSON.parse(sections); } catch(e) { sections = []; }
+            }
+            return (Array.isArray(sections) ? sections : []).map((section: any, index: number) => (
+              <DynamicSection 
+                key={section.id || index}
+                section={section}
+                isEditor={false}
+                language={language}
+              />
+            ));
+          })()}
+        </div>
 
         {/* Call to Action Final */}
         <Card className="bg-gradient-to-r from-[#1C5D15] to-[#629960] text-white p-8 text-center">

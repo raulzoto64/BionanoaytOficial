@@ -25,6 +25,8 @@ interface SidebarProps {
   allEcosystemMembers: any[];
   availableForms?: any[];
   pageSlug?: string;
+  allCategories?: any[];
+  allBlogPosts?: any[];
   onAddLibrarySection?: (section: ReusableSection) => void;
   entityType?: 'page' | 'blog' | 'legal' | 'footer' | 'product';
 }
@@ -39,6 +41,8 @@ export function Sidebar({
   allProducts,
   allEcosystemMembers,
   availableForms = [],
+  allCategories = [],
+  allBlogPosts = [],
   pageSlug,
   onAddLibrarySection,
   entityType = 'page'
@@ -261,6 +265,8 @@ export function Sidebar({
                   availableProducts={allProducts}
                   availableEcosystemMembers={allEcosystemMembers}
                   availableForms={availableForms}
+                  availableCategories={allCategories}
+                  availableBlogPosts={allBlogPosts}
                   pageSlug={pageSlug}
                   entityType={entityType}
                 />

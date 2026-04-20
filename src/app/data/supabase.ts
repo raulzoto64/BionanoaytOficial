@@ -236,19 +236,28 @@ export interface ChatMessage {
 
 export const supabaseAPI = {
   _cache: {} as Record<string, { data: any; timestamp: number }>,
-  _cacheTTL: 24 * 60 * 60 * 1000,
+  _cacheTTL: 5 * 60 * 1000, // 5 minutos para asegurar sincronización rápida con la DB
   _persistPrefix: "bionano_cache_",
 
   _getFromCache: (key: string, persist: boolean = true) => {
     const cached = supabaseAPI._cache[key];
-    if (cached && Date.now() - cached.timestamp < supabaseAPI._cacheTTL) return cached.data;
+    const now = Date.now();
+    
+    if (cached && now - cached.timestamp < supabaseAPI._cacheTTL) return cached.data;
+    
     if (persist && typeof window !== "undefined") {
       try {
         const persisted = localStorage.getItem(supabaseAPI._persistPrefix + key);
         if (persisted) {
           const parsed = JSON.parse(persisted);
-          supabaseAPI._cache[key] = parsed;
-          return parsed.data;
+          // BUG FIX: Verificar TTL también al cargar de localStorage
+          if (now - parsed.timestamp < supabaseAPI._cacheTTL) {
+            supabaseAPI._cache[key] = parsed;
+            return parsed.data;
+          } else {
+            // Si expiró, limpiar para obligar a nueva petición
+            localStorage.removeItem(supabaseAPI._persistPrefix + key);
+          }
         }
       } catch (e) {}
     }
@@ -440,6 +449,17 @@ export const supabaseAPI = {
           return [{ id: 'legacy-content', type: 'blog-text', _zone: 'article', content: { html: blogTrans.content } }];
         }
         return [];
+        }
+      case 'product': {
+        const productTrans = await supabaseAPI.getProductTranslation(id, lang);
+        if (productTrans?.sections) {
+          try {
+            return typeof productTrans.sections === 'string' ? JSON.parse(productTrans.sections) : productTrans.sections;
+          } catch (e) {
+            console.error("Error parsing product sections:", e);
+          }
+        }
+        return [];
       }
       case 'legal':
         {
@@ -502,7 +522,7 @@ export const supabaseAPI = {
       case 'footer':
         return await supabaseAPI.updateFooterSettings(content);
       case 'product':
-        return await supabaseAPI.updateProductTranslation(id, lang, { description: JSON.stringify(content) });
+        return await supabaseAPI.updateProductTranslation(id, lang, { sections: JSON.stringify(content) });
       default:
         throw new Error(`Unsupported entity type: ${type}`);
     }

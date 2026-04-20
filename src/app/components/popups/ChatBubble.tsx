@@ -178,16 +178,16 @@ export function ChatBubble() {
             ? 'bg-red-500 rotate-90' 
             : (isOverDarkBg 
                 ? 'bg-white hover:scale-110 shadow-white/20' 
-                : 'bg-[#1C5D15] hover:scale-110')
+                : 'bg-[#19FF00] hover:scale-110')
         }`}
       >
         {isOpen ? (
           <X className="text-white w-6 h-6" />
         ) : (
           <>
-            <MessageCircle className={`${isOverDarkBg ? 'text-[#1C5D15]' : 'text-white'} w-7 h-7 transition-colors duration-300`} />
+            <MessageCircle className={`${isOverDarkBg ? 'text-[#1C5D15]' : 'text-[#1C5D15]'} w-7 h-7 transition-colors duration-300`} />
             {unreadCount > 0 && (
-              <span className={`absolute -top-1 -right-1 ${isOverDarkBg ? 'bg-[#1C5D15] text-white border-white' : 'bg-[#19FF00] text-[#1C5D15] border-white'} text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 animate-bounce`}>
+              <span className={`absolute -top-1 -right-1 ${isOverDarkBg ? 'bg-[#1C5D15] text-white border-white' : 'bg-[#1C5D15] text-white border-white'} text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 animate-bounce`}>
                 {unreadCount}
               </span>
             )}

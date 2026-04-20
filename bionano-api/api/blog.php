@@ -26,10 +26,11 @@ if ($method === 'GET') {
     } else if ($idOrAction === 'translations') {
         $lang = $parts[2] ?? 'es';
         $stmt = $pdo->prepare("
-            SELECT bp.*, bpt.* 
+            SELECT bp.id as id, bp.slug, bp.status, bp.author, bp.cover_image, bp.featured, bp.views, bp.created_at, bp.updated_at, bp.type, bp.category_name,
+                   bpt.title, bpt.excerpt, bpt.content, bpt.meta_title, bpt.meta_description, bpt.meta_keywords
             FROM blog_posts bp
-            JOIN blog_post_translations bpt ON bp.id = bpt.post_id
-            WHERE bpt.language = ? AND bp.status = 'published'
+            LEFT JOIN blog_post_translations bpt ON bp.id = bpt.post_id AND bpt.language = ?
+            WHERE bp.status = 'published'
             ORDER BY bp.created_at DESC
         ");
         $stmt->execute([$lang]);
@@ -102,7 +103,12 @@ if ($method === 'POST') {
             if ($meta_keywords    !== null) { $fields[] = 'meta_keywords = ?';    $params[] = $meta_keywords; }
 
             if (!empty($fields)) {
-                $params[] = $postId;
+                // Resolver el ID si se pasó un slug
+                $idStmt = $pdo->prepare("SELECT id FROM blog_posts WHERE id = ? OR slug = ?");
+                $idStmt->execute([$postId, $postId]);
+                $realPostId = $idStmt->fetchColumn() ?: $postId;
+
+                $params[] = $realPostId;
                 $params[] = $lang;
                 $sql = "UPDATE blog_post_translations SET " . implode(', ', $fields) . " WHERE post_id = ? AND language = ?";
                 $stmt = $pdo->prepare($sql);
@@ -133,8 +139,13 @@ if ($method === 'POST') {
     $stmt = $pdo->prepare("
         INSERT INTO blog_posts (id, slug, status, author, cover_image, type, category_name)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE status = VALUES(status), author = VALUES(author),
-            cover_image = VALUES(cover_image), type = VALUES(type), category_name = VALUES(category_name)
+        AS new_post
+        ON DUPLICATE KEY UPDATE 
+            status = new_post.status, 
+            author = new_post.author,
+            cover_image = new_post.cover_image, 
+            type = new_post.type, 
+            category_name = new_post.category_name
     ");
     $stmt->execute([$id, $slug, $status, $author, $cover_image, $type, $category_name]);
 
@@ -161,7 +172,8 @@ if ($method === 'PUT' && $idOrAction) {
 
     if (!empty($fields)) {
         $params[] = $idOrAction;
-        $sql = "UPDATE blog_posts SET " . implode(', ', $fields) . " WHERE id = ?";
+        $params[] = $idOrAction;
+        $sql = "UPDATE blog_posts SET " . implode(', ', $fields) . " WHERE id = ? OR slug = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
     }

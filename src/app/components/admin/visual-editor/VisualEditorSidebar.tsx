@@ -22,6 +22,8 @@ interface VisualEditorSidebarProps {
   availableProducts?: any[];
   availableEcosystemMembers?: any[];
   availableForms?: Form[];
+  availableCategories?: any[];
+  availableBlogPosts?: any[];
   pageSlug?: string;
   entityType?: 'page' | 'blog' | 'legal' | 'footer' | 'product';
 }
@@ -33,6 +35,8 @@ export function VisualEditorSidebar({
   availableProducts = [], 
   availableEcosystemMembers = [],
   availableForms = [],
+  availableCategories = [],
+  availableBlogPosts = [],
   pageSlug = '',
   entityType = 'page'
 }: VisualEditorSidebarProps) {
@@ -498,6 +502,284 @@ export function VisualEditorSidebar({
                 </div>
              )}
           </div>
+          
+             {/* CONFIGURACIÓN ESPECÍFICA DE PRODUCTO */}
+             {entityType === 'product' && (
+               <div className="space-y-6 pt-4 border-t border-[#1C5D15]/10 animate-in fade-in zoom-in-95">
+                  <h5 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest flex items-center gap-1.5">
+                    <Database className="w-3.5 h-3.5 text-[#19FF00]" />
+                    Configuración de Producto
+                  </h5>
+
+                  {/* NOMBRE COMERCIAL */}
+                  <div className="space-y-2">
+                      <LanguageToggle fieldKey="prod-name" label="Nombre Comercial" />
+                      <Input 
+                        value={(getFieldLang('prod-name') === 'es' ? sectionES.content.name : sectionEN.content.name) || ''}
+                        onChange={(e) => {
+                           const lang = getFieldLang('prod-name');
+                           handleContentChange('name', e.target.value, lang);
+                        }}
+                        placeholder="Nombre del producto..."
+                        className="text-[11px] font-bold"
+                      />
+                  </div>
+
+                  {/* DESCRIPCIÓN CORTA (RESUMEN) */}
+                  <div className="space-y-2">
+                      <LanguageToggle fieldKey="prod-short" label="Descripción Corta (Hero)" />
+                      <textarea 
+                        value={(getFieldLang('prod-short') === 'es' ? sectionES.content.short_description : sectionEN.content.short_description) || ''}
+                        onChange={(e) => {
+                           const lang = getFieldLang('prod-short');
+                           handleContentChange('short_description', e.target.value, lang);
+                        }}
+                        className="w-full text-[10px] p-2 border rounded-md focus:ring-1 focus:ring-[#19FF00] outline-none min-h-[60px]"
+                        placeholder="Resumen del producto para el encabezado..."
+                      />
+                  </div>
+
+                  {/* ESTADO Y CATEGORÍA */}
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1.5">
+                        <Label className="text-[9px] font-black text-[#1C5D15] uppercase opacity-60">Categoría Técnica</Label>
+                        <select 
+                          value={sectionES.content.category || ''}
+                          onChange={(e) => handleContentChange('category', e.target.value, 'both')}
+                          className="w-full h-8 text-[10px] border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+                        >
+                           <option value="">Seleccionar...</option>
+                           {availableCategories.map((cat: any) => (
+                             <option key={cat.id} value={cat.id}>{cat.name}</option>
+                           ))}
+                        </select>
+                     </div>
+                     <div className="space-y-1.5">
+                        <Label className="text-[9px] font-black text-[#1C5D15] uppercase opacity-60">Estado</Label>
+                        <select 
+                          value={sectionES.content.status || 'draft'}
+                          onChange={(e) => handleContentChange('status', e.target.value, 'both')}
+                          className="w-full h-8 text-[10px] border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
+                        >
+                           <option value="active">🟢 Activo</option>
+                           <option value="inactive">🔴 Inactivo</option>
+                           <option value="draft">🟡 Borrador</option>
+                        </select>
+                     </div>
+                  </div>
+
+                  {/* GALERÍA DE IMÁGENES */}
+                  <div className="space-y-2">
+                     <Label className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Galería del Producto</Label>
+                     <ImageUpload 
+                       currentImages={sectionES.content.images || []}
+                       onImageUpload={(urls) => handleContentChange('images', urls, 'both')}
+                       type="product"
+                     />
+                  </div>
+
+                  {/* DESCRIPCIÓN COMPLETA (CUERPO) */}
+                  <div className="space-y-2">
+                      <LanguageToggle fieldKey="prod-desc" label="Descripción Detallada (Caja 1)" />
+                      <textarea 
+                        value={(getFieldLang('prod-desc') === 'es' ? sectionES.content.description : sectionEN.content.description) || ''}
+                        onChange={(e) => {
+                           const lang = getFieldLang('prod-desc');
+                           handleContentChange('description', e.target.value, lang);
+                        }}
+                        className="w-full text-[10px] p-2 border rounded-md focus:ring-1 focus:ring-[#19FF00] outline-none min-h-[100px]"
+                        placeholder="Historia y detalles profundos del producto..."
+                      />
+                  </div>
+
+                  {/* CARACTERÍSTICAS (LISTA) */}
+                  <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                         <LanguageToggle fieldKey="prod-features" label="Características (Caja 2)" />
+                         <Button size="sm" variant="ghost" className="h-5 text-[8px] font-bold" 
+                           onClick={() => {
+                              const lang = getFieldLang('prod-features');
+                              const current = [...((lang === 'es' ? sectionES.content.features : sectionEN.content.features) || [])];
+                              current.push("");
+                              handleContentChange('features', current, lang);
+                           }}
+                         >
+                           <Plus className="w-2.5 h-2.5 mr-1" /> Añadir
+                         </Button>
+                      </div>
+                      <div className="space-y-1.5">
+                         {((getFieldLang('prod-features') === 'es' ? sectionES.content.features : sectionEN.content.features) || []).map((feat: string, idx: number) => (
+                           <div key={idx} className="flex gap-1">
+                              <Input 
+                                value={feat}
+                                onChange={(e) => {
+                                   const lang = getFieldLang('prod-features');
+                                   const next = [...((lang === 'es' ? sectionES.content.features : sectionEN.content.features) || [])];
+                                   next[idx] = e.target.value;
+                                   handleContentChange('features', next, lang);
+                                }}
+                                className="h-7 text-[10px]"
+                                placeholder="Escribe una característica..."
+                              />
+                           </div>
+                         ))}
+                      </div>
+                  </div>
+
+                  {/* BENEFICIOS (LISTA) */}
+                  <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                         <LanguageToggle fieldKey="prod-benefits" label="Beneficios (Caja 3)" />
+                         <Button size="sm" variant="ghost" className="h-5 text-[8px] font-bold" 
+                           onClick={() => {
+                              const lang = getFieldLang('prod-benefits');
+                              const current = [...((lang === 'es' ? sectionES.content.benefits : sectionEN.content.benefits) || [])];
+                              current.push("");
+                              handleContentChange('benefits', current, lang);
+                           }}
+                         >
+                           <Plus className="w-2.5 h-2.5 mr-1" /> Añadir
+                         </Button>
+                      </div>
+                      <div className="space-y-1.5">
+                         {((getFieldLang('prod-benefits') === 'es' ? sectionES.content.benefits : sectionEN.content.benefits) || []).map((ben: string, idx: number) => (
+                           <div key={idx} className="flex gap-1">
+                              <Input 
+                                value={ben}
+                                onChange={(e) => {
+                                   const lang = getFieldLang('prod-benefits');
+                                   const next = [...((lang === 'es' ? sectionES.content.benefits : sectionEN.content.benefits) || [])];
+                                   next[idx] = e.target.value;
+                                   handleContentChange('benefits', next, lang);
+                                }}
+                                className="h-7 text-[10px]"
+                                placeholder="Escribe un beneficio..."
+                              />
+                           </div>
+                         ))}
+                      </div>
+                  </div>
+
+                  {/* ESPECIFICACIONES TÉCNICAS (JSON) */}
+                  <div className="space-y-3">
+                     <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Especificaciones</Label>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-5 text-[8px] font-black text-[#1C5D15]"
+                          onClick={() => {
+                            const current = { ...sectionES.content.technical_specs };
+                            current[`Nueva Spec ${Object.keys(current).length + 1}`] = '';
+                            handleContentChange('technical_specs', current, 'both');
+                          }}
+                        >
+                          <Plus className="w-2.5 h-2.5 mr-1" /> Añadir
+                        </Button>
+                     </div>
+                     <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                        {Object.entries(sectionES.content.technical_specs || {}).map(([key, val], idx) => (
+                           <div key={idx} className="flex gap-2 items-start bg-gray-50 p-2 rounded-lg relative group">
+                              <div className="flex-1 space-y-1">
+                                 <Input 
+                                   value={key}
+                                   onChange={(e) => {
+                                      const next = { ...sectionES.content.technical_specs };
+                                      delete next[key];
+                                      next[e.target.value] = val;
+                                      handleContentChange('technical_specs', next, 'both');
+                                   }}
+                                   className="h-6 text-[9px] font-bold border-none bg-transparent p-0"
+                                   placeholder="Nombre"
+                                 />
+                                 <Input 
+                                   value={val as string}
+                                   onChange={(e) => {
+                                      const next = { ...sectionES.content.technical_specs };
+                                      next[key] = e.target.value;
+                                      handleContentChange('technical_specs', next, 'both');
+                                   }}
+                                   className="h-6 text-[9px] text-[#629960] border-none bg-transparent p-0"
+                                   placeholder="Valor (Ej: 99.9%)"
+                                 />
+                              </div>
+                              <button 
+                                onClick={() => {
+                                   const next = { ...sectionES.content.technical_specs };
+                                   delete next[key];
+                                   handleContentChange('technical_specs', next, 'both');
+                                }}
+                                className="text-red-300 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+
+                  {/* FEATURES & BENEFITS (LISTS) */}
+                  <div className="space-y-3">
+                      <LanguageToggle fieldKey="prod-features" label="Características Destacadas" />
+                      <div className="space-y-2">
+                         {((getFieldLang('prod-features') === 'es' ? sectionES.content.features : sectionEN.content.features) || []).map((f: string, i: number) => (
+                            <div key={i} className="flex gap-2">
+                               <Input 
+                                 value={f}
+                                 onChange={(e) => {
+                                    const lang = getFieldLang('prod-features');
+                                    const next = [...(lang === 'es' ? sectionES.content.features : sectionEN.content.features)];
+                                    next[i] = e.target.value;
+                                    handleContentChange('features', next, lang);
+                                 }}
+                                 className="h-7 text-[10px]"
+                               />
+                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => {
+                                  const lang = getFieldLang('prod-features');
+                                  const next = (lang === 'es' ? sectionES.content.features : sectionEN.content.features).filter((_: any, idx: number) => idx !== i);
+                                  handleContentChange('features', next, lang);
+                               }}>
+                                 <X className="w-3 h-3" />
+                               </Button>
+                            </div>
+                         ))}
+                         <Button variant="outline" size="sm" className="w-full h-7 text-[9px] font-black uppercase" onClick={() => {
+                            const lang = getFieldLang('prod-features');
+                            const next = [...(lang === 'es' ? sectionES.content.features : sectionEN.content.features), 'Nueva característica'];
+                            handleContentChange('features', next, lang);
+                         }}>
+                            <Plus className="w-3 h-3 mr-1" /> Añadir Característica
+                         </Button>
+                      </div>
+                  </div>
+
+                  {/* SEO DE PRODUCTO */}
+                  <div className="space-y-4 pt-4 border-t border-[#1C5D15]/10">
+                     <h5 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest flex items-center gap-1.5 opacity-70">
+                       <Search className="w-3 h-3 text-[#19FF00]" />
+                       SEO de Producto
+                     </h5>
+                     <div className="space-y-2">
+                        <LanguageToggle fieldKey="prod-seo-title" label="Meta Título" />
+                        <Input 
+                          value={(getFieldLang('prod-seo-title') === 'es' ? sectionES.content.meta_title : sectionEN.content.meta_title) || ''}
+                          onChange={(e) => handleContentChange('meta_title', e.target.value, getFieldLang('prod-seo-title'))}
+                          placeholder="Título para buscadores..."
+                          className="text-[10px]"
+                        />
+                     </div>
+                     <div className="space-y-2">
+                        <LanguageToggle fieldKey="prod-seo-desc" label="Meta Descripción" />
+                        <Input 
+                          value={(getFieldLang('prod-seo-desc') === 'es' ? sectionES.content.meta_description : sectionEN.content.meta_description) || ''}
+                          onChange={(e) => handleContentChange('meta_description', e.target.value, getFieldLang('prod-seo-desc'))}
+                          placeholder="Descripción breve..."
+                          className="text-[10px]"
+                        />
+                     </div>
+                  </div>
+               </div>
+             )}
           
           <div className="p-4 bg-[#19FF00]/5 border border-dashed border-[#19FF00]/30 rounded-xl">
              <p className="text-[9px] text-[#1C5D15] font-bold uppercase text-center italic">

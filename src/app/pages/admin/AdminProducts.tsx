@@ -343,7 +343,7 @@ export function AdminProducts() {
                   variant="outline"
                   size="sm"
                   className="border-[#1C5D15] text-[#1C5D15]"
-                  onClick={() => handleEdit(product)}
+                  onClick={() => window.location.href = `/admin/visual-editor/product/${product.id}`}
                 >
                   <Edit className="w-4 h-4" />
                 </Button>

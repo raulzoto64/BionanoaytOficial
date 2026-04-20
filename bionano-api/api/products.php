@@ -23,6 +23,7 @@ if ($method === 'GET') {
             $item['features'] = json_decode($item['features'] ?? '[]', true) ?: [];
             $item['benefits'] = json_decode($item['benefits'] ?? '[]', true) ?: [];
             $item['technical_specs'] = json_decode($item['technical_specs'] ?? '{}', true) ?: (object)[];
+            $item['sections'] = json_decode($item['sections'] ?? '[]', true) ?: [];
         }
         echo json_encode($rows ?: []);
 
@@ -45,6 +46,7 @@ if ($method === 'GET') {
             $row['features'] = json_decode($row['features'] ?? '[]', true) ?: [];
             $row['benefits'] = json_decode($row['benefits'] ?? '[]', true) ?: [];
             $row['technical_specs'] = json_decode($row['technical_specs'] ?? '{}', true) ?: (object)[];
+            $row['sections'] = json_decode($row['sections'] ?? '[]', true) ?: [];
         }
         echo json_encode($row ?: (object)[]);
 
@@ -78,17 +80,20 @@ if ($method === 'GET') {
         $benefits = json_encode($data['benefits'] ?? []);
         $specs = json_encode($data['technical_specs'] ?? (object)[]);
         
+        // Asegurar que la columna sections existe (Lazy Migration)
+        try { $pdo->exec("ALTER TABLE product_translations ADD COLUMN sections JSON AFTER meta_description"); } catch (Exception $e) {}
+
         $stmt = $pdo->prepare("
-            INSERT INTO product_translations (product_id, language, name, description, short_description, features, benefits, technical_specs, meta_title, meta_description)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO product_translations (product_id, language, name, description, short_description, features, benefits, technical_specs, meta_title, meta_description, sections)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
                 name=VALUES(name), description=VALUES(description), short_description=VALUES(short_description),
                 features=VALUES(features), benefits=VALUES(benefits), technical_specs=VALUES(technical_specs),
-                meta_title=VALUES(meta_title), meta_description=VALUES(meta_description)
+                meta_title=VALUES(meta_title), meta_description=VALUES(meta_description), sections=VALUES(sections)
         ");
         $stmt->execute([
             $idOrSlug, $lang, $data['name'] ?? '', $data['description'] ?? '', $data['short_description'] ?? '',
-            $features, $benefits, $specs, $data['meta_title'] ?? '', $data['meta_description'] ?? ''
+            $features, $benefits, $specs, $data['meta_title'] ?? '', $data['meta_description'] ?? '', $data['sections'] ?? '[]'
         ]);
         echo json_encode(["success"=>true]);
         exit;

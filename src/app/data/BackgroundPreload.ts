@@ -70,34 +70,27 @@ export const BackgroundPreload = {
       await supabaseAPI.getProducts();
       console.log("[CACHE] Productos precargados.");
 
-      // 4. Precarga de Blog/Noticias (con todos los detalles que necesita NewsSection)
+      // 4. Precarga de Blog/Noticias (Optimizado con Carga Masiva)
       console.log("[CACHE] Precargando artículos y noticias del blog...");
-      const allPosts = await supabaseAPI.getBlogPosts('published');
-      const allCategories = await supabaseAPI.getBlogCategories('active');
+      const postsWithTranslationsRaw = await supabaseAPI.getAllBlogPostTranslations(language);
 
-      const categoryNames: Record<string, string> = {};
-      for (const category of allCategories) {
-        const translation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
-        categoryNames[category.id] = translation.name || category.slug;
-      }
+      const processedPosts = postsWithTranslationsRaw.map((post: any) => ({
+        ...post,
+        translation: post.title ? {
+          title: post.title,
+          excerpt: post.excerpt,
+          content: post.content
+        } : (post.translation || { title: post.slug.replace(/-/g, ' ').toUpperCase(), excerpt: "..." }),
+        category_name: post.category_name || 'General'
+      }));
 
-      const postsWithTranslations = [];
-      const featured = allPosts.filter((p: any) => p.featured).slice(0, 5);
-      for (const post of featured) {
-        const translation = await supabaseAPI.getBlogPostTranslation(post.id, language);
-        const relations = await supabaseAPI.getBlogPostCategories(post.id);
-        const category_id = relations.length > 0 ? relations[0].category_id : undefined;
-        
-        postsWithTranslations.push({
-          ...post,
-          translation,
-          category_id,
-          category_name: category_id ? categoryNames[category_id] || 'Sin categoría' : 'Sin categoría'
-        });
-      }
+      // Seleccionar hasta 5 dándo prioridad a destacados
+      const featuredPosts = processedPosts.filter((p: any) => p.featured);
+      const recentPosts = processedPosts.filter((p: any) => !p.featured);
+      const finalDisplay = [...featuredPosts, ...recentPosts].slice(0, 5);
 
-      newsPreloadCache = { posts: postsWithTranslations, language };
-      console.log("[CACHE] Blog y noticias precargados:", featured.length, "artículos.");
+      newsPreloadCache = { posts: finalDisplay, language };
+      console.log("[CACHE] Blog y noticias precargados:", finalDisplay.length, "artículos.");
 
     } catch (error) {
       console.warn("[CACHE] Error durante la precarga:", error);

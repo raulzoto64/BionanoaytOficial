@@ -56,52 +56,67 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, 
 
   useEffect(() => {
     const loadFeaturedPosts = async () => {
-      // Usar caché si está disponible para este idioma
-      if (newsPreloadCache && newsPreloadCache.language === language) {
+      // Usar caché si está disponible para este idioma (solo en prod para velocidad)
+      if (!isEditor && newsPreloadCache && newsPreloadCache.language === language && newsPreloadCache.posts.length > 0) {
         setFeaturedPosts(newsPreloadCache.posts);
         setLoading(false);
         return;
       }
 
       try {
-        const allPosts = await supabaseAPI.getBlogPosts('published');
-        const featured = allPosts.filter((post: any) => post.featured).slice(0, 5);
-        
-        const allCategories = await supabaseAPI.getBlogCategories();
+        setLoading(true);
+        // OPTIMIZACIÓN: Carga masiva de traducciones (mismo patrón que Blog.tsx)
+        const [allCategories, postsWithTranslationsRaw] = await Promise.all([
+          supabaseAPI.getBlogCategories(),
+          supabaseAPI.getAllBlogPostTranslations(language)
+        ]);
 
-        const categoryNames: Record<string, string> = {};
-        for (const category of allCategories) {
-          const translation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
-          categoryNames[category.id] = translation.name || category.slug;
-        }
+        const categoryNamesMap: Record<string, string> = {};
+        await Promise.all(allCategories.map(async (cat: any) => {
+          const trans = await supabaseAPI.getBlogCategoryTranslation(cat.id, language);
+          categoryNamesMap[cat.id] = trans?.name || cat.slug;
+        }));
 
-        const postsWithTranslations = [];
-        for (const post of featured) {
-          const translation = await supabaseAPI.getBlogPostTranslation(post.id, language);
-          const relations = await supabaseAPI.getBlogPostCategories(post.id);
-          const category_id = relations.length > 0 ? relations[0].category_id : undefined;
-          
-          postsWithTranslations.push({
+        // Procesar y priorizar destacados, pero mostrar recientes si no hay suficientes
+        const processedPosts = postsWithTranslationsRaw.map((post: any) => {
+          const translation = post.title ? {
+            post_id: post.id,
+            language: language,
+            title: post.title,
+            excerpt: post.excerpt,
+            content: post.content
+          } : (post.translation || { title: post.slug.replace(/-/g, ' ').toUpperCase(), excerpt: "..." });
+
+          return {
             ...post,
             translation,
-            category_id,
-            category_name: category_id ? categoryNames[category_id] || 'Sin categoría' : 'Sin categoría'
-          });
-        }
+            category_name: post.category_name || (post.category_id ? categoryNamesMap[post.category_id] : (language === 'es' ? 'General' : 'General'))
+          };
+        });
 
-        // Guardar en caché centralizado
+        // Lógica de Prioridad:
+        // 1. Artículos marcados como destacados (featured = 1)
+        // 2. Si hay menos de 5, rellenar con los más recientes (independientemente de si son featured o no)
+        const featured = processedPosts.filter((p: any) => p.featured);
+        const nonFeatured = processedPosts.filter((p: any) => !p.featured);
+        
+        // Tomamos hasta 5 en total
+        const finalDisplay = [...featured, ...nonFeatured].slice(0, 5);
+
+        // Actualizar caché global
         const { setNewsPreloadCache } = await import('../data/BackgroundPreload');
-        setNewsPreloadCache({ posts: postsWithTranslations, language });
-        setFeaturedPosts(postsWithTranslations);
+        setNewsPreloadCache({ posts: finalDisplay, language });
+        
+        setFeaturedPosts(finalDisplay);
       } catch (error) {
-        // En caso de fallo, se ignora silenciosamente para no interrumpir la navegación principal.
+        console.error("Error cargando noticias destacados:", error);
       } finally {
         setLoading(false);
       }
     };
 
     loadFeaturedPosts();
-  }, [language]);
+  }, [language, isEditor]);
 
   if (loading) {
     return (
