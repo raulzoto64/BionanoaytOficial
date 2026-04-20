@@ -25,7 +25,8 @@ $base_path = '/api/';
 
 // Limpiar la URI para obtener la ruta relativa a /api/
 $path = str_replace($base_path, '', parse_url($request_uri, PHP_URL_PATH));
-$parts = explode('/', trim($path, '/'));
+$clean_path = preg_replace('#/+#', '/', $path);
+$parts = explode('/', trim($clean_path, '/'));
 
 $resource = $parts[0] ?? '';
 

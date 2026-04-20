@@ -111,7 +111,7 @@ export function DeviceCanvas({
                   <div className="pointer-events-none opacity-100 z-50">
                     <Navigation />
                   </div>
-                  <div className="pt-20 flex-1">
+                  <div className="flex-1">
                     {entityType !== 'footer' && (
                       <VisualEditorPreview
                         sections={activeSections}

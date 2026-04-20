@@ -105,6 +105,18 @@ export function VisualEditorSidebar({
     }))
   ];
 
+  const handleContentMultipleChanges = (changes: Record<string, any>, targetLang: 'es' | 'en' | 'both' = 'both') => {
+    const nextES = { ...sectionES, content: { ...sectionES.content } };
+    const nextEN = { ...sectionEN, content: { ...sectionEN.content } };
+    
+    for (const [field, val] of Object.entries(changes)) {
+      if (targetLang === 'es' || targetLang === 'both') nextES.content[field] = val;
+      if (targetLang === 'en' || targetLang === 'both') nextEN.content[field] = val;
+    }
+    
+    onChange(nextES, nextEN);
+  };
+
   /**
    * COMPONENTE AUXILIAR INTERNO: Selector de Acción Universal
    */
@@ -113,7 +125,7 @@ export function VisualEditorSidebar({
     value, 
     actionType, 
     fieldPrefix = 'cta',
-    onChange
+    onChange: customOnChange
   }: { 
     label: string; 
     value: string; 
@@ -143,11 +155,13 @@ export function VisualEditorSidebar({
                 else if (newType === 'route') defaultVal = '/';
                 else if (newType === 'chat') defaultVal = 'chat';
                 
-                if (onChange) {
-                  onChange(newType, defaultVal);
+                if (customOnChange) {
+                  customOnChange(newType, defaultVal);
                 } else {
-                  handleContentChange(`${fieldPrefix}ActionType`, newType, 'both');
-                  handleContentChange(`${fieldPrefix}Link`, defaultVal, 'both');
+                  handleContentMultipleChanges({
+                    [`${fieldPrefix}ActionType`]: newType,
+                    [`${fieldPrefix}Link`]: defaultVal
+                  }, 'both');
                 }
               }}
             >
@@ -158,7 +172,7 @@ export function VisualEditorSidebar({
             </select>
           </div>
 
-          {actionType !== 'chat' && (
+            {actionType !== 'chat' && (
             <div>
               <Label className="text-[9px] text-gray-400 uppercase font-bold mb-1 block">
                 {isPopup ? 'Seleccionar Popup' : 'Destino / Enlace'}
@@ -169,7 +183,7 @@ export function VisualEditorSidebar({
                   className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
                   value={value}
                   onChange={(e) => {
-                    if (onChange) onChange(actionType || 'popup', e.target.value);
+                    if (customOnChange) customOnChange(actionType || 'popup', e.target.value);
                     else handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both');
                   }}
                 >
@@ -182,7 +196,7 @@ export function VisualEditorSidebar({
                   className="w-full text-[10px] h-8 border rounded-md bg-white px-2 focus:ring-2 focus:ring-[#19FF00] outline-none"
                   value={value}
                   onChange={(e) => {
-                    if (onChange) onChange(actionType || 'route', e.target.value);
+                    if (customOnChange) customOnChange(actionType || 'route', e.target.value);
                     else handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both');
                   }}
                 >
@@ -196,7 +210,7 @@ export function VisualEditorSidebar({
                   placeholder="https://..."
                   value={value}
                   onChange={(e) => {
-                    if (onChange) onChange(actionType || 'url', e.target.value);
+                    if (customOnChange) customOnChange(actionType || 'url', e.target.value);
                     else handleContentChange(`${fieldPrefix}Link`, e.target.value, 'both');
                   }}
                 />
@@ -372,27 +386,31 @@ export function VisualEditorSidebar({
              </div>
 
              {/* EXTRACTO / SUBTÍTULO */}
-             <div className="space-y-2">
-                <LanguageToggle fieldKey="meta-excerpt" label="Extracto / Resumen" />
-                <RichTextEditor 
-                  value={(getFieldLang('meta-excerpt') === 'es' ? sectionES.content.excerpt_es : sectionEN.content.excerpt_en) || ''}
-                  onChange={(val) => {
-                     const lang = getFieldLang('meta-excerpt');
-                     handleContentChange(lang === 'es' ? 'excerpt_es' : 'excerpt_en', val, 'both');
-                  }}
-                  minHeight="100px"
-                />
-             </div>
+             {entityType !== 'legal' && (
+               <div className="space-y-2">
+                  <LanguageToggle fieldKey="meta-excerpt" label="Extracto / Resumen" />
+                  <RichTextEditor 
+                    value={(getFieldLang('meta-excerpt') === 'es' ? sectionES.content.excerpt_es : sectionEN.content.excerpt_en) || ''}
+                    onChange={(val) => {
+                       const lang = getFieldLang('meta-excerpt');
+                       handleContentChange(lang === 'es' ? 'excerpt_es' : 'excerpt_en', val, 'both');
+                    }}
+                    minHeight="100px"
+                  />
+               </div>
+             )}
 
              {/* IMAGEN DE PORTADA */}
-             <div className="space-y-2">
-                <Label className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Imagen de Portada</Label>
-                <ImageUpload 
-                  currentImage={sectionES.content.cover_image}
-                  onImageUpload={(url) => handleContentChange('cover_image', url, 'both')}
-                  type="banner"
-                />
-             </div>
+             {entityType !== 'legal' && (
+               <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest">Imagen de Portada</Label>
+                  <ImageUpload 
+                    currentImage={sectionES.content.cover_image}
+                    onImageUpload={(url) => handleContentChange('cover_image', url, 'both')}
+                    type="banner"
+                  />
+               </div>
+             )}
 
              {/* CATEGORÍA Y AUTOR (SOLO BLOG) */}
              {entityType === 'blog' && (
@@ -672,41 +690,7 @@ export function VisualEditorSidebar({
             </div>
           </div>
 
-          {/* Bloque de CTA Personalizado - SOLO LEGAL */}
-          {entityType === 'legal' && (
-            <div className="p-4 bg-white border border-[#1C5D15]/10 rounded-xl shadow-sm space-y-4 font-sans animate-in fade-in slide-in-from-bottom-2">
-               <h4 className="text-[10px] font-black text-[#1C5D15] uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-                  <Zap className="w-3 h-3 text-[#19FF00] fill-[#19FF00]" />
-                  Botón de Contacto (CTA)
-               </h4>
-               <div className="space-y-4">
-                  <div>
-                     <LanguageToggle fieldKey="legal-cta-label" label="Frase Superior (Opcional)" />
-                     <Input
-                        placeholder="Ej: ¿Necesitas información adicional?"
-                        value={(getFieldLang('legal-cta-label') === 'es' ? sectionES.content.ctaLabel : sectionEN.content.ctaLabel) || ""}
-                        onChange={(e) => handleContentChange("ctaLabel", e.target.value, getFieldLang('legal-cta-label'))}
-                        className="text-xs h-9"
-                     />
-                  </div>
-                  <div>
-                     <LanguageToggle fieldKey="legal-cta-text" label="Texto del Botón" />
-                     <Input
-                        placeholder="Ej: Contáctanos"
-                        value={(getFieldLang('legal-cta-text') === 'es' ? sectionES.content.ctaText : sectionEN.content.ctaText) || ""}
-                        onChange={(e) => handleContentChange("ctaText", e.target.value, getFieldLang('legal-cta-text'))}
-                        className="text-xs h-9"
-                     />
-                  </div>
-                  <ActionSelector 
-                    label="Acción del Botón"
-                    value={sectionES.content.ctaLink || ''}
-                    actionType={sectionES.content.ctaActionType}
-                    fieldPrefix="cta"
-                  />
-               </div>
-            </div>
-          )}
+
         </div>
       )}
 
@@ -3442,7 +3426,7 @@ export function VisualEditorSidebar({
       )}
 
       {/* Configuración Genérica de CTA Button para otras secciones */}
-      {!["hero", "ecosystem", "news", "products", "featured", "flipcards", "category-filter", "clientes", "certifications", "stats", "cta", "custom", "footer-settings", "rich-text"].includes(sectionES.type) && (
+      {!["hero", "ecosystem", "news", "products", "featured", "flipcards", "category-filter", "clientes", "certifications", "stats", "cta", "custom", "footer-settings", "rich-text", "page-metadata"].includes(sectionES.type) && (
         <div className="mt-8 pt-6 border-t border-[#1C5D15]/10 space-y-4">
           <h4 className="font-extrabold text-[#1C5D15] text-xs uppercase tracking-widest px-1">Botón de Acción Final (CTA) - Opcional</h4>
           <div className="p-4 bg-white border rounded-xl shadow-sm space-y-4">

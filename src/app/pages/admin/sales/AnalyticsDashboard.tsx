@@ -27,6 +27,7 @@ export function AnalyticsDashboard() {
       if (timeRange === 'all') start = new Date(2020, 0, 1);
 
       const stats = await supabaseAPI.getFunnelStats(start.toISOString(), end.toISOString());
+      console.log('📊 [Analytics] Funnel Stats received:', stats);
       setFunnelData(stats);
     } catch (error) {
       console.error('Error loading analytics', error);

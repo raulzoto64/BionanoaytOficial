@@ -2,6 +2,10 @@
  * Configuración central de la API para BionanoAYT
  */
 
+// Configuración de la API (Activa: Producción)
+// Para usar local, asegúrate de que tu servidor Apache esté corriendo y la URL sea correcta.
+// export const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost/bionano-api' : 'https://api.bionano-ayt.com/api';
+
 export const API_BASE_URL = 'https://api.bionano-ayt.com/api';
 
 /**

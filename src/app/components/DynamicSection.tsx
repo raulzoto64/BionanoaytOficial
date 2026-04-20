@@ -820,20 +820,7 @@ export function DynamicSection({
                     dangerouslySetInnerHTML={{ __html: section.content.html || '' }}
                   />
 
-                  {/* Llamado a la acción Final - SOLO LEGAL */}
-                  {entityType === 'legal' && (
-                     <div className="mt-16 pt-10 border-t border-[#F7F9CE] text-center">
-                        <p className="text-[#1C5D15] font-bold mb-6 italic text-sm md:text-base">
-                           {section.content.ctaLabel || '¿Necesitas información adicional?'}
-                        </p>
-                        <Button 
-                           onClick={() => handleAction(section.content.ctaActionType || 'route', section.content.ctaLink || '/contact', navigate)}
-                           className="bg-[#1C5D15] text-[#F7F9CE] hover:bg-[#19FF00] hover:text-[#1C5D15] px-10 py-7 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-[#1C5D15]/10 hover:scale-105 transition-all"
-                        >
-                           {section.content.ctaText || 'Contáctanos'}
-                        </Button>
-                     </div>
-                  )}
+
                </div>
             </div>
           </div>

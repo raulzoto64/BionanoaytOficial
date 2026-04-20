@@ -3,7 +3,16 @@ $method = $_SERVER['REQUEST_METHOD'];
 $id = $parts[1] ?? null;
 
 if ($method === 'GET') {
-    if ($id) {
+    if ($id === 'search') {
+        $identifier = $_GET['identifier'] ?? '';
+        $stmt = $pdo->prepare("SELECT * FROM leads WHERE visitor_id = ? OR user_id = ? OR email = ? ORDER BY created_at DESC");
+        $stmt->execute([$identifier, $identifier, $identifier]);
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$item) {
+            $item['metadata'] = json_decode($item['metadata'] ?? '{}', true) ?: (object)[];
+        }
+        echo json_encode($rows);
+    } else if ($id) {
         $stmt = $pdo->prepare("SELECT * FROM leads WHERE id = ?");
         $stmt->execute([$id]);
         $row = $stmt->fetch();

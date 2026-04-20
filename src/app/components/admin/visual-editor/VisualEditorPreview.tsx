@@ -200,19 +200,20 @@ export function VisualEditorPreview({
             </EditableBlock>
 
             {!isLockedEntity && (
-               <div className="group/add relative flex justify-center py-4 my-2 opacity-0 hover:opacity-100 transition-opacity">
-                 <div className="absolute inset-0 flex items-center justify-center">
-                   <div className="w-full h-px bg-gradient-to-r from-transparent via-[#19FF00]/30 to-transparent"></div>
+               <div className="group/add relative h-0 z-50 opacity-0 hover:opacity-100 transition-opacity">
+                 <div className="absolute top-0 left-0 w-full h-12 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                   <div className="absolute w-full h-px bg-[#19FF00] shadow-[0_0_10px_#19FF00]"></div>
+                   <button 
+                     onClick={() => {
+                        const event = new CustomEvent('editor:open-library', { detail: { insertAt: index + 1 } });
+                        window.dispatchEvent(event);
+                     }}
+                     className="relative z-10 bg-[#1C5D15] text-[#19FF00] p-2 rounded-full shadow-[0_0_20px_rgba(25,255,0,0.5)] hover:scale-125 transition-all pointer-events-auto border border-[#19FF00]/50"
+                     title="Añadir sección aquí"
+                   >
+                     <Plus className="w-5 h-5" />
+                   </button>
                  </div>
-                 <button 
-                   onClick={() => {
-                      const event = new CustomEvent('editor:open-library', { detail: { insertAt: index + 1 } });
-                      window.dispatchEvent(event);
-                   }}
-                   className="relative z-10 bg-white border-2 border-[#19FF00] text-[#1C5D15] p-2 rounded-full shadow-lg hover:bg-[#19FF00] transition-all hover:scale-110"
-                 >
-                   <Plus className="w-4 h-4" />
-                 </button>
                </div>
             )}
           </div>

@@ -120,9 +120,9 @@ function LayoutInner() {
 
 export function Layout() {
   return (
-    <LanguageProvider>
+    <>
       <ScrollToTop />
       <LayoutInner />
-    </LanguageProvider>
+    </>
   );
 }

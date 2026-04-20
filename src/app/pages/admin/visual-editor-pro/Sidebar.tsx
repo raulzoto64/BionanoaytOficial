@@ -58,13 +58,20 @@ export function Sidebar({
     const fetchLibrary = async () => {
       try {
         const data = await supabaseAPI.getReusableSections();
-        setLibrarySections(data || []);
+        const INTERNAL_TYPES = ['blog-text', 'rich-text', 'blog-intro', 'blog-quote', 'blog-list', 'blog-image', 'blog-divider'];
+        
+        // Filtrar biblioteca según el contexto (legal solo permite contenido interno)
+        const visibleLibrary = entityType === 'legal' 
+          ? (data || []).filter((s: any) => INTERNAL_TYPES.includes(s.type))
+          : data;
+
+        setLibrarySections(visibleLibrary || []);
       } catch (error) {
         console.error("Error fetching library sections:", error);
       }
     };
     fetchLibrary();
-  }, [activeTab]);
+  }, [activeTab, entityType]);
 
   // Auto cambiar a pestaña configuracion cuando seleccionas una seccion
   useEffect(() => {
@@ -75,7 +82,7 @@ export function Sidebar({
   const sectionGroups = [
     {
       name: 'Componentes de Artículo',
-      visible: entityType === 'blog',
+      visible: ['blog', 'legal'].includes(entityType),
       items: [
         { type: 'blog-text', label: 'Cuerpo de Texto', icon: 'Type' },
         { type: 'blog-intro', label: 'Párrafo Destacado', icon: 'Sparkles' },

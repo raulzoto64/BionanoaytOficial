@@ -14,9 +14,9 @@ if ($method === 'GET' && $slugOrId) {
     $stmt = $pdo->prepare("
         SELECT pc.sections FROM page_contents pc
         JOIN pages p ON pc.page_id = p.id
-        WHERE (p.slug = ? OR p.id = ?) AND pc.language = ?
+        WHERE (p.slug = ? OR p.slug = CONCAT('/', ?) OR p.id = ?) AND pc.language = ?
     ");
-    $stmt->execute([$slugOrId, $slugOrId, $lang]);
+    $stmt->execute([$slugOrId, $slugOrId, $slugOrId, $lang]);
     $row = $stmt->fetch();
 
     if ($row) {

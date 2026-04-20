@@ -41,6 +41,8 @@ const AdminActiveCarts = () => import("./pages/admin/sales/ActiveCarts").then(m 
 const AdminCheckoutLeads = () => import("./pages/admin/sales/CheckoutLeads").then(m => ({ Component: m.CheckoutLeads }));
 const AdminAnalytics = () => import("./pages/admin/sales/AnalyticsDashboard").then(m => ({ Component: m.AnalyticsDashboard }));
 
+const DynamicPage = () => import("./pages/DynamicPage").then(m => ({ Component: m.DynamicPage }));
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -94,6 +96,10 @@ export const router = createBrowserRouter([
       {
         path: "legal/:slug",
         lazy: LegalPage,
+      },
+      {
+        path: ":slug",
+        lazy: DynamicPage,
       },
       {
         path: "*",

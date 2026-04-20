@@ -138,11 +138,12 @@ export function AdminVisualEditor() {
           setPage(pageData as any);
           entityTitle = blogPost.slug || 'Artículo';
           
-          // Poblar contenido de cabecera con datos reales de las traducciones
+          // Poblar contenido de cabecera con datos reales.
+          // CRÍTICO: La imagen de portada viene del registro global blogPost, NO de la traducción.
           const headerContentES = {
             title_es: blogTransES?.title || blogPost.title || '',
             excerpt_es: blogTransES?.excerpt || blogPost.excerpt || '',
-            cover_image: blogPost.cover_image,
+            cover_image: blogPost.cover_image, // <--- Este es el valor real
             author: blogPost.author,
             type: blogPost.type,
             category_name: blogPost.category_name,
@@ -214,20 +215,38 @@ export function AdminVisualEditor() {
         supabaseAPI.getUniversalContent(type, id || 'footer', 'en')
       ]);
 
+      // Resolver el objeto de datos actual (no el estado React que es stale)
+      // page aún no se actualizó porque setPage() es asíncrono
+      let currentEntity: any = null;
+      if (type === 'legal') {
+        // legalPage ya fue resuelto arriba en este mismo bloque
+        // Re-fetch para tenerlo disponible aquí
+        let rawLegalCurrent = await supabaseAPI.getLegalPageById(id || '');
+        currentEntity = Array.isArray(rawLegalCurrent) ? rawLegalCurrent[0] : rawLegalCurrent;
+        if (!currentEntity || Object.keys(currentEntity).length === 0) {
+          const allP = await supabaseAPI.getLegalPages();
+          currentEntity = allP.find((p: any) => p.id === id || p.slug === id);
+        }
+      }
+
       const headerContentES = {
-        title_es: type === 'legal' ? page?.title_es : page?.translation?.title || page?.title,
-        excerpt_es: type === 'legal' ? '' : page?.translation?.excerpt || page?.excerpt,
-        cover_image: page?.cover_image,
-        author: page?.author,
+        title_es: type === 'legal'
+          ? (currentEntity?.title_es || '')
+          : (page?.translation?.title || page?.title || ''),
+        excerpt_es: type === 'legal' ? '' : (page?.translation?.excerpt || page?.excerpt || ''),
+        cover_image: type === 'legal' ? '' : (page?.cover_image || ''),
+        author: type === 'legal' ? '' : (page?.author || ''),
         type: page?.type,
         category_name: page?.category_name
       };
 
       const headerContentEN = {
-        title_en: type === 'legal' ? page?.title_en : page?.translation?.title || page?.title,
-        excerpt_en: type === 'legal' ? '' : page?.translation?.excerpt || page?.excerpt,
-        cover_image: page?.cover_image,
-        author: page?.author,
+        title_en: type === 'legal'
+          ? (currentEntity?.title_en || '')
+          : (page?.translation?.title || page?.title || ''),
+        excerpt_en: type === 'legal' ? '' : (page?.translation?.excerpt || page?.excerpt || ''),
+        cover_image: type === 'legal' ? '' : (page?.cover_image || ''),
+        author: type === 'legal' ? '' : (page?.author || ''),
         type: page?.type,
         category_name: page?.category_name
       };
@@ -261,8 +280,20 @@ export function AdminVisualEditor() {
         const sectionsArrayEN = Array.isArray(sEN) ? sEN : [];
         
         if (type === 'blog' || type === 'legal') {
-           setSectionsES([headerSectionES, ...sectionsArrayES]);
-           setSectionsEN([headerSectionEN, ...sectionsArrayEN]);
+           const INTERNAL_TYPES = ['blog-text', 'rich-text', 'blog-intro', 'blog-quote', 'blog-list', 'blog-image', 'blog-divider'];
+           
+           // Para legales, filtramos ESTRICTAMENTE solo contenido interno (sin CTAs, banners, etc)
+           // Para blogs, solemos permitir CTAs al final, así que solo filtramos en legales
+           const filteredES = type === 'legal' 
+             ? sectionsArrayES.filter(s => INTERNAL_TYPES.includes(s.type))
+             : sectionsArrayES;
+           
+           const filteredEN = type === 'legal'
+             ? sectionsArrayEN.filter(s => INTERNAL_TYPES.includes(s.type))
+             : sectionsArrayEN;
+
+           setSectionsES([headerSectionES, ...filteredES]);
+           setSectionsEN([headerSectionEN, ...filteredEN]);
            setActiveSectionId('page-header');
         } else {
            setSectionsES(sectionsArrayES);
@@ -304,23 +335,32 @@ export function AdminVisualEditor() {
         const realSectionsEN = sectionsEN.filter(s => s.id !== 'page-header');
         
         // Guardar metadatos si han cambiado
-        const headerES = sectionsES.find(s => s.id === 'page-header')?.content;
-        const headerEN = sectionsEN.find(s => s.id === 'page-header')?.content;
+        let headerES = sectionsES.find(s => s.id === 'page-header')?.content;
+        let headerEN = sectionsEN.find(s => s.id === 'page-header')?.content;
+
+        // Fallback: Si por alguna razón el header ya no está en el array (ej. filtrado accidental)
+        // intentamos recuperarlo de los datos actuales del post/página para no perder la imagen
+        if (!headerES && type === 'blog') {
+           console.log("⚠️ [EDITOR-SAVE] Header no encontrado en secciones, usando fallback de metadatos...");
+           headerES = {
+             cover_image: page?.cover_image,
+             author: page?.author,
+             type: page?.type,
+             category_name: page?.category_name,
+             title_es: page?.translationES?.title || page?.title || '',
+             excerpt_es: page?.translationES?.excerpt || page?.excerpt || '',
+           };
+        }
 
         console.log(`🔍 [EDITOR-SAVE] DEBUG - type: ${type}, finalId: ${finalId}`);
         console.log(`🔍 [EDITOR-SAVE] DEBUG - headerES:`, headerES);
-        console.log(`🔍 [EDITOR-SAVE] DEBUG - realSectionsES (${realSectionsES.length}):`, realSectionsES);
-        console.log(`🔍 [EDITOR-SAVE] DEBUG - realSectionsEN (${realSectionsEN.length}):`, realSectionsEN);
 
         if (type === 'blog') {
-          // SIEMPRE guardar las secciones del blog via updateBlogPostTranslation
-          // El guardado de contenido NO depende del header
-          console.log(`📝 [EDITOR-SAVE] Guardando secciones blog directamente via updateBlogPostTranslation...`);
+          console.log(`📝 [EDITOR-SAVE] Guardando secciones blog...`);
           
           await Promise.all([
             supabaseAPI.updateBlogPostTranslation(finalId, 'es', {
               content: JSON.stringify(realSectionsES),
-              // Solo incluir metadatos si el header fue cargado/modificado
               ...(headerES ? {
                 title: headerES.title_es,
                 excerpt: headerES.excerpt_es,
@@ -341,9 +381,8 @@ export function AdminVisualEditor() {
             })
           ]);
 
-          // Actualizar metadatos globales del post si el header fue tocado
           if (headerES) {
-            console.log(`🖼️ [EDITOR-SAVE] Actualizando metadatos del post (cover, author, type)...`);
+            console.log(`%c🖼️ [DATABASE UPDATE] Guardando Portada: ${headerES.cover_image}`, "color: #007bff; font-weight: bold;");
             await supabaseAPI.updateBlogPostMetadata(finalId, {
                author: headerES.author,
                cover_image: headerES.cover_image,
@@ -352,7 +391,12 @@ export function AdminVisualEditor() {
             });
           }
 
-          console.log(`✅ [EDITOR-SAVE] Blog guardado completamente.`);
+          // Limpiar caché para que el sitio público vea los cambios inmediatamente
+          supabaseAPI._invalidateCache('blog-posts-all');
+          supabaseAPI._invalidateCache('blog-posts-published');
+          supabaseAPI._invalidateCache(`blog-post-${finalId}`); // Invalida también el post específico
+
+          console.log(`✅ [EDITOR-SAVE] Blog guardado.`);
 
         } else if (type === 'legal') {
           if (headerES) {
@@ -468,8 +512,15 @@ export function AdminVisualEditor() {
 
   const handleViewLive = () => {
     if (!page?.slug) return;
-    const slug = page.slug.replace(/^page-/, '');
-    window.open(slug === 'home' ? '/' : `/${slug}`, '_blank');
+    // Limpiamos prefijos y slashes iniciales para evitar que //lo-que-sea sea tratado como un dominio
+    const cleanSlug = page.slug.replace(/^page-/, '').replace(/^\/+/, '');
+    
+    let path = `/${cleanSlug}`;
+    if (type === 'blog') path = `/blog/${cleanSlug}`;
+    else if (type === 'legal') path = `/legal/${cleanSlug}`;
+    else if (cleanSlug === 'home' || cleanSlug === '') path = '/';
+
+    window.open(path, '_blank');
   };
 
   if (loading) {

@@ -34,40 +34,53 @@ export function BlogPost() {
 
   useEffect(() => {
     const loadPost = async () => {
-      try {
-        const allPosts = await supabaseAPI.getBlogPosts('published');
-        const postFound = allPosts.find((p: any) => p.slug === slug);
+        setLoading(true);
+        try {
+          // 1. Primero intentamos buscar por slug en la lista (para rapidez)
+          const allPosts = await supabaseAPI.getBlogPosts('published');
+          let postFound = allPosts.find((p: any) => p.slug === slug);
+  
+          // 2. CRÍTICO: Si lo encontramos en la lista, hacemos un fetch individual 
+          // para asegurarnos de tener la IMAGEN DE PORTADA más reciente (bypass caché)
+          if (postFound) {
+            console.log("🔍 [BlogPost] Post encontrado en lista, verificando versión fresca del servidor...");
+            const freshPost = await supabaseAPI.getBlogPostById(postFound.id);
+            if (freshPost) {
+               console.log("✨ [BlogPost] Versión fresca recuperada:", freshPost.cover_image);
+               postFound = { ...postFound, ...freshPost };
+            }
+          }
 
-        if (!postFound) {
-          setError('Post no encontrado');
+          if (!postFound) {
+            setError('Post no encontrado');
+            setLoading(false);
+            return;
+          }
+
+          const translation = await supabaseAPI.getBlogPostTranslation(postFound.id, language);
+          const relations = await supabaseAPI.getBlogPostCategories(postFound.id);
+          const allCategories = await supabaseAPI.getBlogCategories();
+  
+          const categoryNames: Record<string, string> = {};
+          for (const category of allCategories) {
+            const categoryTranslation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
+            categoryNames[category.id] = categoryTranslation.name || category.slug;
+          }
+
+          const category_id = relations.length > 0 ? relations[0].category_id : undefined;
+
+          setPost({
+            ...postFound,
+            translation,
+            category_id,
+            category_name: category_id ? categoryNames[category_id] || 'Sin categoría' : 'Sin categoría'
+          });
+        } catch (err) {
+          setError('Error al cargar el post');
+          console.error('Error loading blog post:', err);
+        } finally {
           setLoading(false);
-          return;
         }
-
-        const translation = await supabaseAPI.getBlogPostTranslation(postFound.id, language);
-        const relations = await supabaseAPI.getBlogPostCategories(postFound.id);
-        const allCategories = await supabaseAPI.getBlogCategories();
-
-        const categoryNames: Record<string, string> = {};
-        for (const category of allCategories) {
-          const categoryTranslation = await supabaseAPI.getBlogCategoryTranslation(category.id, language);
-          categoryNames[category.id] = categoryTranslation.name || category.slug;
-        }
-
-        const category_id = relations.length > 0 ? relations[0].category_id : undefined;
-
-        setPost({
-          ...postFound,
-          translation,
-          category_id,
-          category_name: category_id ? categoryNames[category_id] || 'Sin categoría' : 'Sin categoría'
-        });
-      } catch (err) {
-        setError('Error al cargar el post');
-        console.error('Error loading blog post:', err);
-      } finally {
-        setLoading(false);
-      }
     };
 
     loadPost();
