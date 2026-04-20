@@ -10,27 +10,27 @@ export function Navigation() {
   const navigate = useNavigate();
 
   const scrollToSection = (sectionId: string) => {
-    const handleScroll = () => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        const isHome = window.location.pathname === "/";
-        const headerOffset = isHome ? 80 : 80; 
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth"
-        });
+    const isHome = window.location.pathname === "/";
+    
+    // ✅ Eliminar el carácter '#' si viene incluido
+    const cleanId = sectionId.replace('#', '');
+    
+    if (isHome) {
+      // ✅ Simplemente actualizamos el hash para que Home.tsx (el motor inteligente) tome el control
+      window.location.hash = cleanId;
+      
+      // Forzar actualización si el hash ya era el mismo (para repetir el scroll si el usuario está perdido)
+      if (window.location.hash === '#' + cleanId) {
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
       }
-    };
-
-    if (window.location.pathname === "/") {
-      handleScroll();
     } else {
+      // ✅ Si no estamos en Home, guardamos el destino y navegamos.
+      // Al llegar a Home, el useEffect de targetAnchor lo detectará.
+      sessionStorage.setItem('bx_return_section', cleanId);
       navigate("/");
-      setTimeout(handleScroll, 800);
     }
+    
+    setMobileMenuOpen(false);
   };
 
   return (

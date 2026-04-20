@@ -414,13 +414,14 @@ export function AdminVisualEditor() {
         // intentamos recuperarlo de los datos actuales del post/página para no perder la imagen
         if (!headerES && type === 'blog') {
            console.log("⚠️ [EDITOR-SAVE] Header no encontrado en secciones, usando fallback de metadatos...");
+           const pAny = page as any;
            headerES = {
-             cover_image: page?.cover_image,
-             author: page?.author,
-             type: page?.type,
-             category_name: page?.category_name,
-             title_es: page?.translationES?.title || page?.title || '',
-             excerpt_es: page?.translationES?.excerpt || page?.excerpt || '',
+             cover_image: pAny?.cover_image,
+             author: pAny?.author,
+             type: pAny?.type,
+             category_name: pAny?.category_name,
+             title_es: pAny?.translationES?.title || pAny?.title || '',
+             excerpt_es: pAny?.translationES?.excerpt || pAny?.excerpt || '',
            };
         }
 

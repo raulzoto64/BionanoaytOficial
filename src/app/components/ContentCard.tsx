@@ -111,6 +111,12 @@ export function ContentCard({ type, data, sectionId, from }: ContentCardProps) {
             <Link 
               to={`/blog/${post.slug}`}
               state={{ from: from || 'blog', sectionId: sectionId || `post-${post.id}` }}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem('bx_return_section', sectionId || `post-${post.id}`);
+                  sessionStorage.setItem('bx_return_from', window.location.pathname);
+                }
+              }}
               className="text-[#1C5D15] text-sm font-semibold flex items-center gap-1 hover:text-[#19FF00] transition-colors"
             >
               {language === 'es' ? 'Leer más' : 'Read more'}
@@ -135,6 +141,12 @@ export function ContentCard({ type, data, sectionId, from }: ContentCardProps) {
           <Link 
             to={member.slug ? `/ecosystem/${member.slug}` : '#'}
             state={{ from: from || 'ecosystem', sectionId: sectionId || 'ecosystem' }}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem('bx_return_section', sectionId || 'ecosystem');
+                sessionStorage.setItem('bx_return_from', window.location.pathname);
+              }
+            }}
             className="flex flex-col h-full group"
           >
             <div className="flex items-center gap-4 mb-3 shrink-0">

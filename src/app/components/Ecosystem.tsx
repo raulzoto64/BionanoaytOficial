@@ -210,6 +210,12 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
                         id={`member-${member.id}`}
                         to={member.slug ? `/ecosystem/${member.slug}` : '#'}
                         state={{ from: 'home', sectionId }}
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            sessionStorage.setItem('bx_return_section', sectionId || 'ecosystem');
+                            sessionStorage.setItem('bx_return_from', window.location.pathname);
+                          }
+                        }}
                         className="block h-full group"
                       >
                         <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#629960]/10 group-hover:border-[#19FF00] flex flex-col h-full mx-1">

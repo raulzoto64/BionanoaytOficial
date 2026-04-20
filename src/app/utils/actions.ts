@@ -43,6 +43,12 @@ export const handleAction = (type: string | undefined, value: string | undefined
   const normalizedType = type || resolveCtaAction(value) || 'url';
 
   console.log('🔘 [ACTION] Triggering:', { type: normalizedType, value, state });
+  
+  // ✅ Guardar origen para efecto de "regreso perfecto"
+  if (state?.sectionId && typeof window !== 'undefined') {
+    sessionStorage.setItem('bx_return_section', state.sectionId);
+    sessionStorage.setItem('bx_return_from', window.location.pathname);
+  }
 
   if (normalizedType === 'popup') {
     // OPEN POPUP — fire custom event; Layout's useExitIntent listens to this

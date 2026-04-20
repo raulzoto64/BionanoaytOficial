@@ -12,12 +12,15 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 import { useDatabase } from "../hooks/useDatabase";
 import { useNavigationType } from "react-router";
+import { API_BASE_URL, getApiHeaders } from "../data/apiConfig";
 
 export function Home() {
   const { language } = useLanguage();
   const { updateTrigger } = useDatabase();
   const navigationType = useNavigationType();
   
+  console.log("🏠 [HOME-CORE] Renderizado de Home detectado.");
+
   const [pageContent, setPageContent] = useState<PageContent | null>(() => 
     supabaseAPI.getCachedData(`page-content-page-home-${language}`)
   );
@@ -25,77 +28,142 @@ export function Home() {
     (Product & { translation: ProductTranslation; categoryName: string })[]
   >(() => supabaseAPI.getCachedData(`home-products-ready-${language}`) || []);
 
-  // Sistema de Renderizado Progresivo Temporal
   const [renderedSectionsCount, setRenderedSectionsCount] = useState(0);
-  const startTime = performance.now();
   
-  // ✅ Detectar si estamos en modo retorno o carga por ancla (#)
-  const [targetAnchor] = useState(() => 
-    typeof window !== 'undefined' ? (sessionStorage.getItem('bx_return_section') || window.location.hash.replace('#', '')) : null
-  );
+  const [targetAnchor, setTargetAnchor] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
 
-  // ✅ 1. Renderizado Progresivo Inteligente
+    // Detectar si es una recarga física (F5)
+    const forms = window.performance.getEntriesByType('navigation');
+    const isReload = forms.length > 0 && (forms[0] as any).type === 'reload';
+
+    if (isReload) {
+      console.log(`🔄 [HOME-CORE] Recarga detectada en INIT. Ignorando hash.`);
+      if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
+      sessionStorage.removeItem('bx_return_section');
+      return null;
+    }
+
+    const initial = sessionStorage.getItem('bx_return_section') || window.location.hash.replace('#', '');
+    if (initial) console.log(`🎯 [HOME-CORE] Ancla inicial detectada: #${initial}`);
+    return initial;
+  });
+
   useEffect(() => {
-    // Si NO tenemos datos cargados aun: no hacemos nada
+    // ✅ DETECTOR DE RECARGA (F5): Si se recarga físicamente, mandamos a "/" (arriba)
+    const isReload = window.performance
+      .getEntriesByType('navigation')
+      .map((nav) => (nav as any).type)
+      .includes('reload');
+
+    if (isReload && window.location.hash) {
+      console.log("🔄 [HOME-CORE] Recarga detectada. Limpiando hash para empezar en el top.");
+      window.history.replaceState(null, '', window.location.pathname);
+      setTargetAnchor(null);
+      sessionStorage.removeItem('bx_return_section');
+    }
+
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      console.log(`🔗 [HOME-CORE] Cambio de HASH detectado: #${hash}`);
+      if (hash) setTargetAnchor(hash);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // ✅ 1. Renderizado Progresivo Inteligente (Modo Relámpago si hay ancla)
+  useEffect(() => {
     if (!pageContent || homeProducts.length === 0) return;
 
     const totalSections = pageContent.sections.filter(s => s.visible && s.type !== "hero").length;
-    let current = 0;
     
-    // ✅ SI HAY UN ANCLA O RETORNO: MOSTRAR TODO YA
     if (targetAnchor || (navigationType === 'POP' || navigationType === 'PUSH')) {
+      // MODO RELÁMPAGO: Renderizar todo de golpe
       setRenderedSectionsCount(totalSections);
     } else {
-      // ✅ PRIMERA CARGA LIMPIA: Mostramos 2 secciones inmediatamente
+      // MODO PROGRESIVO: Cargar suavemente
       setRenderedSectionsCount(Math.min(2, totalSections));
-      
-      // ✅ El resto se van agregando una cada 75ms en segundo plano
+      let current = 0;
       const interval = setInterval(() => {
         current++;
         const next = Math.min(2 + current, totalSections);
         setRenderedSectionsCount(next);
         if (next >= totalSections) clearInterval(interval);
       }, 75);
-
       return () => clearInterval(interval);
     }
   }, [pageContent, homeProducts, navigationType, targetAnchor]);
 
-  // ✅ 2. Scroll automático al ancla o retorno
+  // ✅ 2. Motor de Scroll con Auto-Corrección (Deep Telemetry)
   useEffect(() => {
     if (!pageContent || !targetAnchor) return;
 
+    console.log(`🔍 [SCROLL-ENGINE] Buscando destino: #${targetAnchor}`);
+    
     let attempts = 0;
-    const checkInterval = setInterval(() => {
-      attempts++;
+    const maxAttempts = 100;
+    
+    const scrollToTarget = () => {
       const element = document.getElementById(targetAnchor) || 
                      document.querySelector(`[data-section-type="${targetAnchor}"]`) ||
                      document.querySelector(`[data-section-id="${targetAnchor}"]`);
 
       if (element) {
-        clearInterval(checkInterval);
+        const rect = element.getBoundingClientRect();
+        const currentScrollY = window.pageYOffset;
+        const targetTop = rect.top + currentScrollY - 80;
         
-        const delay = targetAnchor.includes('blog') || targetAnchor.includes('ecosystem') ? 800 : 400;
+        console.log(`📍 [SCROLL-ENGINE] Elemento encontrado. Posición actual Y: ${targetTop.toFixed(0)}px`);
 
+        window.scrollTo({
+          top: targetTop,
+          behavior: 'smooth'
+        });
+
+        // Verificación de estabilidad (Causa raíz: Layout Shift)
         setTimeout(() => {
-          element.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
-          });
+          const freshRect = element.getBoundingClientRect();
+          const freshTargetTop = freshRect.top + window.pageYOffset - 80;
+          const shift = Math.abs(freshTargetTop - targetTop);
           
-          // Limpiar referencias
-          sessionStorage.removeItem('bx_return_section');
-          sessionStorage.removeItem('bx_return_from');
-        }, delay);
+          if (shift > 5) {
+            console.warn(`⚠️ [SCROLL-ENGINE] DETECTADO DESPLAZAMIENTO: La sección se movió ${shift.toFixed(0)}px durante el scroll. Re-ajustando...`);
+            window.scrollTo({ top: freshTargetTop, behavior: 'smooth' });
+          } else {
+            console.log(`✅ [SCROLL-ENGINE] Destino alcanzado con precisión.`);
+          }
+          
+          // ✅ Limpieza Final: Una vez que estamos seguros de haber llegado
+          if (Math.abs(freshRect.top - 80) < 60) {
+            console.log("🧹 [SCROLL-ENGINE] Destino consolidado. Limpiando ancla de la URL.");
+            sessionStorage.removeItem('bx_return_section');
+            sessionStorage.removeItem('bx_return_from');
+            
+            // Eliminar el hash de la URL sin recargar la página
+            window.history.replaceState(null, '', window.location.pathname);
+            setTargetAnchor(null);
+          }
+        }, 800);
 
-      } else if (attempts > 60) {
-        clearInterval(checkInterval);
-        sessionStorage.removeItem('bx_return_section');
+        return true;
       }
-    }, 50);
+      return false;
+    };
 
-    return () => clearInterval(checkInterval);
+    const interval = setInterval(() => {
+      attempts++;
+      const success = scrollToTarget();
+      if (!success && attempts % 10 === 0) {
+        console.log(`⏳ [SCROLL-ENGINE] Intento ${attempts}: Esperando a que #${targetAnchor} aparezca en el DOM...`);
+      }
+      if (success || attempts > maxAttempts) {
+        if (!success) console.error(`❌ [SCROLL-ENGINE] Error: No se pudo encontrar #${targetAnchor} tras 10 segundos.`);
+        clearInterval(interval);
+      }
+    }, 250);
+
+    return () => clearInterval(interval);
   }, [pageContent, renderedSectionsCount, targetAnchor]);
 
   useEffect(() => {
@@ -130,7 +198,6 @@ export function Home() {
       );
 
       setHomeProducts(productsWithTranslations);
-      // Guardar el resultado procesado para carga instantánea la próxima vez
       supabaseAPI._saveToCache(`home-products-ready-${language}`, productsWithTranslations);
     } catch (error) {
       console.error("Error loading home products:", error);
@@ -159,12 +226,10 @@ export function Home() {
         keywords={seoData.metaKeywords}
       />
 
-        {/* Hero siempre primero */}
-        <div id="hero" style={{ minHeight: '100vh', overflow: 'hidden' }}>
-          <Hero content={heroContent} />
-        </div>
+      <div id="hero" style={{ minHeight: '100vh', overflow: 'hidden' }}>
+        <Hero content={heroContent} />
+      </div>
 
-      {/* Secciones dinámicas: se renderizan TODAS las secciones guardadas en BD */}
       {pageContent ? (
         <>
           {pageContent.sections
@@ -182,7 +247,6 @@ export function Home() {
             ))}
         </>
       ) : (
-        /* Skeleton de carga */
         <div className="py-20 bg-white">
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid md:grid-cols-3 gap-10">

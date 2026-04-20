@@ -118,7 +118,12 @@ export function VisualEditorSidebar({
       if (targetLang === 'en' || targetLang === 'both') nextEN.content[field] = val;
     }
     
-    onChange(nextES, nextEN);
+    if (targetLang === 'es' || targetLang === 'both') {
+      onUpdateSection(sectionES.id, nextES.content, 'es');
+    }
+    if (targetLang === 'en' || targetLang === 'both') {
+      onUpdateSection(sectionEN.id, nextEN.content, 'en');
+    }
   };
 
   /**

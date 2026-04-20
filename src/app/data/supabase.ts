@@ -83,6 +83,15 @@ export interface PageContent {
 export type PageWithContent = Page & {
   contentES?: PageContent;
   contentEN?: PageContent;
+  // Campos opcionales para compatibilidad en el editor visual (Blog/Productos)
+  title?: string;
+  excerpt?: string;
+  cover_image?: string;
+  author?: string;
+  category_name?: string;
+  translation?: any;
+  translationES?: any;
+  translationEN?: any;
 };
 
 export interface Section {

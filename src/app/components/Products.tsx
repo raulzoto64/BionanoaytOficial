@@ -81,6 +81,12 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
               key={product.id}
               to={`/products/${product.slug}`}
               state={{ from: 'home', sectionId }}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem('bx_return_section', sectionId || 'products');
+                  sessionStorage.setItem('bx_return_from', window.location.pathname);
+                }
+              }}
               className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#629960]/20 hover:border-[#19FF00] group relative flex flex-col"
             >
               {product.featured && (

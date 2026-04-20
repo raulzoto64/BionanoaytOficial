@@ -920,15 +920,20 @@ export function DynamicSection({
     }
   };
 
-  // Si estamos regresando a una sección específica, FORZAMOS la carga de TODAS las secciones
-  // para asegurar que la altura de la página sea 100% estable y el scroll sea preciso.
-  const isTargeting = !!targetAnchor;
+  // SI HAY UN OBJETIVO (ANCLA), FORZAMOS LA CARGA DE TODO EL DOCUMENTO
+  // Esto es vital para que las secciones intermedias tengan su altura real 
+  // y el scrollbar no "crezca" mientras bajamos.
+  const isAnyTargetActive = !!targetAnchor;
 
-  const shouldForceLoad = isTargeting ||
+  const shouldForceLoad = isAnyTargetActive ||
     index < 1 ||
-    section.id === targetAnchor ||
-    section.type === targetAnchor ||
     section.type === 'hero';
+
+  useEffect(() => {
+    if (isAnyTargetActive) {
+      console.log(`🔌 [DYNAMIC-SECTION] Carga prioritaria activada para "${section.type}" (id: ${section.id}) debido a navegación por ancla: #${targetAnchor}`);
+    }
+  }, [isAnyTargetActive, targetAnchor]);
 
 
   return (
