@@ -2,9 +2,31 @@ import { useState, useEffect } from 'react';
 import { LeadData } from './types';
 import { PopupBase } from './PopupBase';
 import { ThankYouStep } from './ThankYouStep';
-import { supabaseAPI, Form, FormField } from '../../data/supabase';
+import { supabaseAPI, Form } from '../../data/supabase';
 import { Loader2, Mail, User, ChevronRight, Check } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+
+interface FormField {
+  id: string;
+  label_es: string;
+  label_en: string;
+  name: string;
+  type: 'text' | 'email' | 'textarea' | 'select' | 'checkbox' | 'tel';
+  required: boolean;
+  placeholder_es?: string;
+  placeholder_en?: string;
+  options?: string[];
+}
+
+interface LocalForm extends Form {
+  title_es?: string;
+  title_en?: string;
+  subtitle_es?: string;
+  subtitle_en?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface ExitIntentPopupProps {
   popupId: string | null;
@@ -15,7 +37,7 @@ interface ExitIntentPopupProps {
 export function ExitIntentPopup({ popupId, onClose, onSubmit }: ExitIntentPopupProps) {
   const { language } = useLanguage();
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [formConfig, setFormConfig] = useState<Form | null>(null);
+  const [formConfig, setFormConfig] = useState<LocalForm | null>(null);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
@@ -79,7 +101,7 @@ export function ExitIntentPopup({ popupId, onClose, onSubmit }: ExitIntentPopupP
     try {
       const form = await supabaseAPI.getFormById(id);
       if (form) {
-        setFormConfig(form);
+        setFormConfig(form as LocalForm);
       }
     } catch (error) {
       console.error('Error loading form config:', error);

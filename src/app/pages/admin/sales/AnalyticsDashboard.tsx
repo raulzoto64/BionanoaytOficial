@@ -4,8 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 import { Loader2, Users, ShoppingCart, CreditCard, CheckCircle, Calendar } from 'lucide-react';
-import { format, subDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { subDays } from 'date-fns';
 
 export function AnalyticsDashboard() {
   const [funnelData, setFunnelData] = useState<any>(null);
@@ -27,10 +26,10 @@ export function AnalyticsDashboard() {
       if (timeRange === 'all') start = new Date(2020, 0, 1);
 
       const stats = await supabaseAPI.getFunnelStats(start.toISOString(), end.toISOString());
-      console.log('📊 [Analytics] Funnel Stats received:', stats);
+
       setFunnelData(stats);
     } catch (error) {
-      console.error('Error loading analytics', error);
+
     } finally {
       setLoading(false);
     }

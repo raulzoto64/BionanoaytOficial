@@ -100,7 +100,7 @@ export function Blog() {
           };
         });
 
-        console.log(`📊 [BLOG] Artículos procesados (${language}):`, postsWithCategories.length);
+
         
         setPosts(postsWithCategories);
         setFilteredPosts(postsWithCategories);
@@ -120,12 +120,12 @@ export function Blog() {
 
   // --- FILTRADO LÓGICO ---
   useEffect(() => {
-    console.log(`🔍 [FILTER] Aplicando filtro: ${activeFilter} sobre ${posts.length} posts`);
+
     if (activeFilter === 'all') {
       setFilteredPosts(posts);
     } else {
       const filtered = posts.filter(post => post.type === activeFilter);
-      console.log(`✅ [FILTER] Resultado: ${filtered.length} posts tipo ${activeFilter}`);
+
       setFilteredPosts(filtered);
     }
   }, [activeFilter, posts]);
@@ -137,11 +137,11 @@ export function Blog() {
         acc[p.type] = (acc[p.type] || 0) + 1;
         return acc;
       }, {});
-      console.log("📊 [STATS] Distribución en memoria:", counts);
+
     }
 
     if (!loading && posts.length === 0) {
-      console.log("🔄 [BLOG] Sincronizando con la base de datos...");
+
       const timer = setTimeout(() => {
         // Bloqueamos el cache manual para esta petición de rescate
         supabaseAPI._invalidateCache(`blog-posts-ready-${language}`);
@@ -175,7 +175,7 @@ export function Blog() {
         renderSection ahora sí procesará el hero-blog.
       */}
       {sections && sections.length > 0 ? (
-        sections.map((section: any) => renderSection(section))
+        sections.map((section: any, index: number) => renderSection(section, index))
       ) : (
         /* FALLBACK: Si no hay diseño en la DB, mostramos un Hero básico y el listado */
         <>
@@ -196,7 +196,7 @@ export function Blog() {
 }
 
 export function BlogSectionPreview({ 
-  section, language, index, 
+  section, language, 
   filteredPosts = [], activeFilter = 'all', setActiveFilter = () => {} 
 }: any) {
   switch (section.type) {

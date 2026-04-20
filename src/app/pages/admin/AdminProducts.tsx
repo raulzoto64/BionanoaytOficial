@@ -11,7 +11,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -154,12 +153,6 @@ export function AdminProducts() {
     setDialogOpen(true);
   };
 
-  const handleEdit = async (product: Product) => {
-    setEditingProduct(product);
-    const translation = await supabaseAPI.getProductTranslation(product.id, currentLang);
-    setEditingTranslation(translation);
-    setDialogOpen(true);
-  };
 
   const handleSave = async () => {
   if (!editingProduct || !editingTranslation) return;

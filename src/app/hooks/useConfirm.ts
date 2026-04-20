@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ConfirmModalProps } from '../ui/ConfirmModal';
+import { ConfirmModalProps } from '../components/ui/ConfirmModal';
 
 interface ConfirmConfig extends Omit<ConfirmModalProps, 'isOpen' | 'onClose'> {}
 

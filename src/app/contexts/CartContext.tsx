@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabaseAPI, CartItemWithProduct } from '../data/supabase';
 import { useAuthContext } from './AuthContext';
-import { toast } from 'sonner';
 
 interface CartContextType {
   items: CartItemWithProduct[];

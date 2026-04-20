@@ -36,13 +36,13 @@ export const resolveCtaAction = (value: string | undefined): 'popup' | 'route' |
  */
 export const handleAction = (type: string | undefined, value: string | undefined, navigate: any, state?: any) => {
   if (!value) {
-    console.warn('⚠️ [ACTION] Attempted to trigger action without value');
+
     return;
   }
 
   const normalizedType = type || resolveCtaAction(value) || 'url';
 
-  console.log('🔘 [ACTION] Triggering:', { type: normalizedType, value, state });
+
   
   // ✅ Guardar origen para efecto de "regreso perfecto"
   if (state?.sectionId && typeof window !== 'undefined') {

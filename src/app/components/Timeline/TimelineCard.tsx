@@ -1,4 +1,4 @@
-import * as React from "react";
+
 import { Lightbulb, FileCheck, TrendingUp } from "lucide-react";
 import { TextWithTooltip } from "./index";
 

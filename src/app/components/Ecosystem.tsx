@@ -47,7 +47,7 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
   const [loading, setLoading] = useState(() => 
     ecosystemPreloadCache && ecosystemPreloadCache.language === language ? false : true
   );
-  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [, setCarouselApi] = useState<CarouselApi | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
     try {
       const ecosystemMembers = await supabaseAPI.getEcosystemMembers();
       
-      const translationPromises = ecosystemMembers.map(async (member) => {
+      const translationPromises = ecosystemMembers.map(async (member: EcosystemMember) => {
         const translation = await supabaseAPI.getEcosystemMemberTranslation(member.id, language);
         return { id: member.id, translation };
       });

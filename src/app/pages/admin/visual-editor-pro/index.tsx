@@ -38,7 +38,7 @@ export function AdminVisualEditor() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [allEcosystemMembers, setAllEcosystemMembers] = useState<any[]>([]);
   const [allCategories, setAllCategories] = useState<any[]>([]);
-  const [allBlogPosts, setAllBlogPosts] = useState<any[]>([]);
+  const [allBlogPosts] = useState<any[]>([]);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [allForms, setAllForms] = useState<any[]>([]);
 
@@ -52,13 +52,13 @@ export function AdminVisualEditor() {
           supabaseAPI.getAllCategories(),
           supabaseAPI.getForms()
         ]);
-        console.log("📦 [EDITOR-FIX] Datos cargados:", { products: products.length, members: members.length, forms: forms.length });
+
         setAllProducts(products);
         setAllEcosystemMembers(members);
         setAllCategories(categories);
         setAllForms(forms || []);
       } catch (error) {
-        console.error("Error cargando datos del editor:", error);
+
       }
     };
     fetchData();
@@ -69,7 +69,7 @@ export function AdminVisualEditor() {
     const handleDeselectSection = () => {
       if (!['footer', 'legal', 'blog'].includes(type)) {
         setActiveSectionId(null);
-        console.log('[EDITOR] Todas las secciones desactivadas');
+
       }
     };
 
@@ -110,14 +110,12 @@ export function AdminVisualEditor() {
     setLoading(true);
     try {
       // 1. Cargar metadatos del objeto (si aplica)
-      let entityTitle = 'Cargando...';
       if (type === 'page' && id) {
         const allPages = await supabaseAPI.getAllPages();
         const pageObj = allPages.find((p: any) => p.id === id);
         if (pageObj) {
           setPage(pageObj as any);
-          console.log("📄 [EDITOR-LOAD] Página cargada:", pageObj);
-          entityTitle = pageObj.slug;
+
         }
       } else if (type === 'blog' && id) {
         const [blogPost, blogTransES, blogTransEN] = await Promise.all([
@@ -136,7 +134,6 @@ export function AdminVisualEditor() {
             translation: activeLanguage === 'es' ? blogTransES : blogTransEN
           };
           setPage(pageData as any);
-          entityTitle = blogPost.slug || 'Artículo';
           
           // Poblar contenido de cabecera con datos reales.
           // CRÍTICO: La imagen de portada viene del registro global blogPost, NO de la traducción.
@@ -198,8 +195,7 @@ export function AdminVisualEditor() {
           supabaseAPI.getProductTranslation(id, 'en')
         ]);
         
-        console.log(`📦 [EDITOR-LOAD] Producto:`, product);
-        console.log(`📖 [EDITOR-LOAD] Traducción ES:`, prodTransES);
+
         
         if (product) {
           const pageData = { 
@@ -209,7 +205,6 @@ export function AdminVisualEditor() {
             translation: activeLanguage === 'es' ? prodTransES : prodTransEN
           };
           setPage(pageData as any);
-          entityTitle = product.slug || 'Producto';
           
           const headerContentES = {
             name: prodTransES?.name || product.slug || '',
@@ -274,10 +269,8 @@ export function AdminVisualEditor() {
 
         if (legalPage) {
             setPage({ ...legalPage, slug: legalPage.slug || 'untitled-legal' } as any);
-            entityTitle = legalPage.slug || 'Sin título';
         }
       } else if (type === 'footer') {
-        entityTitle = 'Footer Global';
         setPage({ id: 'footer-global', slug: 'footer' } as any);
       }
 
@@ -326,7 +319,7 @@ export function AdminVisualEditor() {
       const headerSectionES = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentES };
       const headerSectionEN = { id: 'page-header', type: 'page-metadata' as any, order: -1, visible: true, content: headerContentEN };
 
-      console.log(`🔌 [EDITOR-LOAD] Raw results for ${type}:`, { sES, sEN });
+
 
       if (type === 'footer') {
         setSectionsES([ { id: 'footer-main', type: 'footer-settings' as any, order: 0, visible: true, content: sES } ]);
@@ -380,7 +373,7 @@ export function AdminVisualEditor() {
 
     } catch (err) {
       toast.error('Error al cargar contenido');
-      console.error(err);
+
     } finally {
       setLoading(false);
     }
@@ -413,7 +406,7 @@ export function AdminVisualEditor() {
         // Fallback: Si por alguna razón el header ya no está en el array (ej. filtrado accidental)
         // intentamos recuperarlo de los datos actuales del post/página para no perder la imagen
         if (!headerES && type === 'blog') {
-           console.log("⚠️ [EDITOR-SAVE] Header no encontrado en secciones, usando fallback de metadatos...");
+
            const pAny = page as any;
            headerES = {
              cover_image: pAny?.cover_image,
@@ -425,11 +418,10 @@ export function AdminVisualEditor() {
            };
         }
 
-        console.log(`🔍 [EDITOR-SAVE] DEBUG - type: ${type}, finalId: ${finalId}`);
-        console.log(`🔍 [EDITOR-SAVE] DEBUG - headerES:`, headerES);
+
 
         if (type === 'blog') {
-          console.log(`📝 [EDITOR-SAVE] Guardando secciones blog...`);
+
           
           await Promise.all([
             supabaseAPI.updateBlogPostTranslation(finalId, 'es', {
@@ -455,7 +447,7 @@ export function AdminVisualEditor() {
           ]);
 
           if (headerES) {
-            console.log(`%c🖼️ [DATABASE UPDATE] Guardando Portada: ${headerES.cover_image}`, "color: #007bff; font-weight: bold;");
+
             await supabaseAPI.updateBlogPostMetadata(finalId, {
                author: headerES.author,
                cover_image: headerES.cover_image,
@@ -473,10 +465,10 @@ export function AdminVisualEditor() {
           supabaseAPI._invalidateCache(`blog-translations-es`);
           supabaseAPI._invalidateCache(`blog-translations-en`);
 
-          console.log(`✅ [EDITOR-SAVE] Blog guardado.`);
+
 
         } else if (type === 'product') {
-           console.log(`📦 [EDITOR-SAVE] Guardando producto ${finalId}...`);
+
            // Asegurar que el slug no sea null
            const slugToSave = headerES?.name 
              ? headerES.name.toLowerCase()
@@ -506,7 +498,7 @@ export function AdminVisualEditor() {
            
            supabaseAPI._invalidateCache(`product-${finalId}`);
            supabaseAPI._invalidateCache('all-products');
-           console.log(`✅ [EDITOR-SAVE] Producto guardado.`);
+
 
         } else if (type === 'legal') {
           if (headerES) {
@@ -526,12 +518,21 @@ export function AdminVisualEditor() {
           ]);
         }
 
-        console.log(`💾 [EDITOR-SAVE] COMPLETADO - ${realSectionsES.length} secciones ES, ${realSectionsEN.length} secciones EN`);
+
       }
       
       toast.success('Cambios publicados con éxito');
+      
+      // Regresar a la página padre después de guardar con éxito
+      setTimeout(() => {
+        if (type === 'product') navigate('/admin/products');
+        else if (type === 'blog') navigate('/admin/blog/posts');
+        else if (type === 'legal') navigate('/admin/legal');
+        else if (type === 'footer') navigate('/admin/footer');
+        else navigate('/admin/content');
+      }, 1500);
     } catch (error) {
-      console.error('❌ Error saving:', error);
+
       toast.error('Error al guardar: ' + (error as Error).message);
     } finally {
       setSaving(false);
@@ -655,7 +656,13 @@ export function AdminVisualEditor() {
         
         <Toolbar 
           pageTitle={(page?.slug || 'Editor').replace(/page-/g, '').replace(/-/g, ' ')}
-          onBack={() => navigate('/admin/content')}
+          onBack={() => {
+            if (type === 'product') navigate('/admin/products');
+            else if (type === 'blog') navigate('/admin/blog/posts');
+            else if (type === 'legal') navigate('/admin/legal');
+            else if (type === 'footer') navigate('/admin/footer');
+            else navigate('/admin/content');
+          }}
           deviceView={deviceView}
           setDeviceView={setDeviceView}
           deviceOrientation={deviceOrientation}

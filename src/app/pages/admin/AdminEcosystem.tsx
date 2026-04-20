@@ -8,10 +8,11 @@ import { Badge } from '../../components/ui/badge';
 import { 
   FileText, 
   Edit, 
-  Save, 
   X, 
   Plus, 
   Trash2, 
+  Save,
+  Loader2,
   Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,7 +23,7 @@ import {
 } from '../../data/supabase';
 import { ImageUpload } from '../../components/ImageUpload';
 
-export const AdminEcosystem = forwardRef((props, ref) => {
+export const AdminEcosystem = forwardRef((_props, ref) => {
   const [members, setMembers] = useState<EcosystemMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<EcosystemMember | null>(null);
   const [translations, setTranslations] = useState<{ es: EcosystemMemberTranslation; en: EcosystemMemberTranslation }>({
@@ -31,6 +32,7 @@ export const AdminEcosystem = forwardRef((props, ref) => {
   });
   const [allTranslations, setAllTranslations] = useState<Map<string, { es: EcosystemMemberTranslation; en: EcosystemMemberTranslation }>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [loadingMember, setLoadingMember] = useState<string | null>(null);
   
   useImperativeHandle(ref, () => ({
@@ -42,9 +44,9 @@ export const AdminEcosystem = forwardRef((props, ref) => {
   }, []);
 
   const loadMembers = async () => {
-    setLoading(true);
+    if (members.length === 0) setLoading(true);
     try {
-      const allMembers = await supabaseAPI.getEcosystemMembers();
+      const allMembers = await supabaseAPI.getAllEcosystemMembers();
       setMembers(allMembers);
       
       // Cargar todas las traducciones
@@ -94,10 +96,13 @@ export const AdminEcosystem = forwardRef((props, ref) => {
   const handleSave = async () => {
     if (!selectedMember) return;
 
+    setIsSaving(true);
     try {
+      // Sanitizar datos para no enviar campos de solo lectura o IDs internos en el body
+      const { id, created_at, updated_at, ...updateData } = selectedMember;
       
       // Actualizar datos del miembro
-      await supabaseAPI.updateEcosystemMember(selectedMember.id, selectedMember);
+      await supabaseAPI.updateEcosystemMember(selectedMember.id, updateData);
 
       // Actualizar traducciones
       await Promise.all([
@@ -110,6 +115,8 @@ export const AdminEcosystem = forwardRef((props, ref) => {
       loadMembers();
     } catch (error) {
       toast.error('Error al guardar el miembro');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -229,10 +236,11 @@ export const AdminEcosystem = forwardRef((props, ref) => {
     setSelectedMember(updatedMember);
   };
 
-  if (loading) {
+  if (loading && !selectedMember) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-[#629960]">Cargando miembros...</p>
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <Loader2 className="w-10 h-10 text-[#1C5D15] animate-spin" />
+        <p className="text-[#629960] font-medium animate-pulse">Cargando ecosistema...</p>
       </div>
     );
   }
@@ -240,7 +248,7 @@ export const AdminEcosystem = forwardRef((props, ref) => {
   // Vista de edición
   if (selectedMember) {
     return (
-      <div>
+      <div className="p-4 md:p-6">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-3xl text-[#1C5D15] mb-2">
@@ -251,9 +259,21 @@ export const AdminEcosystem = forwardRef((props, ref) => {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-[#1C5D15] text-white hover:bg-[#629960]"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+            </Button>
             <Button onClick={handleCancel} variant="outline">
               <X className="w-4 h-4 mr-2" />
-              Cerrar Edición
+              Cerrar
             </Button>
             <Button
               onClick={handleDelete}
@@ -520,15 +540,29 @@ export const AdminEcosystem = forwardRef((props, ref) => {
             </div>
           </Card>
         </div>
+
+        <div className="mt-12 flex justify-center pb-12">
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            size="lg"
+            className="bg-[#1C5D15] text-white hover:bg-[#629960] px-12 py-6 rounded-2xl text-xl font-bold shadow-xl shadow-[#1C5D15]/20 transition-all hover:scale-105 active:scale-95"
+          >
+            {isSaving ? (
+              <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+            ) : (
+              <Save className="w-6 h-6 mr-3" />
+            )}
+            {isSaving ? 'Guardando cambios...' : 'Guardar Cambios del Miembro'}
+          </Button>
+        </div>
       </div>
     );
   }
 
   // Vista de lista
   return (
-    <div>
-
-
+    <div className="p-4 md:p-6">
       {/* Members Management */}
       <div>
         <div className="mb-8 flex items-center justify-between">

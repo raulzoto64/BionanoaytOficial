@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { Trash2, Plus, Minus, ShoppingBag, Truck, User, Mail, Phone, MapPin, Globe, CreditCard, ChevronRight, Loader2 } from "lucide-react";
+import { Plus, Minus, ShoppingBag, Truck, User, Mail, Phone, MapPin, Globe, CreditCard, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
 import { supabaseAPI, CartItemWithProduct } from "../data/supabase";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
@@ -157,7 +156,7 @@ export function Cart() {
 
       const itemsWithPrices = await Promise.all(
         items.map(async (item) => {
-          const priceInfo = await supabaseAPI.calculatePrice(item.product_id, item.quantity, item.packaging);
+          const priceInfo = await supabaseAPI.calculatePrice(item.product_id, item.quantity, item.packaging ?? '');
           return {
             ...item,
             pricePerUnit: priceInfo?.pricePerUnit || 0,
@@ -184,7 +183,7 @@ export function Cart() {
       const newQuantity = Math.max(1, item.quantity + delta);
       await supabaseAPI.updateCartItemQuantity(itemId, newQuantity);
       
-      const priceInfo = await supabaseAPI.calculatePrice(item.product_id, newQuantity, item.packaging);
+      const priceInfo = await supabaseAPI.calculatePrice(item.product_id, newQuantity, item.packaging ?? '');
 
       setCartItems((items) => {
         const mapped = items.map((i) => i.id === itemId ? {

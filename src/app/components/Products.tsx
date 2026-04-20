@@ -1,8 +1,8 @@
-import { ShoppingCart, Check, ArrowRight } from "lucide-react";
+import {Check, ArrowRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
 import { useLanguage } from "../contexts/LanguageContext";
-import { Product, ProductTranslation } from "../data/supabase";
+import { ProductTranslation } from "../data/supabase";
 import { handleAction } from "../utils/actions";
 
 interface ProductWithTranslation {
@@ -25,7 +25,8 @@ interface ProductsProps {
   isStoreLayout?: boolean;
 }
 
-export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActionType, sectionId, isStoreLayout }: ProductsProps) {
+
+export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActionType, sectionId}: ProductsProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   
@@ -89,7 +90,7 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
               }}
               className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#629960]/20 hover:border-[#19FF00] group relative flex flex-col"
             >
-              {product.featured && (
+              {!!product.featured && (
                 <div className="absolute top-4 right-4 z-10 bg-[#19FF00] text-[#1C5D15] px-3 py-1 rounded-full text-sm">
                   {t('products.most_popular')}
                 </div>

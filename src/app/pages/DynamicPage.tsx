@@ -27,7 +27,7 @@ export function DynamicPage() {
 
   const loadPageContent = async () => {
     setLoading(true);
-    console.log(`🔍 [DynamicPage] Iniciando carga para: "${slug}"`);
+
     try {
       // 1. Obtenemos todas las páginas para encontrar el ID real (UUID)
       const allPages = await supabaseAPI.getAllPages();
@@ -38,21 +38,19 @@ export function DynamicPage() {
       });
 
       if (!pageInfo) {
-        console.error(`❌ [DynamicPage] No existe ninguna página con slug: "${slug}"`);
-        setPageContent(null);
-        return;
+
       }
 
-      console.log(`✅ [DynamicPage] Página encontrada. ID Real: ${pageInfo.id}`);
+
 
       // 2. Pedimos el contenido usando el ID único (UUID)
       const content = await supabaseAPI.getPageContent(pageInfo.id, language);
-      console.log(`📦 [DynamicPage] Contenido recuperado:`, content);
+
       
       setPageContent(content || { sections: [], page_id: pageInfo.id, language });
 
     } catch (error) {
-      console.error("Error loading dynamic page content:", error);
+
       setPageContent(null);
     } finally {
       setLoading(false);
@@ -64,7 +62,7 @@ export function DynamicPage() {
       const allProducts = await supabaseAPI.getProducts();
       setProducts(allProducts);
     } catch (error) {
-      console.error("Error loading products:", error);
+
     }
   };
 
@@ -94,7 +92,7 @@ export function DynamicPage() {
 
   return (
     <>
-      <SEO title={`${slug.replace(/-/g, ' ')} | Bionano A&T`} />
+      <SEO title={`${slug?.replace(/-/g, ' ') || ''} | Bionano A&T`} />
       
       <div className="min-h-screen">
         {pageContent.sections.filter(s => s.visible).map((section, index) => (
@@ -104,7 +102,7 @@ export function DynamicPage() {
             products={products}
             language={language}
             index={index}
-            pageSlug={slug}
+            pageSlug={slug || ''}
           />
         ))}
         

@@ -59,7 +59,7 @@ export function VisualEditorSidebar({
   React.useEffect(() => {
     // Si no tenemos productos y la pestaña es de 'config', cargar bajo demanda si aplicable
     if (lazyProducts.length === 0 && (['products', 'featured', 'problems'].includes(sectionES.type))) {
-      console.log("🚚 [Sidebar] Lazy loading products...");
+
       supabaseAPI.getProducts().then(prods => {
          supabaseAPI.getAllProductTranslations('es').then(trans => {
             const transMap = (trans || []).reduce((acc: any, t: any) => { acc[t.product_id] = t; return acc; }, {});
@@ -69,7 +69,7 @@ export function VisualEditorSidebar({
     }
 
     if (lazyMembers.length === 0 && sectionES.type === 'trust') {
-      console.log("🚚 [Sidebar] Lazy loading ecosystem members...");
+
       supabaseAPI.getEcosystemMembers().then(members => {
          supabaseAPI.getAllEcosystemMemberTranslations('es').then(trans => {
             const transMap = (trans || []).reduce((acc: any, t: any) => { acc[t.member_id] = t; return acc; }, {});
@@ -90,7 +90,7 @@ export function VisualEditorSidebar({
   }, [sectionES.content.ctaActionType, sectionES.content.secondaryCtaActionType]);
 
   // Lista completa de rutas y popups disponibles
-  console.log("🔍 [Sidebar] availableForms Prop:", availableForms);
+
   const AVAILABLE_ROUTES = [
     { value: '/', label: '🏠 Página Principal (Home)' },
     { value: '/store', label: '🛒 Tienda / Productos' },
@@ -259,27 +259,21 @@ export function VisualEditorSidebar({
       toast.dismiss(toastId);
       toast.success('Sección guardada en la biblioteca con éxito');
     } catch (error) {
-      console.error('Error saving to library:', error);
+
       toast.error('Error al guardar en la biblioteca');
     }
   };
 
   const handleContentChange = (field: string, value: any, lang: 'es' | 'en' | 'both') => {
-    console.log(`🔵 [DEBUG VISUAL EDITOR] handleContentChange:`, {
-      field,
-      value,
-      lang,
-      previousValue_es: sectionES.content[field],
-      previousValue_en: sectionEN.content[field]
-    });
+
     
     if (lang === 'both') {
-      console.log(`   ↳ Guardando en AMBOS idiomas ES + EN`);
+
       onUpdateSection(sectionES.id, { ...sectionES.content, [field]: value }, 'es');
       onUpdateSection(sectionEN.id, { ...sectionEN.content, [field]: value }, 'en');
     } else {
       const target = lang === 'es' ? sectionES : sectionEN;
-      console.log(`   ↳ Guardando solo en idioma: ${lang.toUpperCase()}`);
+
       onUpdateSection(target.id, { ...target.content, [field]: value }, lang);
     }
   };
@@ -2754,7 +2748,6 @@ export function VisualEditorSidebar({
                             }
                             newList = [...current, prod.id];
                           }
-                          console.log('🛒 [CATALOGO] Actualizando selección:', newList);
                           handleContentChange("selectedProductIds", newList, 'both');
                         }}
                         className={`group flex items-center gap-3 p-2 rounded-xl border transition-all cursor-pointer ${

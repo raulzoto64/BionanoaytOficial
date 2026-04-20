@@ -59,6 +59,7 @@ export function AdminSidebar() {
     location.pathname.startsWith('/admin/content') ||
     location.pathname.startsWith('/admin/blog') ||
     location.pathname.startsWith('/admin/legal') ||
+    location.pathname.startsWith('/admin/ecosystem') ||
     location.pathname.startsWith('/admin/footer')
   );
   
@@ -136,6 +137,7 @@ export function AdminSidebar() {
     { path: '/admin/sections', icon: Database, label: 'Secciones' },
     { path: '/admin/blog/posts', icon: FileEdit, label: 'Blog' },
     { path: '/admin/legal', icon: Scale, label: 'Páginas Legales' },
+    { path: '/admin/ecosystem', icon: Users, label: 'Ecosistema' },
     { path: '/admin/visual-editor/footer/global', icon: Footprints, label: 'Footer' },
   ];
 

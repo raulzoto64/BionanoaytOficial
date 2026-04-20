@@ -1,7 +1,7 @@
 import { Outlet } from "react-router";
 import { Navigation } from "./Navigation";
 import { Toaster } from "./ui/sonner";
-import { LanguageProvider, useLanguage } from "../contexts/LanguageContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import { Footer } from "./Footer";
 import { ScrollToTop } from "./ScrollToTop";
 import { useEffect } from "react";
@@ -31,7 +31,7 @@ function LayoutInner() {
       supabaseAPI.clearCache();
       localStorage.removeItem('supabase.auth.token');
       localStorage.setItem('bionano_auth_cleaned', 'true');
-      console.log('🔄 [AUTH] Rastro de Supabase antiguo detectado y limpiado. Reiniciando...');
+
       window.location.reload();
     }
   }, []);
@@ -41,7 +41,7 @@ function LayoutInner() {
   }, [language]);
 
   const handleSubmitPopup = async (data: any) => {
-    console.log('📩 Popup formulario enviado:', data);
+
 
     // ─── Todas las columnas reales de la tabla `leads` ───────────────────────
     const KNOWN_LEAD_COLUMNS = [
@@ -92,9 +92,9 @@ function LayoutInner() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
-      console.log('✅ Lead CRM guardado correctamente');
+
     } catch (err) {
-      console.error('❌ Error guardando lead del popup:', err);
+
     }
   };
 

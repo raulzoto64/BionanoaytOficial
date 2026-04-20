@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ExternalLink, ChevronDown } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ExternalLink} from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "../contexts/LanguageContext";
 import { DatabaseManager } from "../data/DatabaseManager";
-import { supabaseAPI, FooterSettings } from "../data/supabase";
+import { supabaseAPI, FooterSettings, FooterLink } from "../data/supabase";
 import { handleAction } from "../utils/actions";
 import { useNavigate } from "react-router";
 
@@ -102,7 +102,7 @@ export function Footer({ contactInfo, settings }: FooterProps) {
               {language === 'es' ? column.title_es : column.title_en}
             </h4>
             <ul className="space-y-3">
-              {column.links.map((link) => (
+              {column.links.map((link: FooterLink) => (
                 <li key={link.id}>
                   <a
                     href={link.type === 'category_dropdown' ? `/store?category=${link.category_id}` : (link.actionType === 'route' ? link.url : '#')}

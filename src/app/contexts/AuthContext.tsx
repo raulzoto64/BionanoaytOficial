@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setVisitorId(null);
           }
         } catch (error) {
-          console.error("Error al fusionar carritos durante el login:", error);
+
         }
       }
 
@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getGuestId(); 
       window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (error) {
-      console.error("❌ [AuthContext] Error durante el logout:", error);
+
     }
   };
 

@@ -6,10 +6,7 @@ import {
   Send, 
   CheckCheck, 
   Check,
-  Clock,
-  Filter,
   Loader2,
-  ChevronLeft
 } from 'lucide-react';
 import { supabaseAPI, Chat, ChatMessage } from '../../data/supabase';
 import { toast } from 'sonner';
@@ -245,24 +242,24 @@ export default function AdminChats() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#1C5D15] flex items-center justify-center relative">
                   <User className="text-white w-5 h-5" />
-                  {selectedChat.is_visitor_online && (
+                  {selectedChat?.is_visitor_online && (
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#19FF00] border-2 border-white rounded-full"></span>
                   )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800">{selectedChat.lead_name || 'Visitante Anónimo'}</h3>
+                  <h3 className="font-bold text-gray-800">{selectedChat?.lead_name || 'Visitante Anónimo'}</h3>
                   <p className="text-xs text-[#1C5D15]">
-                    {selectedChat.is_visitor_typing ? 'Escribiendo...' : (selectedChat.is_visitor_online ? 'En línea ahora' : (selectedChat.lead_email || 'Sin correo registrado'))}
+                    {selectedChat?.is_visitor_typing ? 'Escribiendo...' : (selectedChat?.is_visitor_online ? 'En línea ahora' : (selectedChat?.lead_email || 'Sin correo registrado'))}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                   selectedChat.lead_status === 'new' ? 'bg-blue-100 text-blue-700' :
-                   selectedChat.lead_status === 'customer' ? 'bg-[#1C5D15]/10 text-[#1C5D15]' :
+                   selectedChat?.lead_status === 'new' ? 'bg-blue-100 text-blue-700' :
+                   selectedChat?.lead_status === 'customer' ? 'bg-[#1C5D15]/10 text-[#1C5D15]' :
                    'bg-gray-100 text-gray-600'
                  }`}>
-                   Lead: {selectedChat.lead_status || 'desconocido'}
+                   Lead: {selectedChat?.lead_status || 'desconocido'}
                  </span>
               </div>
             </div>
@@ -276,7 +273,7 @@ export default function AdminChats() {
                 const isAdmin = msg.sender_type === 'admin';
                 // Logic for "seen": if it's an admin message and visitor has 0 unread, it's seen
                 // If it's an older message (not in the last 'unread' count), it's also seen
-                const isSeen = isAdmin && (selectedChat.unread_count_visitor === 0);
+                const isSeen = isAdmin && (selectedChat?.unread_count_visitor === 0);
                 
                 return (
                   <div key={i} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
@@ -304,7 +301,7 @@ export default function AdminChats() {
               })}
 
               {/* Visitor Typing indicator */}
-              {selectedChat.is_visitor_typing && (
+              {selectedChat?.is_visitor_typing && (
                 <div className="flex justify-start">
                   <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none flex gap-1 items-center">
                     <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>

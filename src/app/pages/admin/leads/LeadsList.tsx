@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LeadData, LeadStatus } from '../../../components/popups/types';
+import { LeadStatus } from '../../../components/popups/types';
 import { supabaseAPI } from '../../../data/supabase';
 
 interface LeadItem {
@@ -87,7 +87,9 @@ function getStatusColor(status: LeadStatus) {
     new: 'bg-blue-100 text-blue-800',
     contacted: 'bg-yellow-100 text-yellow-800',
     in_progress: 'bg-purple-100 text-purple-800',
-    closed: 'bg-green-100 text-green-800'
+    checkout_started: 'bg-orange-100 text-orange-800',
+    closed: 'bg-green-100 text-green-800',
+    lost: 'bg-red-100 text-red-800'
   };
   return colors[status];
 }

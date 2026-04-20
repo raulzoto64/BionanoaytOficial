@@ -19,7 +19,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "../components/ui/dialog";
 import { useLanguage } from '../contexts/LanguageContext';
 import { useDatabase } from '../hooks/useDatabase';
@@ -82,7 +81,12 @@ export function ProductDetail() {
   const handleBack = () => {
     const from = (location.state as any)?.from;
     const sectionId = (location.state as any)?.sectionId;
-    navigate("/store", { state: { from, sectionId } });
+    
+    if (from === 'home') {
+      navigate("/", { state: { from, sectionId } });
+    } else {
+      navigate("/store", { state: { from, sectionId } });
+    }
   };
 
   // Manejar el guardado del contexto para el botón atrás del navegador
@@ -188,59 +192,49 @@ export function ProductDetail() {
 
   const calculatePricing = async () => {
     if (!product || !selectedPackagingType) {
-      console.log('⚠️ [PRICING] Skip calculation: missing product or packaging');
+
       return;
     }
     
-    console.log(`💰 [PRICING] Starting for product: ${product.slug}`, {
-      quantity,
-      packaging: selectedPackagingType
-    });
+
 
     try {
       const pricing = await supabaseAPI.calculatePrice(product.id, quantity, selectedPackagingType);
-      console.log('✅ [PRICING] Calculation success:', pricing);
+
       setCalculatedPrice(pricing);
     } catch (err) {
-      console.error('❌ [PRICING] Calculation error:', err);
+
     }
   };
 
   const handleAddToCart = async () => {
-    console.log('🛒 [ACTION] handleAddToCart triggered');
+
     
     if (!product || !translation) {
-      console.log('⚠️ [ACTION] Aborted: missing core data', { 
-        hasProduct: !!product, 
-        hasTranslation: !!translation
-      });
+
       return;
     }
 
     if (!calculatedPrice) {
-      console.log('ℹ️ [ACTION] Proceeding without calculated price (possibly quantity below minimum)');
+
     }
 
     try {
       const userId = isAuthenticated && user ? user.id : null;
       const guestId = !isAuthenticated ? hookGuestId : null;
 
-      console.log('👤 [SESSION] Context:', { userId, guestId, isAuth: isAuthenticated });
+
 
       if (!userId && !guestId) {
-        console.error('❌ [SESSION] No valid identifiers found');
+
         toast.error('No se pudo obtener la sesión de usuario');
         return;
       }
 
-      console.log('🚀 [API] Sending to addToCart:', {
-        productId: product.id,
-        quantity,
-        packaging: selectedPackagingType
-      });
+
 
       const result = await supabaseAPI.addToCart(product.id, quantity, userId, guestId, selectedPackagingType);
-      console.log('✨ [API] addToCart Succesful result:', result);
+
       
       // Lanzar rastreador de telemetría de negocio
       await trackEvent('add_to_cart', {
@@ -253,7 +247,7 @@ export function ProductDetail() {
       
       toast.success(`${translation.name} agregado al carrito (${quantity} unidades)`);
     } catch (error: any) {
-      console.error('🔥 [FATAL] Error in handleAddToCart:', error);
+
       toast.error(`Error: ${error.message || 'No se pudo agregar al carrito'}`);
     }
   };
@@ -302,7 +296,7 @@ export function ProductDetail() {
         setContactForm(prev => ({ ...prev, message: '' }));
       }
     } catch (error) {
-      console.error('Lead submission failed:', error);
+
       toast.error('Ocurrió un error al enviar tus datos');
     } finally {
       setIsSubmittingLead(false);

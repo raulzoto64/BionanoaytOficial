@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import { useLanguage } from "../contexts/LanguageContext";
 
 interface BreadcrumbLink {
   name: string;
@@ -11,8 +10,6 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ links }: BreadcrumbProps) {
-  const { language } = useLanguage();
-
   return (
     <nav className="flex items-center gap-2 text-sm">
       {links.map((link, index) => (

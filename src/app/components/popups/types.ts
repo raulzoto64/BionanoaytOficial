@@ -1,6 +1,6 @@
 export type LeadType = 'exit-intent' | 'quote' | 'contact';
 
-export type LeadStatus = 'new' | 'contacted' | 'in_progress' | 'closed';
+export type LeadStatus = 'new' | 'contacted' | 'in_progress' | 'checkout_started' | 'closed' | 'lost';
 
 export interface LeadData {
   id?: number;

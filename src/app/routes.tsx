@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout";
-import { LanguageProvider } from "./contexts/LanguageContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Carga perezosa de páginas (Code Splitting)
 const Home = () => import("./pages/Home").then(m => ({ Component: m.Home }));
@@ -26,12 +26,12 @@ const AdminSettings = () => import("./pages/admin/AdminSettings").then(m => ({ C
 const AdminBlogPosts = () => import("./pages/admin/AdminBlogPosts").then(m => ({ Component: m.AdminBlogPosts }));
 const AdminBlogCategories = () => import("./pages/admin/AdminBlogCategories").then(m => ({ Component: m.AdminBlogCategories }));
 const AdminUsers = () => import("./pages/admin/AdminUsers").then(m => ({ Component: m.AdminUsers }));
-const AdminEcosystem = () => import("./pages/admin/AdminEcosystem").then(m => ({ Component: m.AdminEcosystem }));
 const AdminLegalPages = () => import("./pages/admin/AdminLegalPages").then(m => ({ Component: m.AdminLegalPages }));
 const AdminFooterSettings = () => import("./pages/admin/AdminFooterSettings").then(m => ({ Component: m.AdminFooterSettings }));
 const AdminLeads = () => import("./pages/admin/leads").then(m => ({ Component: m.default }));
 const AdminForms = () => import("./pages/admin/AdminForms").then(m => ({ Component: m.AdminForms }));
 const AdminChats = () => import("./pages/admin/AdminChats").then(m => ({ Component: m.default }));
+const AdminEcosystem = () => import("./pages/admin/AdminEcosystem").then(m => ({ Component: m.AdminEcosystem }));
 const EcosystemMemberDetail = () => import("./pages/EcosystemMemberDetail").then(m => ({ Component: m.EcosystemMemberDetail }));
 const EcosystemPage = () => import("./pages/Ecosystem").then(m => ({ Component: m.EcosystemPage }));
 const LegalPage = () => import("./pages/LegalPage").then(m => ({ Component: m.LegalPage }));
@@ -47,6 +47,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
+    errorElement: <ErrorBoundary />,
     HydrateFallback: () => (
       <div className="flex h-screen w-screen items-center justify-center bg-[#F7F9CE]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1C5D15]"></div>
@@ -126,6 +127,7 @@ export const router = createBrowserRouter([
   {
     path: "admin",
     lazy: AdminLayout,
+    errorElement: <ErrorBoundary />,
     HydrateFallback: () => (
       <div className="flex h-screen w-screen items-center justify-center bg-gray-100">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1C5D15]"></div>
@@ -207,6 +209,10 @@ export const router = createBrowserRouter([
       {
         path: "sales/analytics",
         lazy: AdminAnalytics,
+      },
+      {
+        path: "ecosystem",
+        lazy: AdminEcosystem,
       },
     ],
   },

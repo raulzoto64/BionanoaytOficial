@@ -150,6 +150,22 @@ export interface BlogPostTranslation {
   meta_keywords: string;
 }
 
+export interface BlogCategory {
+  id: string;
+  slug: string;
+  order: number;
+  status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogCategoryTranslation {
+  category_id: string;
+  language: "es" | "en";
+  name: string;
+  description: string;
+}
+
 export interface Translation {
   id: string;
   key: string;
@@ -158,12 +174,27 @@ export interface Translation {
   en: string;
 }
 
+export interface FormField {
+  id: string;
+  label_es: string;
+  label_en: string;
+  name: string;
+  type: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'checkbox';
+  required: boolean;
+  placeholder_es?: string;
+  placeholder_en?: string;
+}
+
 export interface Form {
+  updated_at: string | number | Date;
   id: string;
   name: string;
   title_es?: string;
   title_en?: string;
-  fields: any[];
+  subtitle_es?: string;
+  subtitle_en?: string;
+  image_url?: string;
+  fields: FormField[];
   is_active: boolean;
 }
 
@@ -179,9 +210,26 @@ export interface LegalPage {
   updated_at: string;
 }
 
+export interface FooterLink {
+  id: string;
+  label_es: string;
+  label_en: string;
+  url: string;
+  type?: string;
+  actionType?: string;
+  category_id?: string;
+}
+
+export interface FooterColumn {
+  id: string;
+  title_es: string;
+  title_en: string;
+  links: FooterLink[];
+}
+
 export interface FooterSettings {
   id: string;
-  columns: any[];
+  columns: FooterColumn[];
   contact_info: any;
   social_media: any;
   copyright_text_es: string;
@@ -223,6 +271,8 @@ export interface EcosystemMemberTranslation {
 }
 
 export interface Chat {
+  is_visitor_typing: any;
+  is_visitor_online: import("react/jsx-runtime").JSX.Element;
   id: string;
   visitor_id: string;
   user_id?: string;
@@ -295,7 +345,7 @@ export const supabaseAPI = {
           localStorage.removeItem(key);
         }
       });
-      console.log('🧹 [CACHE] Caché local de BionanoAYT limpiada completamente.');
+
     }
   },
 
@@ -325,7 +375,7 @@ export const supabaseAPI = {
     return handleApiResponse(res);
   },
   loginUser: async (email: string, pass: string) => {
-    console.log(`🚀 [API] Intentando login para: ${email} (Pass length: ${pass?.length || 0})`);
+
     const body = JSON.stringify({ 
       email: email, 
       password: pass 
@@ -341,6 +391,21 @@ export const supabaseAPI = {
   },
   getUsers: async () => {
     const res = await fetch(`${API_BASE_URL}/users`, { headers: getApiHeaders() });
+    return handleApiResponse(res);
+  },
+  updateUser: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE_URL}/users/${id}`, { 
+      method: 'PUT', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify(data) 
+    });
+    return handleApiResponse(res);
+  },
+  deleteUser: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/users/${id}`, { 
+      method: 'DELETE', 
+      headers: getApiHeaders() 
+    });
     return handleApiResponse(res);
   },
 
@@ -413,6 +478,25 @@ export const supabaseAPI = {
     const res = await fetch(`${API_BASE_URL}/categories/translations/${lang}`, { headers: getApiHeaders() });
     return handleApiResponse(res);
   },
+  createCategory: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/categories`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    supabaseAPI._invalidateCache("categories");
+    return handleApiResponse(res);
+  },
+  updateCategory: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE_URL}/categories/${id}`, { method: 'PUT', headers: getApiHeaders(), body: JSON.stringify(data) });
+    supabaseAPI._invalidateCache("categories");
+    return handleApiResponse(res);
+  },
+  deleteCategory: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/categories/${id}`, { method: 'DELETE', headers: getApiHeaders() });
+    supabaseAPI._invalidateCache("categories");
+    return handleApiResponse(res);
+  },
+  updateCategoryTranslation: async (categoryId: string, lang: string, data: any) => {
+    const res = await fetch(`${API_BASE_URL}/categories/${categoryId}/translation/${lang}`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    return handleApiResponse(res);
+  },
 
   // PAGES
   getAllPages: async () => {
@@ -432,14 +516,14 @@ export const supabaseAPI = {
     return content;
   },
   getUniversalContent: async (type: string, id: string, lang: string) => {
-    console.log(`🌐 [supabaseAPI] getUniversalContent:`, { type, id, lang });
+
     switch (type) {
       case 'page':
         const pageContent = await supabaseAPI.getPageContent(id, lang);
         return pageContent?.sections || [];
       case 'blog': {
         const blogTrans = await supabaseAPI.getBlogPostTranslation(id, lang);
-        console.log(`📖 [getUniversalContent] RAW blogTrans (${lang}):`, blogTrans);
+
         
         const BLOG_CONTENT_TYPES = ['blog-text', 'blog-intro', 'blog-quote', 'blog-list', 'blog-image', 'blog-divider', 'rich-text'];
 
@@ -452,11 +536,11 @@ export const supabaseAPI = {
                 ...s,
                 _zone: BLOG_CONTENT_TYPES.includes(s.type) ? 'article' : 'page'
               }));
-              console.log(`✅ [getUniversalContent] ${tagged.length} secciones cargadas (${lang})`);
+
               return tagged;
             }
           } catch (e) {
-            console.log(`📄 [getUniversalContent] HTML legacy detectado (${lang}), convirtiendo a blog-text`);
+
           }
           // Fallback: HTML puro → un bloque blog-text con _zone article
           return [{ id: 'legacy-content', type: 'blog-text', _zone: 'article', content: { html: blogTrans.content } }];
@@ -469,7 +553,7 @@ export const supabaseAPI = {
           try {
             return typeof productTrans.sections === 'string' ? JSON.parse(productTrans.sections) : productTrans.sections;
           } catch (e) {
-            console.error("Error parsing product sections:", e);
+
           }
         }
         return [];
@@ -480,7 +564,7 @@ export const supabaseAPI = {
           
           // Fallback 1: Si el fetch directo devuelve vacío {}, intentamos buscar en la lista completa
           if (!rawData || (typeof rawData === 'object' && Object.keys(rawData).length === 0)) {
-            console.log(`⚠️ [supabaseAPI] Direct fetch by ID returned empty, trying by list...`);
+
             const allPages = await supabaseAPI.getLegalPages();
             rawData = allPages.find((p: any) => p.id === id || p.slug === id);
           }
@@ -488,7 +572,7 @@ export const supabaseAPI = {
           // Fallback 2: Si el objeto encontrado no tiene contenido (como ocurre con la lista parcial),
           // intentamos un fetch directo usando el SLUG, ya que a veces la API prefiere el slug para el detalle completo.
           if (rawData && !rawData.content_es && rawData.slug) {
-            console.log(`📡 [supabaseAPI] Object found but missing content. Trying direct fetch by SLUG: ${rawData.slug}`);
+
             const fullData = await supabaseAPI.getLegalPageBySlug(rawData.slug);
             if (fullData && fullData.content_es) {
               rawData = fullData;
@@ -496,16 +580,16 @@ export const supabaseAPI = {
           }
           
           const legalPage = Array.isArray(rawData) ? rawData[0] : rawData;
-          console.log(`⚖️ [supabaseAPI] Final processed legalPage:`, legalPage);
+
           
           const content = lang === 'es' ? legalPage?.content_es : legalPage?.content_en;
           
           try {
             const parsed = content ? JSON.parse(content) : [];
-            console.log(`📊 [supabaseAPI] Parsed legal content:`, parsed);
+
             return parsed;
           } catch (e) {
-            console.log(`📜 [supabaseAPI] content is legacy HTML, wrapping...`);
+
             return content ? [{ id: 'legacy-content', type: 'rich-text', content: { html: content } }] : [];
           }
         }
@@ -630,6 +714,35 @@ export const supabaseAPI = {
     });
   },
 
+  createTranslation: async (data: Partial<Translation>) => {
+    const res = await fetch(`${API_BASE_URL}/settings/translations`, { 
+      method: 'POST', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify(data) 
+    });
+    supabaseAPI._invalidateCache("translations");
+    return handleApiResponse(res);
+  },
+
+  updateTranslation: async (id: string, data: Partial<Translation>) => {
+    const res = await fetch(`${API_BASE_URL}/settings/translations/${id}`, { 
+      method: 'PUT', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify(data) 
+    });
+    supabaseAPI._invalidateCache("translations");
+    return handleApiResponse(res);
+  },
+
+  deleteTranslation: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/settings/translations/${id}`, { 
+      method: 'DELETE', 
+      headers: getApiHeaders() 
+    });
+    supabaseAPI._invalidateCache("translations");
+    return handleApiResponse(res);
+  },
+
   // LEADS
   createLead: async (data: any) => {
     const res = await fetch(`${API_BASE_URL}/leads`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
@@ -673,7 +786,7 @@ export const supabaseAPI = {
       if (!text) return null;
       return JSON.parse(text);
     } catch (e) {
-      console.warn('⚠️ [NOTIFICATION] No se pudo crear notificación:', e);
+
       return null;
     }
   },
@@ -706,11 +819,32 @@ export const supabaseAPI = {
     const res = await fetch(`${API_BASE_URL}/ecosystem/${memberId}/translation/${lang}`, { headers: getApiHeaders() });
     return handleApiResponse(res).catch(() => null);
   },
+  updateEcosystemMemberTranslation: async (memberId: string, lang: string, data: any) => {
+    // Asegurar que el body tiene los campos necesarios
+    const payload = { ...data, member_id: memberId, language: lang };
+    const res = await fetch(`${API_BASE_URL}/ecosystem/${memberId}/translation/${lang}`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(payload) });
+    return handleApiResponse(res);
+  },
   getAllEcosystemMemberTranslations: async (lang: string) => {
     return supabaseAPI._fetchWithCache(`ecosystem-translations-${lang}`, async () => {
       const res = await fetch(`${API_BASE_URL}/ecosystem/translations/${lang}`, { headers: getApiHeaders() });
       return handleApiResponse(res);
     });
+  },
+  updateEcosystemMember: async (id: string, data: any) => {
+    const res = await fetch(`${API_BASE_URL}/ecosystem/${id}`, { method: 'PUT', headers: getApiHeaders(), body: JSON.stringify(data) });
+    supabaseAPI._invalidateCache("ecosystem-members");
+    return handleApiResponse(res);
+  },
+  createEcosystemMember: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/ecosystem/members`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    supabaseAPI._invalidateCache("ecosystem-members");
+    return handleApiResponse(res);
+  },
+  deleteEcosystemMember: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/ecosystem/${id}`, { method: 'DELETE', headers: getApiHeaders() });
+    supabaseAPI._invalidateCache("ecosystem-members");
+    return handleApiResponse(res);
   },
 
   // BLOG
@@ -847,11 +981,11 @@ export const supabaseAPI = {
     return handleApiResponse(res);
   },
   getLegalPageById: async (id: string) => {
-    console.log(`📡 [supabaseAPI] Fetching legal page: ${id}`);
+
     const res = await fetch(`${API_BASE_URL}/legal/${id}`, { headers: getApiHeaders() });
     const data = await handleApiResponse(res).catch(() => null);
-    console.log(`📥 [supabaseAPI] Legal page data:`, data);
-    if (data) console.log(`🔑 [supabaseAPI] Keys in data:`, Object.keys(data));
+
+
     return data;
   },
   getLegalPageBySlug: async (slug: string) => {
@@ -860,6 +994,16 @@ export const supabaseAPI = {
   },
   updateLegalPage: async (id: string, data: any) => {
     const res = await fetch(`${API_BASE_URL}/legal/${id}`, { method: 'PUT', headers: getApiHeaders(), body: JSON.stringify(data) });
+    return handleApiResponse(res);
+  },
+  
+  createLegalPage: async (data: any) => {
+    const res = await fetch(`${API_BASE_URL}/legal`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    return handleApiResponse(res);
+  },
+
+  deleteLegalPage: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/legal/${id}`, { method: 'DELETE', headers: getApiHeaders() });
     return handleApiResponse(res);
   },
   updateLegalPageMetadata: async (id: string, data: any) => {

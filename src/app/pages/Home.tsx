@@ -12,18 +12,19 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { SEO } from "../components/SEO";
 import { useDatabase } from "../hooks/useDatabase";
 import { useNavigationType } from "react-router";
-import { API_BASE_URL, getApiHeaders } from "../data/apiConfig";
 
 export function Home() {
   const { language } = useLanguage();
   const { updateTrigger } = useDatabase();
   const navigationType = useNavigationType();
   
-  console.log("🏠 [HOME-CORE] Renderizado de Home detectado.");
 
-  const [pageContent, setPageContent] = useState<PageContent | null>(() => 
-    supabaseAPI.getCachedData(`page-content-page-home-${language}`)
-  );
+
+  const [pageContent, setPageContent] = useState<PageContent | null>(() => {
+    const cached = supabaseAPI.getCachedData(`page-content-page-home-${language}`);
+    if (cached) console.info("[SCROLL] pageContent obtenido de CACHÉ");
+    return cached;
+  });
   const [homeProducts, setHomeProducts] = useState<
     (Product & { translation: ProductTranslation; categoryName: string })[]
   >(() => supabaseAPI.getCachedData(`home-products-ready-${language}`) || []);
@@ -38,14 +39,20 @@ export function Home() {
     const isReload = forms.length > 0 && (forms[0] as any).type === 'reload';
 
     if (isReload) {
-      console.log(`🔄 [HOME-CORE] Recarga detectada en INIT. Ignorando hash.`);
+
       if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
       sessionStorage.removeItem('bx_return_section');
       return null;
     }
 
-    const initial = sessionStorage.getItem('bx_return_section') || window.location.hash.replace('#', '');
-    if (initial) console.log(`🎯 [HOME-CORE] Ancla inicial detectada: #${initial}`);
+    const anchorFromSession = sessionStorage.getItem('bx_return_section');
+    const anchorFromHash = window.location.hash.replace('#', '');
+    const initial = anchorFromSession || anchorFromHash;
+    
+    if (initial) {
+      console.log(`[SCROLL] Ancla inicial detectada: "${initial}" (Session: ${anchorFromSession}, Hash: ${anchorFromHash})`);
+    }
+
     return initial;
   });
 
@@ -57,7 +64,7 @@ export function Home() {
       .includes('reload');
 
     if (isReload && window.location.hash) {
-      console.log("🔄 [HOME-CORE] Recarga detectada. Limpiando hash para empezar en el top.");
+
       window.history.replaceState(null, '', window.location.pathname);
       setTargetAnchor(null);
       sessionStorage.removeItem('bx_return_section');
@@ -65,24 +72,36 @@ export function Home() {
 
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      console.log(`🔗 [HOME-CORE] Cambio de HASH detectado: #${hash}`);
+
       if (hash) setTargetAnchor(hash);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // ✅ 0. Reset de scroll preventivo si tenemos ancla (evita heredar scroll de la página anterior)
+  useEffect(() => {
+    if (targetAnchor) {
+      console.log(`[SCROLL] Reset preventivo a (0,0) para iniciar búsqueda de: ${targetAnchor}`);
+      window.scrollTo(0, 0);
+    }
+  }, [targetAnchor]);
+
   // ✅ 1. Renderizado Progresivo Inteligente (Modo Relámpago si hay ancla)
   useEffect(() => {
-    if (!pageContent || homeProducts.length === 0) return;
+    if (!pageContent) {
+      console.info("[SCROLL] Esperando pageContent para renderizar secciones...");
+      return;
+    }
 
     const totalSections = pageContent.sections.filter(s => s.visible && s.type !== "hero").length;
+    console.info(`[SCROLL] Preparando renderizado de ${totalSections} secciones. Ancla: ${targetAnchor}, Nav: ${navigationType}`);
     
-    if (targetAnchor || (navigationType === 'POP' || navigationType === 'PUSH')) {
-      // MODO RELÁMPAGO: Renderizar todo de golpe
+    // ✅ MODO RELÁMPAGO: Si volvemos (POP) o tenemos un ancla guardada, renderizamos TODO al instante
+    if (targetAnchor || navigationType === 'POP') {
       setRenderedSectionsCount(totalSections);
     } else {
-      // MODO PROGRESIVO: Cargar suavemente
+      // ✅ MODO PROGRESIVO: Para visitas nuevas (PUSH), cargamos suavemente
       setRenderedSectionsCount(Math.min(2, totalSections));
       let current = 0;
       const interval = setInterval(() => {
@@ -99,7 +118,7 @@ export function Home() {
   useEffect(() => {
     if (!pageContent || !targetAnchor) return;
 
-    console.log(`🔍 [SCROLL-ENGINE] Buscando destino: #${targetAnchor}`);
+
     
     let attempts = 0;
     const maxAttempts = 100;
@@ -112,9 +131,9 @@ export function Home() {
       if (element) {
         const rect = element.getBoundingClientRect();
         const currentScrollY = window.pageYOffset;
-        const targetTop = rect.top + currentScrollY - 80;
+        const targetTop = Math.max(0, rect.top + currentScrollY - 80);
         
-        console.log(`📍 [SCROLL-ENGINE] Elemento encontrado. Posición actual Y: ${targetTop.toFixed(0)}px`);
+        console.info(`[SCROLL] ¡Elemento detectado! Scroll a: ${targetTop}px. Anchor: ${targetAnchor}`);
 
         window.scrollTo({
           top: targetTop,
@@ -128,15 +147,12 @@ export function Home() {
           const shift = Math.abs(freshTargetTop - targetTop);
           
           if (shift > 5) {
-            console.warn(`⚠️ [SCROLL-ENGINE] DETECTADO DESPLAZAMIENTO: La sección se movió ${shift.toFixed(0)}px durante el scroll. Re-ajustando...`);
             window.scrollTo({ top: freshTargetTop, behavior: 'smooth' });
-          } else {
-            console.log(`✅ [SCROLL-ENGINE] Destino alcanzado con precisión.`);
           }
           
           // ✅ Limpieza Final: Una vez que estamos seguros de haber llegado
           if (Math.abs(freshRect.top - 80) < 60) {
-            console.log("🧹 [SCROLL-ENGINE] Destino consolidado. Limpiando ancla de la URL.");
+            console.log(`[SCROLL] Estabilidad alcanzada para "${targetAnchor}". Limpiando estados.`);
             sessionStorage.removeItem('bx_return_section');
             sessionStorage.removeItem('bx_return_from');
             
@@ -155,10 +171,10 @@ export function Home() {
       attempts++;
       const success = scrollToTarget();
       if (!success && attempts % 10 === 0) {
-        console.log(`⏳ [SCROLL-ENGINE] Intento ${attempts}: Esperando a que #${targetAnchor} aparezca en el DOM...`);
+
       }
       if (success || attempts > maxAttempts) {
-        if (!success) console.error(`❌ [SCROLL-ENGINE] Error: No se pudo encontrar #${targetAnchor} tras 10 segundos.`);
+
         clearInterval(interval);
       }
     }, 250);

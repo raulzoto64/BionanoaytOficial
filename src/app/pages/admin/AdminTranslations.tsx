@@ -51,7 +51,7 @@ export function AdminTranslations() {
     setEditingId(translation.id);
     setFormData({
       key: translation.key,
-      category: translation.category,
+      category: translation.category as 'ui' | 'messages' | 'navigation' | 'forms',
       es: translation.es,
       en: translation.en,
     });

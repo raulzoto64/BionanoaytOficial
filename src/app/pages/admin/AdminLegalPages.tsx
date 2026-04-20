@@ -39,7 +39,7 @@ export function AdminLegalPages() {
   const handleNewPage = async () => {
     try {
       setIsLoading(true);
-      const newPage: Partial<LegalPage> = {
+      const newPage = {
         slug: `draft-legal-${Date.now()}`,
         title_es: 'Nueva Página Legal',
         title_en: 'New Legal Page',

@@ -16,80 +16,9 @@ import { BlogPostsSection } from './BlogPostsSection';
 import { useNavigate } from 'react-router';
 import { handleAction } from '../utils/actions';
 import { Button } from './ui/button';
-import {
-  Quote,
-  Shield,
-  CheckCircle2,
-  Users,
-  Cloud,
-  Zap,
-  Sprout,
-  Globe,
-  Clock,
-  FileText,
-  AlertCircle,
-  Truck,
-  Building,
-  Factory,
-  FlaskConical,
-  Microscope,
-  TrendingUp,
-  AlertTriangle,
-  Building2,
-  Fish,
-  Apple,
-  HeartPulse,
-  Shirt,
-  Warehouse,
-} from 'lucide-react';
+import { Globe } from 'lucide-react';
 
-// Mapeo de nombres de iconos a componentes
-const IconMap: Record<string, any> = {
-  Quote,
-  Shield,
-  CheckCircle2,
-  Users,
-  Cloud,
-  Zap,
-  Sprout,
-  Globe,
-  Clock,
-  FileText,
-  AlertCircle,
-  Truck,
-  Building,
-  Factory,
-  FlaskConical,
-  Microscope,
-  TrendingUp,
-  AlertTriangle,
-  Building2,
-  Fish,
-  Apple,
-  HeartPulse,
-  Shirt,
-  Warehouse
-};
 
-const Icon = ({ name, className }: { name: string; className?: string }) => {
-  const IconComp = IconMap[name] || Globe;
-  return <IconComp className={className} />;
-};
-
-function FaqPreviewItem({ item }: { item: any }) {
-  return (
-    <div className="border border-gray-100 rounded-xl p-4 bg-white shadow-sm">
-      <h3 className="font-bold text-[#1C5D15] flex items-center gap-2">
-        <div className="w-1.5 h-1.5 bg-[#19FF00] rounded-full" />
-        {item.question}
-      </h3>
-      <div
-        className="mt-2 text-sm text-[#629960] leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: item.answer }}
-      />
-    </div>
-  );
-}
 
 // ══════════════════════════════════════════════════════════════
 // RENDERIZADOR UNIVERSAL DE SECCIONES
@@ -161,7 +90,6 @@ export function DynamicSection({
   availableBlogPosts = [],
   availableProducts = [],
   pageSlug = '',
-  onSectionClick,
   entityType = 'page'
 }: DynamicSectionProps) {
   const navigate = useNavigate();
@@ -915,7 +843,7 @@ export function DynamicSection({
         );
 
       default:
-        console.warn(`⚠️ Tipo de sección desconocido: "${section.type}" (id: ${section.id})`);
+
         return null;
     }
   };
@@ -929,11 +857,7 @@ export function DynamicSection({
     index < 1 ||
     section.type === 'hero';
 
-  useEffect(() => {
-    if (isAnyTargetActive) {
-      console.log(`🔌 [DYNAMIC-SECTION] Carga prioritaria activada para "${section.type}" (id: ${section.id}) debido a navegación por ancla: #${targetAnchor}`);
-    }
-  }, [isAnyTargetActive, targetAnchor]);
+
 
 
   return (

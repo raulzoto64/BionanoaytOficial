@@ -20,8 +20,8 @@ export function AdminDashboard() {
     const products = await supabaseAPI.getProducts();
     setStats({
       totalProducts: products.length,
-      activeProducts: products.filter(p => p.status === 'active').length,
-      draftProducts: products.filter(p => p.status === 'draft').length,
+      activeProducts: products.filter((p: { status: string; }) => p.status === 'active').length,
+      draftProducts: products.filter((p: { status: string; }) => p.status === 'draft').length,
       totalCategories: 4,
     });
   };

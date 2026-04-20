@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Eye, Edit, BookOpen, Sparkles, Layout } from 'lucide-react';
+import { Trash2, Plus, Eye, BookOpen, Sparkles, Layout } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useNavigate } from 'react-router';
 import { Badge } from '../../components/ui/badge';
@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 export function AdminBlogPosts() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [postsNames, setPostsNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
@@ -26,13 +25,6 @@ export function AdminBlogPosts() {
     try {
       const data = await supabaseAPI.getBlogPosts();
       setPosts(data);
-
-      const names: Record<string, string> = {};
-      for (const post of data) {
-        // We just need a title for the list, can use a quick fetch or just the slug
-        names[post.id] = post.slug; // Simplified for now, the editor handles translations
-      }
-      setPostsNames(names);
     } catch (error) {
       toast.error('Error al cargar artículos');
     } finally {

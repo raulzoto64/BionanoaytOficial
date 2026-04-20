@@ -40,7 +40,14 @@ export function EcosystemMemberDetail() {
 
 
   const handleBack = () => {
-    navigate("/ecosystem");
+    const from = (location.state as any)?.from;
+    const sectionId = (location.state as any)?.sectionId;
+
+    if (from === 'home') {
+      navigate("/", { state: { from, sectionId } });
+    } else {
+      navigate("/ecosystem", { state: { from, sectionId } });
+    }
   };
 
   const loadMember = async () => {

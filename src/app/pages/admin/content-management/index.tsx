@@ -43,7 +43,7 @@ export function AdminContent() {
     try {
       const allPages = await supabaseAPI.getAllPages();
       const pagesWithContent = await Promise.all(
-        allPages.map(async (page) => {
+        allPages.map(async (page: Page) => {
           const contentES = await supabaseAPI.getPageContent(page.id, 'es');
           const contentEN = await supabaseAPI.getPageContent(page.id, 'en');
           return { ...page, contentES, contentEN };

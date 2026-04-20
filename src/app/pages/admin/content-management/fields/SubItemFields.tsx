@@ -6,13 +6,12 @@ import { Trash2, Plus } from 'lucide-react';
 
 interface SubItemFieldsProps {
   section: Section;
-  onUpdate: (updates: Partial<Section>) => void;
   onUpdateContent: (field: string, value: any) => void;
   fieldKey: string;
   itemTemplate: any;
 }
 
-export function SubItemFields({ section, onUpdate, onUpdateContent, fieldKey, itemTemplate }: SubItemFieldsProps) {
+export function SubItemFields({ section, onUpdateContent, fieldKey, itemTemplate }: SubItemFieldsProps) {
   const items = section.content[fieldKey] || [];
   
   return (

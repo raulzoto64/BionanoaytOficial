@@ -11,7 +11,6 @@ import {
   EyeOff, 
   Trash2, 
   Save,
-  Plus
 } from 'lucide-react';
 import { ImageUpload } from '../../../components/ImageUpload';
 import { toast } from 'sonner';
@@ -208,7 +207,6 @@ export function SectionEditor({
             {section.type === 'problems' && (
               <SubItemFields
                 section={section}
-                onUpdate={onUpdate}
                 onUpdateContent={onUpdateContent}
                 fieldKey="items"
                 itemTemplate={{ title: '', description: '', icon: 'AlertTriangle', stat: '', statLabel: '' }}
@@ -218,7 +216,6 @@ export function SectionEditor({
             {section.type === 'features' && (
               <SubItemFields
                 section={section}
-                onUpdate={onUpdate}
                 onUpdateContent={onUpdateContent}
                 fieldKey="items"
                 itemTemplate={{ title: '', description: '', icon: 'CheckCircle', result: '', duration: '' }}
@@ -228,7 +225,6 @@ export function SectionEditor({
             {section.type === 'sectors' && (
               <SubItemFields
                 section={section}
-                onUpdate={onUpdate}
                 onUpdateContent={onUpdateContent}
                 fieldKey="items"
                 itemTemplate={{ title: '', description: '', icon: 'Building2' }}
@@ -238,7 +234,6 @@ export function SectionEditor({
             {section.type === 'stats' && (
               <SubItemFields
                 section={section}
-                onUpdate={onUpdate}
                 onUpdateContent={onUpdateContent}
                 fieldKey="stats"
                 itemTemplate={{ value: '', label: '', description: '' }}
@@ -248,7 +243,6 @@ export function SectionEditor({
             {section.type === 'certifications' && (
               <SubItemFields
                 section={section}
-                onUpdate={onUpdate}
                 onUpdateContent={onUpdateContent}
                 fieldKey="items"
                 itemTemplate={{ acronym: '', name: '', description: '', year: '' }}
@@ -258,7 +252,6 @@ export function SectionEditor({
             {section.type === 'faq' && (
               <SubItemFields
                 section={section}
-                onUpdate={onUpdate}
                 onUpdateContent={onUpdateContent}
                 fieldKey="items"
                 itemTemplate={{ question: '', answer: '' }}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabaseAPI, BlogPostTranslation } from '../data/supabase';
-import { Link, useNavigate } from 'react-router';
+import {  useNavigate } from 'react-router';
 import { ContentCard } from './ContentCard';
 import { newsPreloadCache } from '../data/BackgroundPreload';
 import { handleAction } from '../utils/actions';
@@ -34,11 +34,6 @@ interface NewsSectionProps {
   sectionId?: string;
 }
 
-// Caché global para evitar recargas (mismo patrón que Ecosystem.tsx)
-let newsSectionCache: {
-  posts: PostWithTranslation[];
-  language: string;
-} | null = null;
 
 export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, isEditor = false, sectionId }: NewsSectionProps) {
   const { language } = useLanguage();

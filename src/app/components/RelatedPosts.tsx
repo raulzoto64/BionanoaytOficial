@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { useLanguage } from "../contexts/LanguageContext";
 import { supabaseAPI } from "../data/supabase";
 
 interface RelatedPost {
@@ -37,10 +36,10 @@ export function RelatedPosts({ currentPostId, language, type }: RelatedPostsProp
       try {
         const allPosts = await supabaseAPI.getBlogPosts('published');
         const related = allPosts
-          .filter(post => post.id !== currentPostId && post.type === type)
+          .filter((post: RelatedPost) => post.id !== currentPostId && post.type === type)
           .slice(0, 3);
 
-        const allCategories = await supabaseAPI.getBlogCategories('active');
+        const allCategories = await supabaseAPI.getBlogCategories();
 
 const categoryNames: Record<string, string> = {};
         for (const category of allCategories) {
@@ -49,7 +48,7 @@ const categoryNames: Record<string, string> = {};
         }
 
         const postsWithTranslations = await Promise.all(
-          related.map(async (post) => {
+          related.map(async (post: RelatedPost) => {
             const translation = await supabaseAPI.getBlogPostTranslation(post.id, language);
             const relations = await supabaseAPI.getBlogPostCategories(post.id);
             const category_id = relations.length > 0 ? relations[0].category_id : undefined;

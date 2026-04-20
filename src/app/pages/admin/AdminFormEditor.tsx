@@ -24,7 +24,6 @@ import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
 import { ImageUpload } from '../../components/ImageUpload';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { ExitIntentPopup } from '../../components/popups/ExitIntentPopup';
 
 const PREDEFINED_FIELDS = [
   { label_es: 'Nombre Completo', label_en: 'Full Name', name: 'name', type: 'text', required: true, placeholder_es: 'Tu nombre...', placeholder_en: 'Your name...' },
@@ -37,7 +36,7 @@ const PREDEFINED_FIELDS = [
 export function AdminFormEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { language, setLanguage } = useLanguage();
+  const { setLanguage } = useLanguage();
   const [form, setForm] = useState<Partial<Form> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

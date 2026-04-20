@@ -1,4 +1,4 @@
-import { Section } from '../../../data/supabase';
+import { Section } from '../../../../data/supabase';
 import { SectionEditor } from '../SectionEditor';
 import { Button } from '../../../../components/ui/button';
 import { Plus, Share2 } from 'lucide-react';

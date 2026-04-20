@@ -44,7 +44,7 @@ export function LeadsTable() {
   }, [search, statusFilter]);
 
   const fetchLeads = async () => {
-    console.log('🔄 [DEBUG] Fetching leads via API...');
+
     try {
       // Usamos el nuevo supabaseAPI.getAllLeads() que hace fetch a /api/leads
       const data = await supabaseAPI.getAllLeads();
@@ -64,7 +64,7 @@ export function LeadsTable() {
         filteredData = filteredData.filter((l: any) => l.status === statusFilter);
       }
 
-      console.log('✅ [DEBUG] Leads recibidos:', filteredData.length);
+
       setLeads(filteredData as LeadItem[]);
     } catch (err) {
       setError("Error al cargar los leads");
@@ -74,7 +74,7 @@ export function LeadsTable() {
   };
 
   const updateLeadStatus = async (id: number, newStatus: LeadStatus) => {
-    console.log('🔵 [DEBUG] Actualizando estado lead:', id, newStatus);
+
     try {
       setUpdatingId(id);
       
@@ -83,14 +83,14 @@ export function LeadsTable() {
         updated_at: new Date().toISOString() 
       });
 
-      console.log('✅ [DEBUG] Actualizado exitosamente');
+
       
       setLeads(prev => prev.map(lead => 
         lead.id === id ? { ...lead, status: newStatus } : lead
       ));
       
     } catch (err: any) {
-      console.error('❌ [DEBUG] Error actualizando lead:', err);
+
       alert('Error: ' + err.message);
     } finally {
       setUpdatingId(null);
@@ -101,16 +101,16 @@ export function LeadsTable() {
     if (!confirm('¿Estas seguro de eliminar este lead? Esta accion no se puede deshacer.')) return;
 
     try {
-      console.log('🔴 [DEBUG] Eliminando lead:', id);
+
       await supabaseAPI.deleteLead(id.toString());
       
-      console.log('✅ [DEBUG] Eliminado exitosamente');
+
       
       setLeads(prev => prev.filter(lead => lead.id !== id));
       setShowModal(false);
       
     } catch (err: any) {
-      console.error('❌ [DEBUG] Error eliminando lead:', err);
+
       alert('Error: ' + err.message);
     }
   };

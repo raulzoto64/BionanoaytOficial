@@ -40,17 +40,17 @@ export const BackgroundPreload = {
   },
 
   _performPreload: async (language: string) => {
-    console.log("[CACHE] Iniciando precarga de traducciones críticas en segundo plano...");
+
     
     try {
       // 1. Traducciones y settings (ya existía)
       await supabaseAPI.getTranslations();
       await supabaseAPI.getSiteSettings();
 
-      console.log("[CACHE] Precarga crítica completada.");
+
 
       // 2. Precarga del Ecosistema (para scroll inmediato al regresar)
-      console.log("[CACHE] Precargando miembros del Ecosistema...");
+
       const members = await supabaseAPI.getEcosystemMembers();
       const translationPromises = members.map(async (member: any) => {
         const translation = await supabaseAPI.getEcosystemMemberTranslation(member.id, language);
@@ -63,15 +63,15 @@ export const BackgroundPreload = {
       });
       // Escribir al caché global del componente Ecosystem
       ecosystemPreloadCache = { members, translations: translationMap, language };
-      console.log("[CACHE] Ecosistema precargado:", members.length, "miembros.");
+
 
       // 3. Precarga de Productos
-      console.log("[CACHE] Precargando productos...");
+
       await supabaseAPI.getProducts();
-      console.log("[CACHE] Productos precargados.");
+
 
       // 4. Precarga de Blog/Noticias (Optimizado con Carga Masiva)
-      console.log("[CACHE] Precargando artículos y noticias del blog...");
+
       const postsWithTranslationsRaw = await supabaseAPI.getAllBlogPostTranslations(language);
 
       const processedPosts = postsWithTranslationsRaw.map((post: any) => ({
@@ -90,10 +90,10 @@ export const BackgroundPreload = {
       const finalDisplay = [...featuredPosts, ...recentPosts].slice(0, 5);
 
       newsPreloadCache = { posts: finalDisplay, language };
-      console.log("[CACHE] Blog y noticias precargados:", finalDisplay.length, "artículos.");
+
 
     } catch (error) {
-      console.warn("[CACHE] Error durante la precarga:", error);
+
     }
   }
 };

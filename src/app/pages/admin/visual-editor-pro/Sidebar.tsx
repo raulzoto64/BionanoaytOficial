@@ -71,7 +71,7 @@ export function Sidebar({
 
         setLibrarySections(visibleLibrary || []);
       } catch (error) {
-        console.error("Error fetching library sections:", error);
+
       }
     };
     fetchLibrary();

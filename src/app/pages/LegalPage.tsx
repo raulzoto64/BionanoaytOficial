@@ -5,7 +5,6 @@ import { DatabaseManager } from '../data/DatabaseManager';
 import { LegalPage as LegalPageType } from '../data/supabase';
 import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { DynamicSection } from '../components/DynamicSection';
 import '../../styles/blog-content.css';
 
 // Componentes que se renderizan dentro de la tarjeta blanca (cuerpo del texto)
@@ -80,9 +79,6 @@ export function LegalPage() {
     .filter(s => INTERNAL_TYPES.includes(s.type))
     .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  const externalSections = allSections
-    .filter(s => !INTERNAL_TYPES.includes(s.type) && s.type !== 'page-metadata')
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="min-h-screen bg-[#F0F9F0]">

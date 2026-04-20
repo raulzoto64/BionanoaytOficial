@@ -79,7 +79,7 @@ export function AdminPrices() {
       
       // Obtener tipos de embase disponibles para el producto seleccionado
       const availablePackagingTypes = Array.from(
-        new Set(pricesData.map(price => {
+        new Set(pricesData.map((price: { packaging: string; }) => {
           const packaging = price.packaging || 'Sin embase';
           return packaging.includes(' ') 
             ? (() => {
@@ -95,7 +95,7 @@ export function AdminPrices() {
       
       // Seleccionar el primer tipo de embase disponible si no hay uno seleccionado
       if (availablePackagingTypes.length > 0 && !selectedPackagingType) {
-        setSelectedPackagingType(availablePackagingTypes[0]);
+        setSelectedPackagingType(availablePackagingTypes[0] as string);
       }
     } catch (error) {
       toast.error('Error al cargar precios');
@@ -194,7 +194,7 @@ export function AdminPrices() {
     : null;
 
   // Obtener tipos de embase disponibles para el producto seleccionado
-  const availablePackagingTypes = Array.from(
+  const availablePackagingTypes = Array.from<string>(
     new Set(prices.map(price => {
       const packaging = price.packaging || 'Sin embase';
       return packaging.includes(' ') 

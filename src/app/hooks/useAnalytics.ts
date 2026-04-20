@@ -59,12 +59,7 @@ export function useAnalytics() {
         localStorage.setItem('guest_id', guestId);
       }
 
-      console.log(`📊 [Analytics] Tracking ${eventType}:`, {
-        visitor_id: guestId,
-        user_id: user?.id,
-        url: urlOverride || window.location.href,
-        ...extraData
-      });
+
 
       await supabaseAPI.trackAnalyticsEvent({
         visitor_id: guestId,

@@ -8,7 +8,7 @@ export function useExitIntent() {
   useEffect(() => {
     const handleManualOpen = (e: any) => {
       const id = e.detail?.popupId || 'exit-intent';
-      console.log('🔘 [POPUP] Apertura manual solicitada:', id);
+
       setShowPopupId(id);
     };
     window.addEventListener('popup:open', handleManualOpen);
@@ -22,7 +22,7 @@ export function useExitIntent() {
       return;
     }
 
-    console.log('🔄 [EXIT INTENT] Triggers automáticos instalados');
+
     
     let canShowPopup = false;
     const unlockTimer = setTimeout(() => {

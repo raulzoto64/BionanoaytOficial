@@ -189,12 +189,12 @@ export function AdminSections() {
               {/* CAPA DE CLIC GIGANTE (Z-40) */}
               <div 
                 className="absolute inset-0 z-40 cursor-pointer" 
-                onPointerDown={() => console.log(`[MOUSE] 🖱️ Click impulsado en: ${item.name}`)}
+
                 onClick={() => {
                   const t0 = performance.now();
                   setSelectedItem(item);
                   setIsPreviewOpen(true);
-                  console.log(`[CATALOG] ✅ Modal opened in ${Math.round(performance.now() - t0)}ms`);
+
                 }}
               />
 

@@ -3,12 +3,6 @@ import { Leaf, Shield, Droplets } from "lucide-react";
 import { useNavigate } from "react-router";
 import { handleAction } from "../utils/actions";
 
-// Elimina etiquetas HTML del texto para evitar que se rendericen como string literal
-function stripHtml(html: string): string {
-  if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').trim();
-}
-
 interface Feature {
   icon: 'Shield' | 'Leaf' | 'Droplets';
   title: string;
@@ -16,7 +10,7 @@ interface Feature {
 }
 
 interface FeaturedProductProps {
-  content: Record<string, any>;
+  content: Record<string, any> & { features?: Feature[] };
   sectionId?: string;
 }
 

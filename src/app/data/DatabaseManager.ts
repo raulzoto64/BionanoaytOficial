@@ -28,7 +28,7 @@ export class DatabaseManager {
     return await supabaseAPI.getUsers();
   }
 
-  static async saveUsers(users: User[]): Promise<void> {
+  static async saveUsers(_users: User[]): Promise<void> {
     // Implementar lógica para guardar usuarios en Supabase
     console.warn('Save users not implemented');
   }
@@ -38,7 +38,7 @@ export class DatabaseManager {
     return await supabaseAPI.getProducts();
   }
 
-  static async saveProducts(products: Product[]): Promise<void> {
+  static async saveProducts(_products: Product[]): Promise<void> {
     // Implementar lógica para guardar productos en Supabase
     console.warn('Save products not implemented');
   }
@@ -48,7 +48,7 @@ export class DatabaseManager {
     return await supabaseAPI.getCategories();
   }
 
-  static async saveCategories(categories: Category[]): Promise<void> {
+  static async saveCategories(_categories: Category[]): Promise<void> {
     // Implementar lógica para guardar categorías en Supabase
     console.warn('Save categories not implemented');
   }
@@ -66,7 +66,7 @@ export class DatabaseManager {
     return translations;
   }
 
-  static async saveCategoryTranslations(translations: CategoryTranslation[]): Promise<void> {
+  static async saveCategoryTranslations(_translations: CategoryTranslation[]): Promise<void> {
     // Implementar lógica para guardar traducciones de categorías
     console.warn('Save category translations not implemented');
   }
@@ -76,7 +76,7 @@ export class DatabaseManager {
     return await supabaseAPI.getAllPages();
   }
 
-  static async savePages(pages: Page[]): Promise<void> {
+  static async savePages(_pages: Page[]): Promise<void> {
     // Implementar lógica para guardar páginas en Supabase
     console.warn('Save pages not implemented');
   }
@@ -94,7 +94,7 @@ export class DatabaseManager {
     return contents;
   }
 
-  static async savePageContents(contents: PageContent[]): Promise<void> {
+  static async savePageContents(_contents: PageContent[]): Promise<void> {
     // Implementar lógica para guardar contenido de páginas
     console.warn('Save page contents not implemented');
   }
@@ -113,7 +113,7 @@ export class DatabaseManager {
     return await supabaseAPI.getTranslations();
   }
 
-  static async saveTranslations(translations: Translation[]): Promise<void> {
+  static async saveTranslations(_translations: Translation[]): Promise<void> {
     // Implementar lógica para guardar traducciones generales
     console.warn('Save translations not implemented');
   }
