@@ -152,7 +152,7 @@ export function AdminTranslations() {
         </div>
         <Button
           onClick={startCreating}
-          className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+          className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
           disabled={isCreating || editingId !== null}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -198,7 +198,7 @@ export function AdminTranslations() {
           <div className="flex gap-3 mt-6">
             <Button
               onClick={handleSave}
-              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+              className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
             >
               <Save className="w-4 h-4 mr-2" />
               Guardar
@@ -241,7 +241,7 @@ export function AdminTranslations() {
                   <div className="flex gap-3 mt-6">
                     <Button
                       onClick={handleSave}
-                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+                      className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
                     >
                       <Save className="w-4 h-4 mr-2" />
                       Guardar

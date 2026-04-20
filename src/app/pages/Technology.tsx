@@ -10,7 +10,6 @@ import {
   ChevronDown, ChevronUp, Quote, BarChart3, Zap,
   FlaskConical, Globe, Star, Check
 } from "lucide-react";
-import { useState as useLocalState } from "react";
 import { Leadership } from "../components/Leadership";
 import { Timeline } from "../components/Timeline";
 
@@ -97,7 +96,7 @@ export function Technology() {
   );
 }
 
-export function TechnologySectionPreview({ section, index, language, navigate }: any) {
+export function TechnologySectionPreview({ section, index, language }: any) {
   switch (section.type) {
           // ── HERO ──────────────────────────────────────────────────────────
           case 'hero':

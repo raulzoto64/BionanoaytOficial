@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { PageContent, Section, supabaseAPI, Product, ProductTranslation } from "../data/supabase";
+import { PageContent, Section, supabaseAPI, Product, EcosystemMember } from "../data/supabase";
 import { DynamicSection } from "../components/DynamicSection";
 import { ensureExternalLink } from "../utils/url";
 import { Link } from "react-router";
 import {
   FlaskConical, FileCheck, Microscope, Factory, TrendingUp, Globe,
-  AlertTriangle, ChevronDown, ChevronUp, Quote, CheckCircle,
+  AlertTriangle, CheckCircle,
   Sprout, Building2, Fish, Apple, HeartPulse, Shirt, Warehouse, Shield,
   Star, ShoppingCart, Package, Truck, Award, Users, Info, ExternalLink
 } from "lucide-react";
@@ -51,7 +51,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 // ── Componente de producto para la sección products ────────────────────────
-function ProductCard({ product, index }: { product: any; index: number }) {
+function ProductCard({ product, index }: { product: EnhancedProduct; index: number }) {
   const rating = index % 2 === 0 ? 5 : 4.5; // Alternar entre 5 y 4.5 estrellas
 
   return (
@@ -60,7 +60,7 @@ function ProductCard({ product, index }: { product: any; index: number }) {
       state={{ from: 'store' }}
       className="cursor-pointer bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group block"
     >
-      <div className="h-44 overflow-hidden bg-[#F7F9CE]">
+      <div className="h-52 overflow-hidden bg-[#F7F9CE]">
         <img
           src={product.image}
           alt={product.name}
@@ -73,6 +73,19 @@ function ProductCard({ product, index }: { product: any; index: number }) {
         </div>
         <h3 className="text-lg font-semibold text-[#1C5D15] mb-2 line-clamp-2">{product.name}</h3>
         <p className="text-sm text-[#629960] mb-3 line-clamp-3">{product.description}</p>
+
+        {/* ✅ Beneficios del producto */}
+        {product.benefits && product.benefits.length > 0 && (
+          <div className="space-y-1 mb-4">
+            {product.benefits.slice(0, 3).map((benefit: string, index: number) => (
+              <div key={index} className="flex items-center gap-2 text-xs">
+                <span className="text-[#19FF00] font-bold">✓</span>
+                <span className="text-[#1C5D15]">{benefit}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <StarRating rating={rating} />
           <span className="text-sm font-bold text-[#19FF00]">Ver detalle</span>
@@ -82,25 +95,40 @@ function ProductCard({ product, index }: { product: any; index: number }) {
   );
 }
 
+// Define the enhanced product type that includes translation data
+interface EnhancedProduct extends Product {
+  name: string;
+  description: string;
+  benefits: string[];
+  category_id: string;
+  category: string;
+  price: number;
+}
+
 export function Store() {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [pageContent, setPageContent] = useState<PageContent | null>(() => 
+  interface Category {
+    id: string;
+    name: string;
+    [key: string]: any;
+  }
+  const [pageContent, setPageContent] = useState<PageContent | null>(() =>
     supabaseAPI.getCachedData(`page-content-page-store-${language}`)
   );
-  const [products, setProducts] = useState<any[]>(() => 
+  const [products, setProducts] = useState<any[]>(() =>
     supabaseAPI.getCachedData(`store-products-ready-${language}`) || []
   );
-  const [categories, setCategories] = useState<any[]>(() => 
+  const [categories, setCategories] = useState<Category[]>(() =>
     supabaseAPI.getCachedData(`store-categories-ready-${language}`) || []
   );
-  const [ecosystemMembers, setEcosystemMembers] = useState<any[]>(() => 
+  const [ecosystemMembers, setEcosystemMembers] = useState<EcosystemMember[]>(() =>
     supabaseAPI.getCachedData(`store-members-ready-${language}`) || []
   );
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
+
   // Estados para el popup de partners (movidos AFUERA del map)
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -118,7 +146,7 @@ export function Store() {
     try {
       const productsData = await supabaseAPI.getProducts();
       const productsWithDetails = await Promise.all(
-        productsData.map(async (product) => {
+        productsData.map(async (product: Product) => {
           const translation = await supabaseAPI.getProductTranslation(product.id, language);
           const category = await supabaseAPI.getCategoryTranslation(product.category, language);
 
@@ -126,6 +154,7 @@ export function Store() {
             ...product,
             name: translation?.name || product.slug,
             description: translation?.description || '',
+            benefits: translation?.benefits || [],
             category_id: product.category,
             category: category?.name || product.category,
             price: product.price_per_unit || 0,
@@ -142,8 +171,9 @@ export function Store() {
   const loadCategories = async () => {
     try {
       const categoriesData = await supabaseAPI.getCategories();
+
       const categoriesWithTranslations = await Promise.all(
-        categoriesData.map(async (category) => {
+        (categoriesData as Category[]).map(async (category) => {
           const translation = await supabaseAPI.getCategoryTranslation(category.id, language);
           return {
             ...category,
@@ -162,7 +192,7 @@ export function Store() {
     try {
       const members = await supabaseAPI.getEcosystemMembers();
       const membersWithTranslations = await Promise.all(
-        members.map(async (member) => {
+        members.map(async (member: EcosystemMember) => {
           const translation = await supabaseAPI.getEcosystemMemberTranslation(member.id, language);
           return {
             ...member,
@@ -189,7 +219,7 @@ export function Store() {
     if (!pageContent) return;
 
     const from = sessionStorage.getItem('bx_return_from');
-    
+
     if (from === 'store') {
       const timer = setTimeout(() => {
         const element = document.getElementById("products");
@@ -222,8 +252,8 @@ export function Store() {
     }
   };
 
-  const filteredProducts = selectedCategory === 'all' 
-    ? products 
+  const filteredProducts = selectedCategory === 'all'
+    ? products
     : products.filter(product => product.category_id === selectedCategory);
 
   if (!pageContent) {
@@ -254,10 +284,10 @@ export function Store() {
         .map((section: Section, index: number) => {
           return (
             <StoreSectionPreview
-               key={section.id} 
-               section={section} 
-               index={index} 
-               language={language} 
+               key={section.id}
+               section={section}
+               index={index}
+               language={language}
                navigate={navigate}
                selectedPartner={selectedPartner}
                setSelectedPartner={setSelectedPartner}
@@ -275,11 +305,16 @@ export function Store() {
   );
 }
 
-export function StoreSectionPreview({ 
+export function StoreSectionPreview({
    section, index, language, navigate,
    selectedPartner, setSelectedPartner, isScrolled, setIsScrolled, ecosystemMembers,
    selectedCategory, handleCategoryChange, categories, filteredProducts
 }: any) {
+  interface Category {
+    id: string;
+    name: string;
+    [key: string]: any;
+  }
   switch (section.type) {
     case 'hero':
             return (
@@ -327,8 +362,8 @@ export function StoreSectionPreview({
                     <style dangerouslySetInnerHTML={{
                       __html: `
                       .dialog-content-scroll::-webkit-scrollbar { display: none; }
-                      [data-slot="dialog-close"] { 
-                        transition: color 0.3s ease; 
+                      [data-slot="dialog-close"] {
+                        transition: color 0.3s ease;
                         z-index: 100;
                         color: ${isScrolled ? '#1C5D15' : 'white'};
                       }
@@ -390,7 +425,7 @@ export function StoreSectionPreview({
                         <div className="bg-[#1C5D15]/5 p-6 border-t border-[#1C5D15]/10 flex justify-center">
                             <button
                               onClick={() => navigate(`/ecosystem/${selectedPartner.slug}`)}
-                              className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
+                              className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
                             >
                               <Globe className="w-4 h-4" />
                               Ver Cliente
@@ -413,13 +448,13 @@ export function StoreSectionPreview({
           case 'clientes':
             // ✅ USAMOS MIEMBROS DEL ECOSISTEMA DIRECTAMENTE
             let clientesList: any[] = [];
-            
+
             if (section.content.selectedMemberIds?.length > 0) {
-              const selectedIds = section.content.selectedMemberIds;
-              const filtered = ecosystemMembers.filter(m => selectedIds.includes(m.id));
-              
+              const selectedIds: string[] = section.content.selectedMemberIds;
+              const filtered: EcosystemMember[] = ecosystemMembers.filter((m: EcosystemMember) => selectedIds.includes(m.id));
+
               // ✅ MAPEAMOS TODOS LOS CAMPOS EXISTENTES EN ECOSYSTEM MEMBER
-              clientesList = filtered.map(member => ({
+              clientesList = filtered.map((member: EcosystemMember) => ({
                 id: member.id,
                 slug: member.slug,
                 name: member.translation?.name || member.slug,
@@ -443,16 +478,16 @@ export function StoreSectionPreview({
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {clientesList.map((cliente: any, index: number) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         onClick={() => setSelectedPartner(cliente)}
                         className="rounded-2xl overflow-hidden text-center transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 group"
                         style={{ backgroundColor: '#F7F9CE' }}
                       >
                         <div className="relative h-32 overflow-hidden">
-                          <img 
-                            src={cliente.image} 
-                            alt={cliente.name} 
+                          <img
+                            src={cliente.image}
+                            alt={cliente.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                           <div className="absolute inset-0 bg-[#1C5D15]/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -488,7 +523,7 @@ export function StoreSectionPreview({
                     >
                       Todas las Categorías
                     </button>
-                    {categories.map((category) => (
+                    {categories.map((category: Category) => (
                       <button
                         key={category.id}
                         onClick={() => handleCategoryChange(category.id)}
@@ -512,13 +547,13 @@ export function StoreSectionPreview({
 
 
           // ── 3. PRODUCTS ──────────────────────────────────────────────────
-          case 'products':
+case 'products':
             {
               return (
                 <section key={section.id} id="products" className="py-16 bg-[#F7F9CE]">
                   <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filteredProducts.map((product, index) => (
+                      {filteredProducts.map((product: EnhancedProduct, index: number) => (
                         <ProductCard key={product.id} product={product} index={index} />
                       ))}
                     </div>
@@ -537,10 +572,10 @@ export function StoreSectionPreview({
 
             if (section.content.selectedMemberIds?.length > 0) {
               const selectedIds = section.content.selectedMemberIds;
-              const filtered = ecosystemMembers.filter(m => selectedIds.includes(m.id));
-              
+const filtered = ecosystemMembers.filter((m: EcosystemMember) => selectedIds.includes(m.id));
+
               // ✅ MAPEAMOS TODOS LOS CAMPOS EXISTENTES EN ECOSYSTEM MEMBER
-              partnersList = filtered.map(member => ({
+              partnersList = filtered.map((member: EcosystemMember) => ({
                 id: member.id,
                 slug: member.slug,
                 name: member.translation?.name || member.slug,
@@ -564,16 +599,16 @@ export function StoreSectionPreview({
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {partnersList.map((partner: any, index: number) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         onClick={() => setSelectedPartner(partner)}
                         className="bg-[#F7F9CE] rounded-2xl overflow-hidden text-center transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-1 group"
                       >
                         {/* Imagen como banner de fondo completo */}
                         <div className="relative h-32 bg-[#F7F9CE] overflow-hidden">
-                          <img 
-                            src={partner.image} 
-                            alt={partner.name} 
+                          <img
+                            src={partner.image}
+                            alt={partner.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                           {/* Overlay hover con boton Ver Mas */}
@@ -602,8 +637,8 @@ export function StoreSectionPreview({
                     <style dangerouslySetInnerHTML={{
                       __html: `
                       .dialog-content-scroll::-webkit-scrollbar { display: none; }
-                      [data-slot="dialog-close"] { 
-                        transition: color 0.3s ease; 
+                      [data-slot="dialog-close"] {
+                        transition: color 0.3s ease;
                         z-index: 100;
                         color: ${isScrolled ? '#1C5D15' : 'white'};
                       }
@@ -668,7 +703,7 @@ export function StoreSectionPreview({
                                 href={ensureExternalLink(selectedPartner.link)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
+                              className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
                             >
                               <Globe className="w-4 h-4" />
                               Visitar Sitio Web

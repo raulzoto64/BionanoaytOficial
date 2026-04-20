@@ -22,6 +22,7 @@ export interface Product {
   image: string;
   images?: string[];
   featured: boolean;
+  price_per_unit?: number;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +38,7 @@ export interface ProductTranslation {
   technical_specs: Record<string, string>;
   meta_title: string;
   meta_description: string;
+  sections?: any;
 }
 
 export interface PriceByQuantity {
@@ -209,6 +211,8 @@ export interface EcosystemMember {
   social_media: Record<string, string>;
   youtube_videos: string[];
   short_videos: string[];
+  translation?: EcosystemMemberTranslation;
+  videos?: string[];
 }
 
 export interface EcosystemMemberTranslation {

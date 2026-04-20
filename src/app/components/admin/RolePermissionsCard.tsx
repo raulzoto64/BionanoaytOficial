@@ -76,7 +76,7 @@ export function RolePermissionsCard({ role }: RolePermissionsCardProps) {
                 <Button 
                   onClick={handleSave}
                   size="sm"
-                  className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+                  className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Guardar

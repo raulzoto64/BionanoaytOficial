@@ -272,7 +272,7 @@ export function ProcessSectionPreview({ section, index, language, navigate }: an
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {section.content.items?.map((item: any, index: number) => (
-                      <div key={index} className="group bg-white/10 hover:bg-[#19FF00] rounded-2xl p-6 text-center transition-all duration-300 border border-white/10 hover:border-[#19FF00] hover:shadow-2xl hover:shadow-[#19FF00]/20 hover:-translate-y-1 cursor-default">
+                      <div key={index} className="group bg-white/10 rounded-2xl p-6 text-center transition-all duration-300 border border-white/10 hover:border-[#19FF00] hover:shadow-2xl hover:shadow-[#19FF00]/20 hover:-translate-y-1 cursor-default">
                         <div className="flex items-center justify-center w-14 h-14 bg-[#19FF00]/20 group-hover:bg-[#1C5D15]/20 rounded-xl mx-auto mb-4 transition-colors">
                           <Icon name={item.icon} className="w-7 h-7 text-[#19FF00] group-hover:text-[#1C5D15]" />
                         </div>
@@ -418,7 +418,7 @@ export function ProcessSectionPreview({ section, index, language, navigate }: an
                     <div className="text-center mt-12">
                       <button
                         onClick={() => handleAction(section.content.ctaType, section.content.ctaLink || '/#contact', navigate)}
-                        className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white rounded-full font-bold hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-lg uppercase text-sm tracking-wider"
+                        className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white rounded-full font-bold hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-lg uppercase text-sm tracking-wider"
                       >
                         {section.content.ctaText}
                       </button>

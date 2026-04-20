@@ -160,7 +160,7 @@ export function AdminUsers() {
           <DialogTrigger asChild>
             <Button 
               onClick={resetForm}
-              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] flex items-center gap-2 shadow-md transform active:scale-95 transition-all"
+              className="bg-[#1C5D15] text-white hover:text-[#1C5D15] flex items-center gap-2 shadow-md transform active:scale-95 transition-all"
             >
               <Plus className="w-5 h-5" />
               {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
@@ -206,7 +206,7 @@ export function AdminUsers() {
               
               <Button 
                 type="submit" 
-                className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+                className="w-full bg-[#1C5D15] text-white hover:text-[#1C5D15]"
                 disabled={isLoading}
               >
                 {isLoading ? 'Cargando...' : (editingUser ? 'Actualizar' : 'Crear')}

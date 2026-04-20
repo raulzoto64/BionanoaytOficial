@@ -248,7 +248,7 @@ export function ExitIntentPopup({ popupId, onClose, onSubmit }: ExitIntentPopupP
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-[#1C5D15]/20 flex items-center justify-center gap-2 mt-4 hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:translate-y-0"
+              className="w-full bg-[#1C5D15] hover:text-[#1C5D15] text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-[#1C5D15]/20 flex items-center justify-center gap-2 mt-4 hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:translate-y-0"
             >
               {isSubmitting ? (
                 <>

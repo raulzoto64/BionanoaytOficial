@@ -48,7 +48,7 @@ export function TimelineSlider({ milestones }: TimelineSliderProps) {
     ],
     dotsClass: "slick-dots !bottom-[-40px]",
     customPaging: () => (
-      <div className="w-3 h-3 bg-[#19FF00]/30 rounded-full hover:bg-[#19FF00] transition-colors" />
+      <div className="w-3 h-3 bg-[#19FF00]/30 rounded-full transition-colors" />
     ),
   };
 

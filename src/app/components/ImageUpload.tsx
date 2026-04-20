@@ -25,16 +25,16 @@ export function ImageUpload({
   // Configuración de ImageKit (Cuentas por defecto de HitPoly)
   const DEFAULT_CONFIG = {
     avatar: {
-      publicKey: "public_Et8QkoYluHINxWKh3aTIOB0b464=",
-      privateKey: "private_n+77Uw3D8PATiLls8b3tA8JrH+k="
+      publicKey: "public_eytYlzqr/41E3UAUOhgd42aLsRU=",
+      privateKey: "private_0pjvBk9JAaqJa5froe2f3miRYyk="
     },
     banner: {
-      publicKey: "public_LMAf2QROhvzzt89GcZrQQLp1ydI=",
-      privateKey: "private_KHCQyprWox4wBQO/T0lfRn2xMSE="
+      publicKey: "public_eytYlzqr/41E3UAUOhgd42aLsRU=",
+      privateKey: "private_0pjvBk9JAaqJa5froe2f3miRYyk="
     },
     product: {
-      publicKey: "public_LMAf2QROhvzzt89GcZrQQLp1ydI=",
-      privateKey: "private_KHCQyprWox4wBQO/T0lfRn2xMSE="
+      publicKey: "public_eytYlzqr/41E3UAUOhgd42aLsRU=",
+      privateKey: "private_0pjvBk9JAaqJa5froe2f3miRYyk="
     }
   };
 

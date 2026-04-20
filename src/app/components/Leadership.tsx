@@ -47,7 +47,7 @@ function MemberCard({ member }: { member: TeamMember }) {
                 href={ensureExternalLink(member.linkedin)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-3 bg-white text-[#1C5D15] rounded-full shadow-xl hover:scale-125 hover:bg-[#19FF00] transition-all duration-300 transform translate-y-4 group-hover:translate-y-0"
+                className="p-3 bg-white text-[#1C5D15] rounded-full shadow-xl hover:scale-125 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0"
                 title="Ver Perfil de LinkedIn"
               >
                 <Linkedin className="w-6 h-6" />
@@ -120,8 +120,8 @@ export function Leadership({ members, title, subtitle, ctaText, ctaLink, ctaActi
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="bg-white border-2 border-[#629960]/20 text-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] hover:border-[#19FF00]" />
-                <CarouselNext className="bg-white border-2 border-[#629960]/20 text-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] hover:border-[#19FF00]" />
+                <CarouselPrevious className="bg-white border-2 border-[#629960]/20 text-[#1C5D15] hover:text-[#1C5D15] hover:border-[#19FF00]" />
+                <CarouselNext className="bg-white border-2 border-[#629960]/20 text-[#1C5D15] hover:text-[#1C5D15] hover:border-[#19FF00]" />
                 <CarouselDots dotClassName="bg-[#629960]/30" />
               </Carousel>
             </div>
@@ -148,7 +148,7 @@ export function Leadership({ members, title, subtitle, ctaText, ctaLink, ctaActi
           <div className="text-center mt-12">
             <Button 
                 onClick={() => handleAction(ctaActionType, ctaLink, navigate)}
-                className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
             >
                 {ctaText}
             </Button>

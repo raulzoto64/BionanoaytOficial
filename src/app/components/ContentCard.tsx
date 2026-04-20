@@ -117,7 +117,7 @@ export function ContentCard({ type, data, sectionId, from }: ContentCardProps) {
                   sessionStorage.setItem('bx_return_from', window.location.pathname);
                 }
               }}
-              className="text-[#1C5D15] text-sm font-semibold flex items-center gap-1 hover:text-[#19FF00] transition-colors"
+              className="text-[#1C5D15] text-sm font-semibold flex items-center gap-1 transition-colors"
             >
               {language === 'es' ? 'Leer más' : 'Read more'}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

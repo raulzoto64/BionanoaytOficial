@@ -253,7 +253,7 @@ export function Cart() {
               <ShoppingBag className="w-12 h-12 text-gray-200" />
             </div>
             <h2 className="text-2xl font-black text-[#1C5D15] mb-4 uppercase tracking-tighter">Tu carrito está vacío</h2>
-            <Button onClick={() => navigate("/store")} className="bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] px-10 py-7 text-lg font-black uppercase rounded-2xl shadow-2xl">
+            <Button onClick={() => navigate("/store")} className="bg-[#1C5D15] hover:text-[#1C5D15] px-10 py-7 text-lg font-black uppercase rounded-2xl shadow-2xl">
               Explorar Catálogo
             </Button>
           </div>

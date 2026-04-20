@@ -166,7 +166,7 @@ export function AdminSidebar() {
             )}
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="text-white hover:text-[#19FF00] p-2"
+              className="text-white p-2"
             >
               {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
             </button>
@@ -186,7 +186,7 @@ export function AdminSidebar() {
                     className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
                       active
                         ? 'bg-[#19FF00] text-[#1C5D15]'
-                        : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
+                        : 'text-white hover:bg-[#629960]/30'
                     }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -203,7 +203,7 @@ export function AdminSidebar() {
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
                   productsSubItems.some(i => isActive(i.path))
                     ? 'bg-[#19FF00] text-[#1C5D15]'
-                    : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
+                    : 'text-white hover:bg-[#629960]/30'
                 }`}
               >
                 <Package className="w-5 h-5 flex-shrink-0" />
@@ -218,7 +218,7 @@ export function AdminSidebar() {
                 <ul className="mt-1 ml-4 space-y-1 border-l-2 border-[#629960]/40 pl-3">
                   {productsSubItems.map((sub) => (
                     <li key={sub.path}>
-                      <Link to={sub.path} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white hover:text-[#19FF00]'}`}>
+                      <Link to={sub.path} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white'}`}>
                         <sub.icon className="w-4 h-4" /> <span>{sub.label}</span>
                       </Link>
                     </li>
@@ -234,7 +234,7 @@ export function AdminSidebar() {
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors relative ${
                     marketingSubItems.some(i => isActive(i.path))
                     ? 'bg-[#19FF00] text-[#1C5D15]'
-                    : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
+                    : 'text-white hover:bg-[#629960]/30'
                 }`}
               >
                 <Megaphone className="w-5 h-5 flex-shrink-0" />
@@ -259,7 +259,7 @@ export function AdminSidebar() {
                     const count = sub.path.includes('leads') ? unreadLeads : (sub.path.includes('chats') ? unreadChats : 0);
                     return (
                       <li key={sub.path}>
-                        <Link to={sub.path} className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white hover:text-[#19FF00]'}`}>
+                        <Link to={sub.path} className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white'}`}>
                           <div className="flex items-center gap-3">
                             <sub.icon className="w-4 h-4" /> <span>{sub.label}</span>
                           </div>
@@ -283,7 +283,7 @@ export function AdminSidebar() {
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
                     salesSubItems.some(i => isActive(i.path))
                     ? 'bg-[#19FF00] text-[#1C5D15]'
-                    : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
+                    : 'text-white hover:bg-[#629960]/30'
                 }`}
               >
                 <Target className="w-5 h-5 flex-shrink-0" />
@@ -298,7 +298,7 @@ export function AdminSidebar() {
                 <ul className="mt-1 ml-4 space-y-1 border-l-2 border-[#629960]/40 pl-3">
                   {salesSubItems.map((sub) => (
                     <li key={sub.path}>
-                      <Link to={sub.path} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white hover:text-[#19FF00]'}`}>
+                      <Link to={sub.path} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white'}`}>
                         <sub.icon className="w-4 h-4" /> <span>{sub.label}</span>
                       </Link>
                     </li>
@@ -314,7 +314,7 @@ export function AdminSidebar() {
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
                   cmsSubItems.some(i => isActive(i.path))
                     ? 'bg-[#19FF00] text-[#1C5D15]'
-                    : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
+                    : 'text-white hover:bg-[#629960]/30'
                 }`}
               >
                 <FileText className="w-5 h-5 flex-shrink-0" />
@@ -329,7 +329,7 @@ export function AdminSidebar() {
                 <ul className="mt-1 ml-4 space-y-1 border-l-2 border-[#629960]/40 pl-3">
                   {cmsSubItems.map((sub) => (
                     <li key={sub.path}>
-                      <Link to={sub.path} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white hover:text-[#19FF00]'}`}>
+                      <Link to={sub.path} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isActive(sub.path) ? 'bg-[#19FF00]/80 text-[#1C5D15] font-semibold' : 'text-white'}`}>
                         <sub.icon className="w-4 h-4" /> <span>{sub.label}</span>
                       </Link>
                     </li>
@@ -349,7 +349,7 @@ export function AdminSidebar() {
                     className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
                       active
                         ? 'bg-[#19FF00] text-[#1C5D15]'
-                        : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
+                        : 'text-white hover:bg-[#629960]/30'
                     }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -363,7 +363,7 @@ export function AdminSidebar() {
 
         {/* Footer Bar */}
         <div className={`py-4 border-t border-[#629960]/30 flex items-center px-4 ${collapsed ? 'flex-col gap-4' : 'justify-around overflow-visible'}`}>
-          <Link to="/" className="text-white hover:text-[#19FF00]"><Home size={20}/></Link>
+          <Link to="/" className="text-white"><Home size={20}/></Link>
           <NotificationCenter />
           <button onClick={() => setLogoutConfirmOpen(true)} className="text-red-400 hover:text-red-300"><LogOut size={20}/></button>
         </div>

@@ -249,7 +249,7 @@ export function AdminFormEditor() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] text-white rounded-full px-8 py-5 h-10 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-[#1C5D15]/20"
+            className="bg-[#1C5D15] hover:text-[#1C5D15] text-white rounded-full px-8 py-5 h-10 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-[#1C5D15]/20"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             {saving ? 'Publicando...' : 'Publicar Cambios'}
@@ -331,7 +331,7 @@ export function AdminFormEditor() {
                 <section className="pt-6 border-t border-gray-50">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-[#1C5D15] font-black uppercase text-[10px] tracking-[0.2em]">Campos de Entrada</h3>
-                    <button onClick={addField} className="p-2 bg-[#1C5D15] text-white rounded-xl hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all shadow-lg shadow-[#1C5D15]/20">
+                    <button onClick={addField} className="p-2 bg-[#1C5D15] text-white rounded-xl hover:text-[#1C5D15] transition-all shadow-lg shadow-[#1C5D15]/20">
                       <Plus size={16} />
                     </button>
                   </div>

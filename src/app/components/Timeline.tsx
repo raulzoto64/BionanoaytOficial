@@ -174,8 +174,8 @@ export function Timeline({ milestones, title, subtitle, description, ctaText, ct
               })}
             </CarouselContent>
             <div className="flex justify-center mt-12 gap-4">
-              <CarouselPrevious className="static translate-y-0 bg-white/10 border-white/20 text-white hover:bg-[#19FF00] hover:text-[#1C5D15]" />
-              <CarouselNext className="static translate-y-0 bg-white/10 border-white/20 text-white hover:bg-[#19FF00] hover:text-[#1C5D15]" />
+              <CarouselPrevious className="static translate-y-0 bg-white/10 border-white/20 text-white hover:text-[#1C5D15]" />
+              <CarouselNext className="static translate-y-0 bg-white/10 border-white/20 text-white hover:text-[#1C5D15]" />
             </div>
             <CarouselDots dotClassName="bg-white/20" />
           </Carousel>

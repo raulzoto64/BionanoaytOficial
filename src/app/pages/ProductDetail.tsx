@@ -153,6 +153,17 @@ export function ProductDetail() {
       setProduct(productData);
       setTranslation(translationData);
       setPrices(pricesData);
+
+      // ✅ Siempre poner la imagen de portada PRIMERA, despues las imagenes adicionales
+      if (productData) {
+        const mainImage = productData.image;
+        const additionalImages = productData.images || [];
+        // Combinar y eliminar duplicados si la imagen principal ya esta en el array
+        productData.images = [
+          mainImage, 
+          ...additionalImages.filter((img: string | null | undefined) => img !== mainImage)
+        ].filter(Boolean); // Eliminar null/undefined
+      }
       
       const pkgMap = new Map<string, string>();
       pricesData.forEach((p: any) => {
@@ -259,7 +270,7 @@ export function ProductDetail() {
 
     try {
       setIsSubmittingLead(true);
-      const result = await supabaseAPI.syncLead({
+      await supabaseAPI.syncLead({
         name: currentForm.name,
         email: currentForm.email,
         phone: type === 'Quote' ? (currentForm as any).phone : '',

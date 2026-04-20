@@ -47,7 +47,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
     <div className="hidden min-[1000px]:flex items-center gap-6">
       {/* Conócenos Dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
+        <DropdownMenuTrigger className="flex items-center gap-1 transition-colors">
           {t("nav.about")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -80,7 +80,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
 
       {/* Tecnología Dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
+        <DropdownMenuTrigger className="flex items-center gap-1 transition-colors">
           {t("nav.technology")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -95,7 +95,7 @@ export function DesktopMenu({ scrollToSection }: DesktopMenuProps) {
 
       {/* Productos Dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
+        <DropdownMenuTrigger className="flex items-center gap-1 transition-colors">
           {t("nav.products")} <ChevronDown className="w-4 h-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>

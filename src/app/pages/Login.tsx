@@ -199,7 +199,7 @@ export function Login() {
                   <input type="checkbox" className="rounded" />
                   Recordarme
                 </label>
-                <button type="button" className="text-[#1C5D15] hover:text-[#19FF00]">
+                <button type="button" className="text-[#1C5D15]">
                   ¿Olvidaste tu contraseña?
                 </button>
               </div>
@@ -207,7 +207,7 @@ export function Login() {
 
             <Button
               type="submit"
-              className="w-full bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] py-6 text-lg"
+              className="w-full bg-[#1C5D15] text-white hover:text-[#1C5D15] py-6 text-lg"
               disabled={isLoading}
             >
               {isLoading ? "Cargando..." : (isLogin ? "Iniciar Sesión" : "Crear Cuenta")}
@@ -218,7 +218,7 @@ export function Login() {
             {isLogin ? "¿No tienes una cuenta? " : "¿Ya tienes una cuenta? "}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-[#1C5D15] font-semibold hover:text-[#19FF00]"
+              className="text-[#1C5D15] font-semibold"
             >
               {isLogin ? "Regístrate aquí" : "Inicia sesión"}
             </button>

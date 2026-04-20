@@ -272,7 +272,7 @@ export function AdminContent() {
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] shadow-sm transform active:scale-95 transition-transform"
+              className="bg-[#1C5D15] text-white hover:text-[#1C5D15] shadow-sm transform active:scale-95 transition-transform"
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1118,7 +1118,7 @@ function SectionEditor({
                                     contentEN: { ...currentContentEN, partners: updatedPartnersEN }
                                   } as any);
                                 }}
-                                className="mt-2 w-full py-6 border-dashed border-2 border-[#1C5D15]/20 text-[#1C5D15] hover:bg-[#19FF00]/5 hover:border-[#19FF00] transition-all"
+                                className="mt-2 w-full py-6 border-dashed border-2 border-[#1C5D15]/20 text-[#1C5D15]/5 hover:border-[#19FF00] transition-all"
                               >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Añadir Nuevo Bloque de Detalle (ES / EN)

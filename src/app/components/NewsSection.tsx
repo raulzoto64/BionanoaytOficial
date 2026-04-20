@@ -197,7 +197,7 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, 
         <div className="text-center mt-12">
           <button
             onClick={() => handleAction(ctaActionType, ctaLink || "/blog", navigate, { from: 'home', sectionId: sectionId || 'news' })}
-            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white font-bold rounded-full hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg uppercase text-sm tracking-wider"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white font-bold rounded-full hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg uppercase text-sm tracking-wider"
           >
             {ctaText || (language === 'es' ? 'Ver todas las noticias' : 'View all news')}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

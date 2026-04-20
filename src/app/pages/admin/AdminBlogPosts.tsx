@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Eye, Edit, BookOpen, Sparkles } from 'lucide-react';
+import { Trash2, Plus, Eye, Edit, BookOpen, Sparkles, Layout } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useNavigate } from 'react-router';
 import { Badge } from '../../components/ui/badge';
@@ -20,10 +20,9 @@ export function AdminBlogPosts() {
 
   useEffect(() => {
     loadPosts();
-  }, [updateTrigger, loading]); // loading is here to refresh after new post creation
+  }, [updateTrigger]);
 
   const loadPosts = async () => {
-    if (!loading && posts.length > 0) return; // Prevent double loads on initial mount if already loading
     try {
       const data = await supabaseAPI.getBlogPosts();
       setPosts(data);
@@ -107,7 +106,7 @@ export function AdminBlogPosts() {
             <BookOpen className="w-4 h-4 mr-2" />
             Categorías
           </Button>
-          <Button className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]" onClick={handleNewPost}>
+          <Button className="bg-[#1C5D15] text-white hover:text-[#1C5D15]" onClick={handleNewPost}>
             <Plus className="w-4 h-4 mr-2" />
             Nuevo Artículo
           </Button>

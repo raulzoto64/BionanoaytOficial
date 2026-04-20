@@ -48,7 +48,7 @@ export function AdminFooterSettings() {
         <Button 
           onClick={handleEnterEditor}
           disabled={isLoading}
-          className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-12 py-8 rounded-2xl font-black uppercase text-lg tracking-widest shadow-[0_20px_40px_-15px_rgba(28,93,21,0.3)] hover:scale-105 transition-all group"
+          className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-12 py-8 rounded-2xl font-black uppercase text-lg tracking-widest shadow-[0_20px_40px_-15px_rgba(28,93,21,0.3)] hover:scale-105 transition-all group"
         >
           <Sparkles className="w-6 h-6 mr-3 group-hover:animate-spin" />
           Abrir Editor Visual

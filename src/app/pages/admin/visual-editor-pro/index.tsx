@@ -477,23 +477,32 @@ export function AdminVisualEditor() {
 
         } else if (type === 'product') {
            console.log(`📦 [EDITOR-SAVE] Guardando producto ${finalId}...`);
-            await Promise.all([
-              supabaseAPI.updateProductTranslation(finalId, 'es', {
-                 ...headerES,
-                 sections: JSON.stringify(realSectionsES)
-              }),
-              supabaseAPI.updateProductTranslation(finalId, 'en', {
-                 ...headerEN,
-                 sections: JSON.stringify(realSectionsEN)
-              }),
-              supabaseAPI.updateProduct(finalId, {
-                image: headerES?.cover_image,
-                images: headerES?.images || [],
-                category: headerES?.category,
-                status: headerES?.status,
-                featured: headerES?.featured
-             })
-           ]);
+           // Asegurar que el slug no sea null
+           const slugToSave = headerES?.name 
+             ? headerES.name.toLowerCase()
+                 .trim()
+                 .replace(/\s+/g, '-')
+                 .replace(/[^\w-]+/g, '')
+             : (page?.slug || finalId);
+           
+           await Promise.all([
+             supabaseAPI.updateProductTranslation(finalId, 'es', {
+                ...headerES,
+                sections: JSON.stringify(realSectionsES)
+             }),
+             supabaseAPI.updateProductTranslation(finalId, 'en', {
+                ...headerEN,
+                sections: JSON.stringify(realSectionsEN)
+             }),
+             supabaseAPI.updateProduct(finalId, {
+               slug: slugToSave,
+               image: headerES?.cover_image,
+               images: headerES?.images || [],
+               category: headerES?.category,
+               status: headerES?.status,
+               featured: headerES?.featured
+            })
+          ]);
            
            supabaseAPI._invalidateCache(`product-${finalId}`);
            supabaseAPI._invalidateCache('all-products');

@@ -106,7 +106,7 @@ export function Footer({ contactInfo, settings }: FooterProps) {
                 <li key={link.id}>
                   <a
                     href={link.type === 'category_dropdown' ? `/store?category=${link.category_id}` : (link.actionType === 'route' ? link.url : '#')}
-                    className="text-white/80 hover:text-[#19FF00] transition-colors flex items-center gap-1 group/item"
+                    className="text-white/80 transition-colors flex items-center gap-1 group/item"
                     onClick={(e) => {
                       if (link.type === 'category_dropdown' || link.actionType === 'route') return;
                       e.preventDefault();
@@ -168,7 +168,7 @@ export function Footer({ contactInfo, settings }: FooterProps) {
             <a
               key={link.name}
               href={link.url}
-              className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all"
+              className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:text-[#1C5D15] transition-all"
               target="_blank"
               rel="noopener noreferrer"
               title={link.name}
@@ -225,7 +225,7 @@ export function Footer({ contactInfo, settings }: FooterProps) {
               </div>
               <Button 
                 type="submit"
-                className="w-full bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90"
+                className="w-full bg-[#19FF00] text-[#1C5D15]/90"
               >
                 {t('btn.send_message')}
               </Button>

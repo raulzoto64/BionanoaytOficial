@@ -2927,7 +2927,7 @@ export function VisualEditorSidebar({
                 <ImageUpload
                   currentImage={sectionES.content.url}
                   onImageUpload={(url) => handleContentChange('url', url, 'both')}
-                  type="standard"
+                  type="banner"
                 />
              </div>
              <div>

@@ -90,7 +90,7 @@ export function AdminForms() {
           </div>
           <Button 
             onClick={handleCreate}
-            className="bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] text-white rounded-full px-8 py-7 font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1C5D15]/20 transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-3 group"
+            className="bg-[#1C5D15] hover:text-[#1C5D15] text-white rounded-full px-8 py-7 font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1C5D15]/20 transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-3 group"
           >
             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
             Nuevo Formulario

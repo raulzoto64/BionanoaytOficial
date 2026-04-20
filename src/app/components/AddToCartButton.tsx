@@ -56,7 +56,7 @@ export function AddToCartButton({ productId, packaging, onSuccess }: AddToCartBu
     return (
       <button 
         onClick={handleCartRedirect}
-        className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] px-6 py-3 text-lg font-bold transition-colors"
+        className="bg-[#19FF00] text-[#1C5D15] hover:text-[#1C5D15] px-6 py-3 text-lg font-bold transition-colors"
       >
         <Check className="w-5 h-5 mr-2" />
         Ver Carrito
@@ -68,7 +68,7 @@ export function AddToCartButton({ productId, packaging, onSuccess }: AddToCartBu
     <button 
       onClick={addToCart}
       disabled={isLoading}
-      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-6 py-3 text-lg font-bold transition-colors"
+      className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-6 py-3 text-lg font-bold transition-colors"
     >
       {isLoading ? (
         <span className="flex items-center justify-center">

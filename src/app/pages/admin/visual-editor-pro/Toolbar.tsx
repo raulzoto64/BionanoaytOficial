@@ -127,7 +127,7 @@ export function Toolbar({
         <Button
           onClick={onSave}
           disabled={saving}
-          className="bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] text-white rounded-full px-6 font-bold shadow-lg shadow-[#1C5D15]/20 h-9 transition-all active:scale-95"
+          className="bg-[#1C5D15] hover:text-[#1C5D15] text-white rounded-full px-6 font-bold shadow-lg shadow-[#1C5D15]/20 h-9 transition-all active:scale-95"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />

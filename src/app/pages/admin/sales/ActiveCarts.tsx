@@ -82,7 +82,7 @@ export function ActiveCarts() {
               className="pl-12 bg-white border-none shadow-sm rounded-xl w-64 font-bold text-xs h-10"
             />
           </div>
-          <Button onClick={loadCarts} disabled={loading} className="rounded-xl h-10 px-6 bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] font-black uppercase tracking-widest text-[9px]">
+          <Button onClick={loadCarts} disabled={loading} className="rounded-xl h-10 px-6 bg-[#1C5D15] hover:text-[#1C5D15] font-black uppercase tracking-widest text-[9px]">
             {loading ? <Loader2 className="animate-spin w-4 h-4" /> : "Actualizar"}
           </Button>
         </div>
@@ -225,7 +225,7 @@ export function ActiveCarts() {
               </div>
 
               <footer className="p-8 border-t bg-gray-50">
-                <Button className="w-full bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] text-white py-6 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-[#1C5D15]/10">
+                <Button className="w-full bg-[#1C5D15] hover:text-[#1C5D15] text-white py-6 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-[#1C5D15]/10">
                   Crear Ticket de Seguimiento
                 </Button>
               </footer>

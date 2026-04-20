@@ -94,7 +94,7 @@ export function AdminLegalPages() {
           <p className="text-[#629960]">Gestiona los términos, condiciones y políticas de privacidad</p>
         </div>
         <Button 
-          className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-6"
+          className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-6"
           onClick={handleNewPage}
         >
           <Plus className="w-4 h-4 mr-2" />

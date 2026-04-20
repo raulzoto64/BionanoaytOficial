@@ -114,8 +114,8 @@ export function TrustBar({ partners, title, subtitle }: TrustBarProps) {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
-          <CarouselNext className="bg-white/10 text-white hover:bg-[#19FF00] hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
+          <CarouselPrevious className="bg-white/10 text-white hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
+          <CarouselNext className="bg-white/10 text-white hover:text-[#1C5D15] border-white/20 hidden sm:flex" />
           <CarouselDots dotClassName="bg-white/20" />
         </Carousel>
       </div>
@@ -198,7 +198,7 @@ export function TrustBar({ partners, title, subtitle }: TrustBarProps) {
                     href={ensureExternalLink(selectedPartner.link)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
+                    className="flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-[#19FF00] rounded-full font-bold hover:text-[#1C5D15] transition-all duration-300 shadow-lg hover:shadow-[#19FF00]/20 active:scale-95"
                   >
                     <Globe className="w-4 h-4" />
                     Visitar Sitio Web

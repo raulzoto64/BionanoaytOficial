@@ -51,7 +51,7 @@ export function CheckoutLeads() {
                 className="pl-12 bg-white border-none shadow-sm rounded-xl w-64 font-bold text-xs h-10"
               />
            </div>
-           <Button onClick={loadLeads} disabled={loading} className="rounded-xl h-10 px-6 bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15] font-black uppercase tracking-widest text-[9px]">
+           <Button onClick={loadLeads} disabled={loading} className="rounded-xl h-10 px-6 bg-[#1C5D15] hover:text-[#1C5D15] font-black uppercase tracking-widest text-[9px]">
              {loading ? <Loader2 className="animate-spin w-4 h-4" /> : "Sincronizar"}
            </Button>
         </div>
@@ -245,7 +245,7 @@ export function CheckoutLeads() {
                     </div>
                  </section>
 
-                 <Button className="w-full bg-[#1C5D15] text-[#19FF00] hover:bg-[#19FF00] hover:text-[#1C5D15] py-7 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-[#1C5D15]/20">
+                 <Button className="w-full bg-[#1C5D15] text-[#19FF00] hover:text-[#1C5D15] py-7 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-[#1C5D15]/20">
                     Sincronizar con CRM Externo
                  </Button>
               </div>

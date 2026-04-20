@@ -78,7 +78,7 @@ export function MobileAdminMenu() {
                       className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
                         active
                           ? 'bg-[#19FF00] text-[#1C5D15]'
-                          : 'text-white hover:bg-[#629960]/30 hover:text-[#19FF00]'
+                          : 'text-white hover:bg-[#629960]/30'
                       }`}
                       onClick={() => setIsOpen(false)}
                     >

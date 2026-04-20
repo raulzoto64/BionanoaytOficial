@@ -422,7 +422,7 @@ export function DynamicSection({
                   <div className="mt-4">
                     <Button
                       onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
-                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                      className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
                     >
                       {section.content.ctaText}
                     </Button>
@@ -489,7 +489,7 @@ export function DynamicSection({
                   <div className="text-center mt-12">
                     <Button
                       onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
-                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                      className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
                     >
                       {section.content.ctaText}
                     </Button>
@@ -667,7 +667,7 @@ export function DynamicSection({
                   <div className="text-center mt-12">
                     <Button
                       onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
-                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                      className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
                     >
                       {section.content.ctaText}
                     </Button>
@@ -698,7 +698,7 @@ export function DynamicSection({
                   <div className="mt-10">
                     <Button
                       onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
-                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                      className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
                     >
                       {section.content.ctaText}
                     </Button>
@@ -719,7 +719,7 @@ export function DynamicSection({
                 {section.content.subtitle && <p className="text-white/70 mb-10">{section.content.subtitle}</p>}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {(section.content.items || []).map((item: any, i: number) => (
-                    <div key={i} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:bg-[#19FF00] hover:text-[#1C5D15] transition-all group">
+                    <div key={i} className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 hover:text-[#1C5D15] transition-all group">
                       <h3 className="font-bold text-sm">{item.title}</h3>
                       {item.description && <p className="text-xs mt-1 opacity-70">{item.description}</p>}
                     </div>
@@ -763,7 +763,7 @@ export function DynamicSection({
                   <div className="mt-12 text-center">
                     <Button
                       onClick={() => handleAction(section.content.ctaActionType, section.content.ctaLink, navigate)}
-                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
+                      className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-8 py-3 rounded-full font-bold uppercase text-sm tracking-wider hover:scale-105 transition-transform"
                     >
                       {section.content.ctaText}
                     </Button>

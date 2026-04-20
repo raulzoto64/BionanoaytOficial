@@ -287,7 +287,7 @@ export function AdminSections() {
                 <Button variant="ghost" onClick={() => setIsPreviewOpen(false)} className="rounded-full px-6 font-bold uppercase text-xs">Cerrar</Button>
                 <Button 
                    onClick={() => handleToggleSync(selectedItem)}
-                   className={`${selectedItem.isSynced ? 'bg-red-500 hover:bg-red-600' : 'bg-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15]'} text-white rounded-full px-8 font-black uppercase text-xs transition-all shadow-lg`}
+                   className={`${selectedItem.isSynced ? 'bg-red-500 hover:bg-red-600' : 'bg-[#1C5D15] hover:text-[#1C5D15]'} text-white rounded-full px-8 font-black uppercase text-xs transition-all shadow-lg`}
                 >
                    {selectedItem.isSynced ? 'Eliminar de DB' : 'Sincronizar Ahora'}
                 </Button>

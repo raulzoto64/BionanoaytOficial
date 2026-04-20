@@ -115,7 +115,7 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
       if (isOpen) loadNotifications();
     }}>
       <PopoverTrigger asChild>
-        <button className="text-white hover:text-[#19FF00] relative p-2 rounded-lg transition-colors hover:bg-white/10 outline-none">
+        <button className="text-white relative p-2 rounded-lg transition-colors hover:bg-white/10 outline-none">
           <Bell size={20} className={unreadCount > 0 ? 'animate-pulse' : ''} />
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#19FF00] border-2 border-[#1C5D15] rounded-full shadow-lg"></span>
@@ -141,7 +141,7 @@ export function NotificationCenter({ collapsed }: { collapsed?: boolean }) {
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-[10px] hover:text-[#19FF00] transition-colors border border-white/20 px-2 py-1 rounded"
+              className="text-[10px] transition-colors border border-white/20 px-2 py-1 rounded"
             >
               Marcar todo leído
             </button>

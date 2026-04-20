@@ -453,7 +453,7 @@ export const AdminEcosystem = forwardRef((props, ref) => {
               <Button
                 onClick={() => addVideo('youtube')}
                 size="sm"
-                className="bg-[#629960] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+                className="bg-[#629960] text-white hover:text-[#1C5D15]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar
@@ -490,7 +490,7 @@ export const AdminEcosystem = forwardRef((props, ref) => {
               <Button
                 onClick={() => addVideo('short')}
                 size="sm"
-                className="bg-[#629960] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+                className="bg-[#629960] text-white hover:text-[#1C5D15]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar
@@ -540,7 +540,7 @@ export const AdminEcosystem = forwardRef((props, ref) => {
           </div>
           <Button
             onClick={handleCreate}
-            className="bg-[#629960] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+            className="bg-[#629960] text-white hover:text-[#1C5D15]"
           >
             <Plus className="w-4 h-4 mr-2" />
             Agregar Miembro

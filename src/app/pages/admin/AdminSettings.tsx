@@ -111,7 +111,7 @@ export function AdminSettings() {
         </div>
         <Button
           onClick={handleSave}
-          className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+          className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
           disabled={saving}
         >
           <Save className="w-4 h-4 mr-2" />
@@ -446,7 +446,7 @@ export function AdminSettings() {
         <div className="flex justify-end">
           <Button
             onClick={handleSave}
-            className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+            className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
             disabled={saving}
           >
             <Save className="w-4 h-4 mr-2" />

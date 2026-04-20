@@ -12,7 +12,7 @@ export function LanguageSelector() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-1 hover:text-[#19FF00] transition-colors">
+      <DropdownMenuTrigger className="flex items-center gap-1 transition-colors">
         <Globe className="w-4 h-4" />
         {language.toUpperCase()}
       </DropdownMenuTrigger>

@@ -182,7 +182,7 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
 
             <Button 
               size="lg" 
-              className="hidden md:inline-flex bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
+              className="hidden md:inline-flex bg-[#1C5D15] text-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
               onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate, { from: 'home', sectionId: sectionId || 'ecosystem' })}
             >
               {ctaText || (language === 'es' ? 'Conocer Más' : 'Learn More')}
@@ -253,8 +253,8 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
               {/* Controles para Desktop */}
               {!isMobile && (
                 <>
-                  <CarouselPrevious className="hidden md:flex -top-10 left-1/2 -translate-x-1/2 rotate-90 bg-white border-[#1C5D15]/10 text-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15]" />
-                  <CarouselNext className="hidden md:flex -bottom-10 left-1/2 -translate-x-1/2 rotate-90 bg-white border-[#1C5D15]/10 text-[#1C5D15] hover:bg-[#19FF00] hover:text-[#1C5D15]" />
+                  <CarouselPrevious className="hidden md:flex -top-10 left-1/2 -translate-x-1/2 rotate-90 bg-white border-[#1C5D15]/10 text-[#1C5D15] hover:text-[#1C5D15]" />
+                  <CarouselNext className="hidden md:flex -bottom-10 left-1/2 -translate-x-1/2 rotate-90 bg-white border-[#1C5D15]/10 text-[#1C5D15] hover:text-[#1C5D15]" />
                 </>
               )}
               {/* Puntos para todos */}
@@ -268,7 +268,7 @@ export function Ecosystem({ title, subtitle, items, sectionId, ctaText, ctaLink,
         <div className="mt-6 flex justify-center md:hidden">
           <Button 
             size="lg" 
-            className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
+            className="bg-[#1C5D15] text-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
             onClick={() => handleAction(ctaActionType, ctaLink || "/ecosystem", navigate, { from: 'home', sectionId: sectionId || 'ecosystem' })}
           >
             {ctaText || (language === 'es' ? 'Conocer Más' : 'Learn More')}

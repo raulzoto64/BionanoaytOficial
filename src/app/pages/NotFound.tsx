@@ -15,7 +15,7 @@ export function NotFound() {
         </p>
         <Button
           onClick={() => navigate("/")}
-          className="bg-[#19FF00] text-[#1C5D15] hover:bg-[#19FF00]/90"
+          className="bg-[#19FF00] text-[#1C5D15]/90"
           size="lg"
         >
           <Home className="w-5 h-5 mr-2" />

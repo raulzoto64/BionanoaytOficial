@@ -60,7 +60,7 @@ export function AdminCategories() {
       // Combinar categorías con sus traducciones
       const allCategories = await supabaseAPI.getAllCategories();
       const categoriesWithTranslations = await Promise.all(
-        allCategories.map(async (cat) => {
+        allCategories.map(async (cat: Category) => {
           const transES = await supabaseAPI.getCategoryTranslation(
             cat.id,
             "es",
@@ -269,7 +269,7 @@ export function AdminCategories() {
         </div>
         <Button
           onClick={startCreating}
-          className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+          className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
           disabled={isCreating || editingId !== null}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -331,7 +331,7 @@ export function AdminCategories() {
                   <div className="flex gap-3 mt-6">
                     <Button
                       onClick={handleSave}
-                      className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15]"
+                      className="bg-[#1C5D15] text-white hover:text-[#1C5D15]"
                     >
                       <Save className="w-4 h-4 mr-2" />
                       Guardar

@@ -65,7 +65,7 @@ export function Purpose({ purposes, title, subtitle, ctaText, ctaLink, ctaAction
           <div className="text-center mt-16">
             <Button 
                 onClick={() => handleAction(ctaActionType, ctaLink, navigate)}
-                className="bg-[#1C5D15] text-white hover:bg-[#19FF00] hover:text-[#1C5D15] px-10 py-4 rounded-full font-bold uppercase text-sm tracking-widest shadow-xl transition-all duration-300"
+                className="bg-[#1C5D15] text-white hover:text-[#1C5D15] px-10 py-4 rounded-full font-bold uppercase text-sm tracking-widest shadow-xl transition-all duration-300"
             >
                 {ctaText}
             </Button>

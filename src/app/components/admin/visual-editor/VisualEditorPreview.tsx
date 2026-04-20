@@ -83,7 +83,7 @@ function EditableBlock({
             <button 
               disabled={index === 0}
               onClick={(e) => { e.stopPropagation(); onMoveUp?.(sectionId); }}
-              className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
+              className={`p-1 disabled:opacity-30 disabled:hover:text-white transition-colors`}
               title="Mover arriba"
             >
               <ArrowUp size={14} />
@@ -92,7 +92,7 @@ function EditableBlock({
             <button 
               disabled={index === totalSections - 1}
               onClick={(e) => { e.stopPropagation(); onMoveDown?.(sectionId); }}
-              className={`p-1 hover:text-[#19FF00] disabled:opacity-30 disabled:hover:text-white transition-colors`}
+              className={`p-1 disabled:opacity-30 disabled:hover:text-white transition-colors`}
               title="Mover abajo"
             >
               <ArrowDown size={14} />

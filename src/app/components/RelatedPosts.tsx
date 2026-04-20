@@ -141,7 +141,7 @@ const categoryNames: Record<string, string> = {};
               </p>
 
               <div className="mt-auto">
-                <span className="text-[#1C5D15] text-sm font-semibold flex items-center gap-1 hover:text-[#19FF00] transition-colors">
+                <span className="text-[#1C5D15] text-sm font-semibold flex items-center gap-1 transition-colors">
                   {language === 'es' ? 'Leer más' : 'Read more'}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
