@@ -99,7 +99,7 @@ export const AdminEcosystem = forwardRef((_props, ref) => {
     setIsSaving(true);
     try {
       // Sanitizar datos para no enviar campos de solo lectura o IDs internos en el body
-      const { id, created_at, updated_at, ...updateData } = selectedMember;
+      const { id, ...updateData } = selectedMember;
       
       // Actualizar datos del miembro
       await supabaseAPI.updateEcosystemMember(selectedMember.id, updateData);
@@ -129,7 +129,7 @@ export const AdminEcosystem = forwardRef((_props, ref) => {
   };
 
   const handleCreate = async () => {
-    const newMember: Omit<EcosystemMember, 'id' | 'created_at' | 'updated_at'> = {
+    const newMember: Omit<EcosystemMember, 'id'> = {
       slug: '',
       status: 'active',
       image: '',

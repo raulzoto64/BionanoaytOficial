@@ -38,16 +38,16 @@ export function Home() {
     const forms = window.performance.getEntriesByType('navigation');
     const isReload = forms.length > 0 && (forms[0] as any).type === 'reload';
 
-    if (isReload) {
-
-      if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
-      sessionStorage.removeItem('bx_return_section');
-      return null;
-    }
-
+    // ✅ SIEMPRE leer ancla de sessionStorage, incluso en POP navigation
     const anchorFromSession = sessionStorage.getItem('bx_return_section');
     const anchorFromHash = window.location.hash.replace('#', '');
     const initial = anchorFromSession || anchorFromHash;
+
+    if (isReload) {
+      if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
+      if (!initial) sessionStorage.removeItem('bx_return_section');
+      return null;
+    }
     
     if (initial) {
       console.log(`[SCROLL] Ancla inicial detectada: "${initial}" (Session: ${anchorFromSession}, Hash: ${anchorFromHash})`);
@@ -79,13 +79,14 @@ export function Home() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // ✅ 0. Reset de scroll preventivo si tenemos ancla (evita heredar scroll de la página anterior)
+  // ✅ 0. Reset de scroll preventivo SOLO SI VENIMOS DE OTRA PAGINA
+  // Si ya estamos en la Home y solo cambia el hash (menu navegacion), NUNCA reseteamos scroll
   useEffect(() => {
-    if (targetAnchor) {
+    if (targetAnchor && navigationType !== 'POP') {
       console.log(`[SCROLL] Reset preventivo a (0,0) para iniciar búsqueda de: ${targetAnchor}`);
       window.scrollTo(0, 0);
     }
-  }, [targetAnchor]);
+  }, [targetAnchor, navigationType]);
 
   // ✅ 1. Renderizado Progresivo Inteligente (Modo Relámpago si hay ancla)
   useEffect(() => {

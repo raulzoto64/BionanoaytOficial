@@ -6,12 +6,13 @@ export function ScrollToTop() {
   const navigationType = useNavigationType();
 
   useEffect(() => {
-    // Si la navegación es 'POP' (botón atrás/adelante del navegador), 
-    // o si detectamos que la Home va a manejar su propio scroll de retorno,
-    // dejamos que la página maneje su propia restauración de scroll.
+    // ✅ SOLO SALTEAR SCROLL SI VOLVEMOS A LA HOME CON ANCLA GUARDADA
+    // En TODOS los demas casos SIEMPRE subir hasta arriba
+    const isHome = pathname === '/' || pathname === '';
     const hasReturnAnchor = sessionStorage.getItem('bx_return_section') || window.location.hash;
-    if (navigationType === 'POP' || hasReturnAnchor) {
-      console.log(`[SCROLL] ScrollToTop SKIPPED (Reason: ${navigationType === 'POP' ? 'POP' : 'Anchor found: ' + hasReturnAnchor})`);
+    
+    if (navigationType === 'POP' && isHome && hasReturnAnchor) {
+      console.log(`[SCROLL] ScrollToTop SKIPPED (Reason: Volviendo a Home con ancla: ${hasReturnAnchor})`);
       return;
     }
 
