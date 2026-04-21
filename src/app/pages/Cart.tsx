@@ -79,17 +79,12 @@ export function Cart() {
   }, [checkoutData, cartItems, subtotal]);
 
   const syncLead = async (isCheckout = false) => {
-    console.log(`🚀 [CART/LEAD] Starting syncLead. isCheckout: ${isCheckout}`);
-    console.log(`📧 [CART/LEAD] Email: "${checkoutData.email}", Length: ${checkoutData.email?.length || 0}`);
-    
     if (!checkoutData.email || checkoutData.email.length < 5) {
-      console.warn(`🛑 [CART/LEAD] Aborting: Email invalid or empty.`);
       return;
     }
     
     try {
       setIsSavingLead(true);
-      console.log(`💾 [CART/LEAD] Preparing leadData payload...`);
       const leadData = {
         name: checkoutData.name,
         email: checkoutData.email,
@@ -113,9 +108,7 @@ export function Cart() {
         }
       };
 
-      console.log(`📡 [CART/LEAD] Sending Payload:`, leadData);
       const result = await supabaseAPI.syncLead(leadData);
-      console.log(`✅ [CART/LEAD] Sync success! Lead ID:`, result?.id);
       
       if (result?.id) leadRef.current = result.id;
 
@@ -130,7 +123,7 @@ export function Cart() {
         });
       }
     } catch (err) {
-      console.error('❌ [CART/LEAD] Lead sync failed:', err);
+      console.error('Error syncing lead:', err);
     } finally {
       setIsSavingLead(false);
     }
@@ -430,9 +423,7 @@ export function Cart() {
                     <div className="space-y-4">
                        <Button 
                          onClick={async () => {
-                           console.log('🛒 [CART/ACTION] Checkout button clicked!');
                            await syncLead(true);
-                           console.log('🛒 [CART/ACTION] Navigating to /checkout...');
                            navigate('/checkout'); 
                          }}
                          className="w-full bg-[#19FF00] text-[#1C5D15] hover:bg-white hover:scale-105 py-8 rounded-[2.5rem] text-lg font-black uppercase tracking-widest transition-all shadow-xl shadow-[#19FF00]/20"

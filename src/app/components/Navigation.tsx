@@ -16,13 +16,11 @@ export function Navigation() {
     const cleanId = sectionId.replace('#', '');
     
     if (isHome) {
-      // ✅ Simplemente actualizamos el hash para que Home.tsx (el motor inteligente) tome el control
-      window.location.hash = cleanId;
+      // ✅ Usamos pushState para evadir el salto "instantáneo" nativo del navegador hacia los IDs
+      window.history.pushState(null, '', '#' + cleanId);
       
-      // Forzar actualización si el hash ya era el mismo (para repetir el scroll si el usuario está perdido)
-      if (window.location.hash === '#' + cleanId) {
-        window.dispatchEvent(new HashChangeEvent('hashchange'));
-      }
+      // Forzamos a que nuestro motor (useMenuNavigation) ejecute el Scroll con animación 'smooth'
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     } else {
       // ✅ Guardamos en AMBOS: history.state (PUSH) + sessionStorage (POP/Back)
       // React Router pierde history.state en navegación POP (Back button).
