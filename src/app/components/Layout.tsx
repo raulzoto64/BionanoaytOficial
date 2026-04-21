@@ -23,6 +23,10 @@ function LayoutInner() {
   const { language } = useLanguage();
   const { showPopupId, setShowPopupId } = useExitIntent();
   useAnalytics(); // 🚀 Silently tracks page_views and session durations
+
+  useEffect(() => {
+    console.info("[LAYOUT] 🚀 Aplicación iniciada");
+  }, []);
   
   useEffect(() => {
     // Limpieza de rastro antiguo de Supabase (Solo una vez)
@@ -33,6 +37,12 @@ function LayoutInner() {
       localStorage.setItem('bionano_auth_cleaned', 'true');
 
       window.location.reload();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
     }
   }, []);
 

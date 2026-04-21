@@ -6,27 +6,35 @@ export function ScrollToTop() {
   const navigationType = useNavigationType();
 
   useEffect(() => {
-    // ✅ SOLO SALTEAR SCROLL SI VOLVEMOS A LA HOME CON ANCLA GUARDADA
-    // En TODOS los demas casos SIEMPRE subir hasta arriba
+    if (typeof window === 'undefined') return;
+
     const isHome = pathname === '/' || pathname === '';
-    const hasReturnAnchor = sessionStorage.getItem('bx_return_section') || window.location.hash;
     
-    if (navigationType === 'POP' && isHome && hasReturnAnchor) {
-      console.log(`[SCROLL] ScrollToTop SKIPPED (Reason: Volviendo a Home con ancla: ${hasReturnAnchor})`);
+    // ✅ Leer ancla de todas las fuentes posibles
+    const sessionAnchor = sessionStorage.getItem('bx_return_section');
+    const hashAnchor = window.location.hash.replace('#', '');
+    const hasAnyAnchor = sessionAnchor || hashAnchor;
+
+    console.debug(`[SCROLL] global.ScrollToTop -> Path: ${pathname}, Nav: ${navigationType}, Ancla: ${hasAnyAnchor || 'N/A'}`);
+
+    // 🔥 REGLA DE ORO: Si es Home y hay ancla, NO SUBIR. Home se encarga de bajar.
+    if (isHome && hasAnyAnchor) {
+      console.log(`[SCROLL] global.ScrollToTop SKIPPED (Motivo: Home con ancla: #${hasAnyAnchor})`);
       return;
     }
 
-    console.log(`[SCROLL] ScrollToTop EXECUTING (TO TOP)`);
-
-    // Scroll inmediato al tope en navegaciones nuevas (PUSH/REPLACE)
-    window.scrollTo(0, 0);
-    
-    // Forzado con pequeño delay para contrarrestar autofocus de otros componentes
-    const timeout = setTimeout(() => {
+    // ✅ SUBIR EN TODOS LOS DEMÁS CASOS (Navegación limpia, cambio de página, etc.)
+    requestAnimationFrame(() => {
+      console.info(`[SCROLL] global.ScrollToTop EXECUTING (A TOPE 0,0). Path: ${pathname}`);
       window.scrollTo(0, 0);
-    }, 100);
-    
-    return () => clearTimeout(timeout);
+      
+      // Refuerzo para asegurar el tope tras el renderizado de la nueva página
+      setTimeout(() => {
+        if (window.pageYOffset < 10 && !hasAnyAnchor) {
+          window.scrollTo(0, 0);
+        }
+      }, 50);
+    });
   }, [pathname, navigationType]);
 
   return null;
