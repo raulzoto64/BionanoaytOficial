@@ -68,7 +68,11 @@ export default function AdminChats() {
     try {
       const data = await supabaseAPI.getChatHistory(selectedChatId, 'admin');
       if (data && data.messages) {
-        setMessages(data.messages);
+        // ✅ Eliminar mensajes duplicados por ID (soluciona error de keys repetidas)
+        const uniqueMessages = Array.from(
+          new Map(data.messages.map((msg: ChatMessage) => [msg.id, msg])).values()
+        ) as ChatMessage[];
+        setMessages(uniqueMessages);
         
         // Update typing and online status of the visitor from the specific chat data
         setChats(prev => prev.map(c => 
@@ -131,9 +135,8 @@ export default function AdminChats() {
     lastTypingSentRef.current = 0;
 
     try {
-      await supabaseAPI.sendChatMessage({
-        visitor_id: currentChat.visitor_id,
-        sender_type: 'admin',
+      await supabaseAPI.sendChatMessage(selectedChatId, {
+        sender_type: 'agent',
         sender_id: 'admin',
         content: content
       });
@@ -269,14 +272,14 @@ export default function AdminChats() {
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30"
             >
-              {messages.map((msg, i) => {
-                const isAdmin = msg.sender_type === 'admin';
+              {messages.map((msg) => {
+                const isAdmin = msg.sender_type === 'admin' || msg.sender_type === 'agent';
                 // Logic for "seen": if it's an admin message and visitor has 0 unread, it's seen
                 // If it's an older message (not in the last 'unread' count), it's also seen
                 const isSeen = isAdmin && (selectedChat?.unread_count_visitor === 0);
                 
                 return (
-                  <div key={i} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                  <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] ${isAdmin ? 'items-end' : 'items-start'} flex flex-col`}>
                       <div className={`p-3 rounded-2xl text-sm shadow-sm ${
                         isAdmin 

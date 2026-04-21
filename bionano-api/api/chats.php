@@ -130,8 +130,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $parts[2] ?? '' === 'messages') {
     $chatId = $parts[1];
     $data = json_decode(file_get_contents('php://input'), true);
     
-  // ✅ Convertir cualquier nombre a 'agent'
-    $senderType = in_array($data['sender_type'], ['admin', 'agent', 'administrador']) ? 'agent' : 'visitor';
+  // ✅ Convertir correctamente segun el tipo
+    if (in_array($data['sender_type'], ['admin', 'agent', 'administrador'])) {
+        $senderType = 'agent';
+    } else if (in_array($data['sender_type'], ['user', 'usuario', 'cliente'])) {
+        $senderType = 'user';
+    } else {
+        $senderType = 'visitor';
+    }
     
     try {
         // ✅ VERIFICAR COLUMNAS EXISTENTES ANTES
@@ -185,10 +191,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'typing') {
     $chatId = $parts[1];
     $data = json_decode(file_get_contents('php://input'), true);
     
-    // ✅ Aceptar tambien 'admin' aqui tambien
-    $field = in_array($data['sender_type'], ['visitor', 'visitante'])
+    // ✅ Aceptar todos los nombres posibles para admin
+    $field = in_array($data['sender_type'], ['visitor', 'visitante', 'user'])
         ? 'is_visitor_typing' 
         : 'is_agent_typing';
+    
+    // LOG DEBUG
+    file_put_contents(__DIR__ . '/../chat_debug.log', 
+        date('Y-m-d H:i:s') . " | TYPING: sender_type={$data['sender_type']} -> campo={$field}" . PHP_EOL, 
+        FILE_APPEND | LOCK_EX
+    );
     
     $stmt = $pdo->prepare("UPDATE chats SET {$field} = ? WHERE id = ?");
     $stmt->execute([$data['is_typing'] ? 1 : 0, $chatId]);
@@ -209,6 +221,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'read') {
         ? 'unread_count_visitor' 
         : 'unread_count_agent';
     
+    // LOG DEBUG
+    file_put_contents(__DIR__ . '/../chat_debug.log', 
+        date('Y-m-d H:i:s') . " | MARK READ: actor={$data['actor']} -> campo={$field}" . PHP_EOL, 
+        FILE_APPEND | LOCK_EX
+    );
+    
     $stmt = $pdo->prepare("UPDATE chats SET {$field} = 0 WHERE id = ?");
     $stmt->execute([$chatId]);
     
@@ -223,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($parts[1])) {
     $stmt = $pdo->query("
         SELECT c.*, l.name as lead_name, l.email as lead_email 
         FROM chats c
-        LEFT JOIN leads l ON c.visitor_id = l.guest_id
+        LEFT JOIN leads l ON c.visitor_id = l.visitor_id
         ORDER BY c.updated_at DESC
     ");
     $chats = $stmt->fetchAll();

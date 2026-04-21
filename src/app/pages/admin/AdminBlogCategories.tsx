@@ -124,13 +124,13 @@ export function AdminBlogCategories() {
       };
 
       if (!categoryId) {
-        const createdCategory = await supabaseAPI.createBlogCategory(categoryData);
+        const createdCategory = await supabaseAPI.createCategory(categoryData);
         categoryId = createdCategory.id;
       } else {
-        await supabaseAPI.updateBlogCategory(categoryId, categoryData);
+        await supabaseAPI.updateCategory(categoryId, categoryData);
       }
 
-      await supabaseAPI.updateBlogCategoryTranslation(categoryId, currentLang, {
+      await supabaseAPI.updateCategoryTranslation(categoryId, currentLang, {
         ...editingTranslation,
         category_id: categoryId,
         language: currentLang,
@@ -160,7 +160,7 @@ export function AdminBlogCategories() {
     if (!categoryToDelete) return;
     
     try {
-      await supabaseAPI.deleteBlogCategory(categoryToDelete);
+      await supabaseAPI.deleteCategory(categoryToDelete);
       toast.success('Categoría eliminada correctamente');
       loadCategories();
       setDeleteDialogOpen(false);

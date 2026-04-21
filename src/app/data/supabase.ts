@@ -290,7 +290,7 @@ export interface Chat {
 export interface ChatMessage {
   id: number;
   chat_id: string;
-  sender_type: 'agent'
+  sender_type: 'agent' | 'visitor' | 'user' | 'admin'
   sender_id: string;
   content: string;
   is_read: boolean;
@@ -1102,7 +1102,7 @@ export const supabaseAPI = {
   },
 
   sendChatMessage: async (chatId: string, data: {
-    sender_type: 'agent'
+    sender_type: 'agent' | 'visitor' | 'user' | 'admin'
     sender_id: string;
     content: string;
   }) => {
@@ -1123,7 +1123,7 @@ export const supabaseAPI = {
     return handleApiResponse(res).catch(() => null);
   },
 
-  markChatAsRead: async (chatId: string, actor: 'agent') => {
+  markChatAsRead: async (chatId: string, actor: 'agent' | 'admin' | 'visitor' | 'user') => {
     const res = await fetch(`${API_BASE_URL}/chats/${chatId}/read`, {
       method: 'PUT',
       headers: getApiHeaders(),

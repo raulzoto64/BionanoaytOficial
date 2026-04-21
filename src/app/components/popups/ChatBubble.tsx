@@ -189,7 +189,7 @@ export function ChatBubble() {
     try {
       // ✅ AHORA SIEMPRE PASAMOS chatId COMO PRIMER PARAMETRO
       await supabaseAPI.sendChatMessage(chatId, {
-        sender_type: 'agent',
+        sender_type: user ? 'user' : 'visitor',
         sender_id: user?.id || visitorId,
         content: content
       });
@@ -275,10 +275,10 @@ export function ChatBubble() {
                 <p className="text-sm text-gray-500">¿En qué podemos ayudarte hoy? Escribe tu mensaje abajo.</p>
               </div>
             ) : (
-              messages.map((msg, i) => {
-                const isMe = msg.sender_type === 'agent';
+              messages.map((msg) => {
+                const isMe = msg.sender_type === 'visitor' || msg.sender_type === 'user';
                 return (
-                  <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
                       isMe 
                         ? 'bg-[#1C5D15] text-white rounded-tr-none' 
