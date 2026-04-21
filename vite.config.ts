@@ -1,18 +1,27 @@
 import { defineConfig } from 'vite'
 import path from 'path'
+import fs from 'fs'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  build: {
+    emptyOutDir: false
+  },
   plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    {
+      name: 'copy-bionano-api',
+      closeBundle: async () => {
+        // Copiar automaticamente la carpeta bionano-api dentro de dist despues de cada build
+        fs.cpSync('./bionano-api', './dist/bionano-api', { recursive: true })
+        console.log('\x1b[32m✅ Carpeta bionano-api copiada exitosamente en dist/\x1b[0m')
+      }
+    }
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
   },

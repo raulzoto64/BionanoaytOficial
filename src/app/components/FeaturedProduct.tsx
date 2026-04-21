@@ -73,7 +73,7 @@ export function FeaturedProduct({ content, sectionId }: FeaturedProductProps) {
 
             <Button 
               size="lg"
-              className="mt-4 bg-[#1C5D15] text-white hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
+              className="mt-4 rounded-full px-8 uppercase text-sm tracking-wider h-12"
               onClick={() => handleAction(content.ctaActionType, content.ctaLink, navigate, { from: 'home', sectionId: sectionId || 'featured' })}
             >
               {content.ctaText}

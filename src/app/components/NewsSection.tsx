@@ -7,6 +7,7 @@ import {  useNavigate } from 'react-router';
 import { ContentCard } from './ContentCard';
 import { newsPreloadCache } from '../data/BackgroundPreload';
 import { handleAction } from '../utils/actions';
+import { Button } from './ui/button';
 
 interface PostWithTranslation {
   id: string;
@@ -190,15 +191,16 @@ export function NewsSection({ title, subtitle, ctaText, ctaLink, ctaActionType, 
         </div>
 
         <div className="text-center mt-12">
-          <button
+          <Button
+            size="lg"
             onClick={() => handleAction(ctaActionType, ctaLink || "/blog", navigate, { from: 'home', sectionId: sectionId || 'news' })}
-            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1C5D15] text-white font-bold rounded-full hover:text-[#1C5D15] hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg uppercase text-sm tracking-wider"
+            className="rounded-full px-8 uppercase text-sm tracking-wider"
           >
             {ctaText || (language === 'es' ? 'Ver todas las noticias' : 'View all news')}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </button>
+          </Button>
         </div>
       </div>
     </section>

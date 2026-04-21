@@ -131,7 +131,7 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
                 {/* CTA Button - NO MUESTRA PRECIO */}
                 <div className="mt-auto">
                   <Button 
-                    className="w-full bg-[#1C5D15] text-white hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full font-bold group/btn"
+                    className="w-full rounded-full group/btn"
                     asChild
                   >
                     <span className="flex items-center justify-center">
@@ -149,7 +149,7 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
         <div className="text-center mt-12">
           <Button 
             size="lg"
-            className="bg-[#1C5D15] text-white hover:text-black hover:-translate-y-1 active:scale-95 transition-all duration-300 shadow-md hover:shadow-lg rounded-full px-8 uppercase text-sm font-bold tracking-wider h-12"
+            className="rounded-full px-8 uppercase text-sm tracking-wider h-12"
             onClick={() => handleAction(ctaActionType, ctaLink || "/store", navigate, { from: 'home', sectionId: sectionId || 'products' })}
           >
             {ctaText || t('btn.view_full_catalog')}
