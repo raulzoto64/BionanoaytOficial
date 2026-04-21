@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         case 'site':
             $stmt = $pdo->prepare("
                 INSERT INTO site_settings (id, site_name, site_email, site_phone, site_address, social_media, seo, colors)
-                VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?)
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     site_name = VALUES(site_name),
                     site_email = VALUES(site_email),
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         case 'footer':
             $stmt = $pdo->prepare("
                 INSERT INTO footer_settings (id, columns, contact_info, social_media, copyright_text_es, copyright_text_en)
-                VALUES (UUID(), ?, ?, ?, ?, ?)
+                VALUES (1, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     columns = VALUES(columns),
                     contact_info = VALUES(contact_info),

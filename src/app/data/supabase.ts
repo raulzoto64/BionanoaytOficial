@@ -1051,12 +1051,20 @@ export const supabaseAPI = {
     return { success: true };
   },
   updateFooterSettings: async (data: any) => {
-    const res = await fetch(`${API_BASE_URL}/settings/footer`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    const res = await fetch(`${API_BASE_URL}/settings/footer`, { 
+      method: 'PUT', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify(data) 
+    });
     supabaseAPI._invalidateCache("footer-settings");
     return handleApiResponse(res);
   },
   updateSiteSettings: async (data: any) => {
-    const res = await fetch(`${API_BASE_URL}/settings/site`, { method: 'POST', headers: getApiHeaders(), body: JSON.stringify(data) });
+    const res = await fetch(`${API_BASE_URL}/settings/site`, { 
+      method: 'PUT', 
+      headers: getApiHeaders(), 
+      body: JSON.stringify(data) 
+    });
     supabaseAPI._invalidateCache("site-settings");
     return handleApiResponse(res);
   },
