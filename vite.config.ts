@@ -17,4 +17,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/bionano-api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
 })

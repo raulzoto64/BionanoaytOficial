@@ -1,5 +1,12 @@
 RewriteEngine On
 
+# ✅ CABECERAS CORS GLOBALES - SOLUCION PERMANENTE ERROR CORS
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "POST, GET, OPTIONS, DELETE, PUT"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+Header always set Access-Control-Max-Age "86400"
+
+
 
 # Redirigir todo lo que empiece con /api/ a index.php
 RewriteCond %{REQUEST_FILENAME} !-f

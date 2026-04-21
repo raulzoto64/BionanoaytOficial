@@ -1,148 +1,236 @@
 <?php
 /**
- * Chats API - BionanoAYT
- * Handles real-time messaging between visitors and administrators.
+ * Controlador de Chats
+ * Implementación del flujo correcto:
+ * 1. /init -> crea/obtiene chat ANTES de cualquier mensaje
+ * 2. 1 chat = 1 visitante (visitor_id UNIQUE)
+ * 3. Todas las operaciones usan chat_id siempre
  */
 
-$method = $_SERVER['REQUEST_METHOD'];
-$id = $parts[1] ?? null; // Can be chat_id or visitor_id
-if ($method === 'GET') {
-    if ($id) {
-        // Fetch specific chat history
-        $stmt = $pdo->prepare("SELECT * FROM chats WHERE id = ? OR visitor_id = ? ORDER BY created_at DESC LIMIT 1");
-        $stmt->execute([$id, $id]);
-        $chat = $stmt->fetch();
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-        if ($chat) {
-            // Auto-ping: Update activity based on requester role
-            $role = $_GET['role'] ?? 'visitor';
-            $pingField = ($role === 'admin') ? 'last_active_admin' : 'last_active_visitor';
-            $pdo->prepare("UPDATE chats SET $pingField = NOW() WHERE id = ?")->execute([$chat['id']]);
+require_once __DIR__ . '/../db.php';
 
-            // Calculate statuses in PHP to avoid DB-Server timezone mismatches
-            $nowTime = time();
-            $chat['is_admin_typing'] = $chat['admin_typing_until'] && strtotime($chat['admin_typing_until']) > $nowTime;
-            $chat['is_visitor_typing'] = $chat['visitor_typing_until'] && strtotime($chat['visitor_typing_until']) > $nowTime;
-            $chat['is_admin_online'] = $chat['last_active_admin'] && strtotime($chat['last_active_admin']) > ($nowTime - 45);
-            $chat['is_visitor_online'] = $chat['last_active_visitor'] && strtotime($chat['last_active_visitor']) > ($nowTime - 45);
+// ✅ LOG DE DEBUG para todos los requests
+file_put_contents(__DIR__ . '/../chat_debug.log', 
+    date('Y-m-d H:i:s') . " | " . $_SERVER['REQUEST_METHOD'] . " " . $_SERVER['REQUEST_URI'] . PHP_EOL, 
+    FILE_APPEND | LOCK_EX
+);
 
-            $stmt = $pdo->prepare("SELECT * FROM chat_messages WHERE chat_id = ? ORDER BY created_at ASC");
-            $stmt->execute([$chat['id']]);
-            $messages = $stmt->fetchAll();
-            echo json_encode([
-                "chat" => $chat, 
-                "messages" => $messages
-            ]);
-        } else {
-            echo json_encode(["chat" => null, "messages" => []]);
-        }
-    } else {
-        // Admin: List all conversations
-        $stmt = $pdo->query("
-            SELECT 
-                c.*, 
-                MAX(l.name) as lead_name, 
-                MAX(l.email) as lead_email,
-                MAX(l.status) as lead_status
-            FROM chats c 
-            LEFT JOIN leads l ON c.visitor_id = l.visitor_id 
-            GROUP BY c.id
-            ORDER BY c.updated_at DESC
-        ");
-        $chats = $stmt->fetchAll();
-        $nowTime = time();
+// ✅ MANEJADOR DE ERRORES GLOBAL PARA ESTE CONTROLADOR
+function chatErrorHandler($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    echo json_encode([
+        "error" => true,
+        "message" => $errstr,
+        "file" => $errfile,
+        "line" => $errline
+    ]);
+    exit;
+}
 
-        foreach ($chats as &$c) {
-            $c['is_admin_typing'] = $c['admin_typing_until'] && strtotime($c['admin_typing_until']) > $nowTime;
-            $c['is_visitor_typing'] = $c['visitor_typing_until'] && strtotime($c['visitor_typing_until']) > $nowTime;
-            $c['is_admin_online'] = $c['last_active_admin'] && strtotime($c['last_active_admin']) > ($nowTime - 45);
-            $c['is_visitor_online'] = $c['last_active_visitor'] && strtotime($c['last_active_visitor']) > ($nowTime - 45);
-        }
+set_error_handler('chatErrorHandler');
 
-        echo json_encode($chats);
-    }
-} else if ($method === 'POST') {
-    // ... existing POST logic remains for sending messages ...
+function chatExceptionHandler($e) {
+    http_response_code(500);
+    echo json_encode([
+        "error" => true,
+        "message" => $e->getMessage(),
+        "file" => $e->getFile(),
+        "line" => $e->getLine(),
+        "trace" => $e->getTraceAsString()
+    ]);
+    exit;
+}
+
+set_exception_handler('chatExceptionHandler');
+
+$subResource = $parts[1] ?? '';
+
+// ==============================================
+// ✅ ENDPOINT: POST /chats/init
+// ==============================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $subResource === 'init') {
     $data = json_decode(file_get_contents('php://input'), true);
-    $visitor_id = $data['visitor_id'] ?? null;
-    $sender_type = $data['sender_type'] ?? 'visitor'; // 'visitor' or 'admin'
-    $message = $data['content'] ?? $data['message'] ?? '';
-    
-    if (!$visitor_id && $sender_type === 'visitor') {
+    $visitor_id = trim($data['visitor_id'] ?? '');
+
+    if (empty($visitor_id)) {
         http_response_code(400);
-        echo json_encode(["error" => "visitor_id is required for visitor messages"]);
+        echo json_encode(["error" => "visitor_id es requerido"]);
         exit;
     }
 
-    // 1. Find or create the conversation
-    $chatId = null;
-    if ($visitor_id) {
-        $stmt = $pdo->prepare("SELECT id FROM chats WHERE visitor_id = ? LIMIT 1");
-        $stmt->execute([$visitor_id]);
-        $existing = $stmt->fetch();
-        if ($existing) {
-            $chatId = $existing['id'];
-        }
+    // ✅ Buscar chat existente primero
+    $stmt = $pdo->prepare("SELECT id, status, created_at FROM chats WHERE visitor_id = ? LIMIT 1");
+    $stmt->execute([$visitor_id]);
+    $chat = $stmt->fetch();
+
+    if ($chat) {
+        // ✅ Chat ya existe, devolver directamente
+        echo json_encode([
+            "id" => $chat['id'],
+            "status" => $chat['status'],
+            "created_at" => $chat['created_at'],
+            "existing" => true
+        ]);
+        exit;
     }
 
-    if (!$chatId) {
-        $chatId = bin2hex(random_bytes(10));
-        $stmt = $pdo->prepare("INSERT INTO chats (id, visitor_id, status) VALUES (?, ?, 'open')");
-        $stmt->execute([$chatId, $visitor_id]);
-    }
+    // ✅ Crear NUEVO chat
+    $chatId = bin2hex(random_bytes(10));
 
-    // 2. Insert the message
-    $sender_id = $data['sender_id'] ?? ($sender_type === 'visitor' ? $visitor_id : 'admin');
-    $stmt = $pdo->prepare("INSERT INTO chat_messages (chat_id, sender_type, sender_id, content) VALUES (?, ?, ?, ?)");
-    $stmt->execute([
-        $chatId,
-        $sender_type,
-        $sender_id,
-        $message
+    $stmt = $pdo->prepare("
+        INSERT INTO chats (id, visitor_id, status, created_at, updated_at)
+        VALUES (?, ?, 'open', NOW(), NOW())
+    ");
+
+    $stmt->execute([$chatId, $visitor_id]);
+
+    echo json_encode([
+        "id" => $chatId,
+        "status" => "open",
+        "existing" => false
     ]);
-
-    // 3. Update chat header (unread and snippet)
-    $unreadField = ($sender_type === 'visitor') ? 'unread_count_admin' : 'unread_count_visitor';
-    // When sending a message, also reset typing status for the sender
-    $typingField = ($sender_type === 'visitor') ? 'visitor_typing_until' : 'admin_typing_until';
-    $stmt = $pdo->prepare("UPDATE chats SET last_message = ?, $unreadField = $unreadField + 1, $typingField = NULL, updated_at = NOW() WHERE id = ?");
-    $stmt->execute([$message, $chatId]);
-
-    // 4. Lead Integration
-    if ($sender_type === 'visitor' && $visitor_id) {
-        $checkLead = $pdo->prepare("SELECT id FROM leads WHERE visitor_id = ? LIMIT 1");
-        $checkLead->execute([$visitor_id]);
-        if (!$checkLead->fetch()) {
-            $leadId = bin2hex(random_bytes(10));
-            $stmt = $pdo->prepare("INSERT INTO leads (id, visitor_id, name, lead_type, status) VALUES (?, ?, ?, 'Chat', 'new')");
-            $stmt->execute([$leadId, $visitor_id, 'Visitante de Chat']);
-        }
-    }
-
-    echo json_encode(["success" => true, "chat_id" => $chatId]);
-
-} else if ($method === 'PATCH' && $id) {
-    // Handle specific actions like typing
-    $data = json_decode(file_get_contents('php://input'), true);
-    $action = $data['action'] ?? '';
-
-    if ($action === 'typing') {
-        $role = $data['role'] ?? 'visitor';
-        $isTyping = $data['is_typing'] ?? false;
-        $field = ($role === 'admin') ? 'admin_typing_until' : 'visitor_typing_until';
-        $val = $isTyping ? date('Y-m-d H:i:s', time() + 7) : null; // 7 seconds typing window
-        
-        $stmt = $pdo->prepare("UPDATE chats SET $field = ? WHERE id = ? OR visitor_id = ?");
-        $stmt->execute([$val, $id, $id]);
-        echo json_encode(["success" => true]);
-    }
-} else if ($method === 'PUT' && $id) {
-    // Mark as read
-    $data = json_decode(file_get_contents('php://input'), true);
-    $target = $data['target'] ?? 'admin'; // 'admin' clears unread_count_admin
-    $field = ($target === 'admin') ? 'unread_count_admin' : 'unread_count_visitor';
-    
-    $stmt = $pdo->prepare("UPDATE chats SET $field = 0 WHERE id = ?");
-    $stmt->execute([$id]);
-    echo json_encode(["success" => true]);
+    exit;
 }
+
+// ==============================================
+// GET /chats/:id
+// ==============================================
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($parts[1])) {
+    $chatId = $parts[1];
+    
+    $stmt = $pdo->prepare("SELECT * FROM chats WHERE id = ? LIMIT 1");
+    $stmt->execute([$chatId]);
+    $chat = $stmt->fetch();
+    
+    if (!$chat) {
+        http_response_code(404);
+        echo json_encode(["error" => "Chat no encontrado"]);
+        exit;
+    }
+    
+    // Obtener mensajes
+    $stmt = $pdo->prepare("SELECT * FROM chat_messages WHERE chat_id = ? ORDER BY created_at ASC");
+    $stmt->execute([$chatId]);
+    $messages = $stmt->fetchAll();
+    
+    echo json_encode([
+        "chat" => $chat,
+        "messages" => $messages
+    ]);
+    exit;
+}
+
+// ==============================================
+// POST /chats/:id/messages
+// ==============================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $parts[2] ?? '' === 'messages') {
+    $chatId = $parts[1];
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+  // ✅ Convertir cualquier nombre a 'agent'
+    $senderType = in_array($data['sender_type'], ['admin', 'agent', 'administrador']) ? 'agent' : 'visitor';
+    
+    try {
+        // ✅ VERIFICAR COLUMNAS EXISTENTES ANTES
+        $check = $pdo->query("DESCRIBE chat_messages");
+        $columns = [];
+        while($row = $check->fetch()) {
+            $columns[] = $row['Field'];
+        }
+        
+        file_put_contents(__DIR__ . '/../chat_debug.log', 
+            date('Y-m-d H:i:s') . " | COLUMNAS chat_messages: " . json_encode($columns) . PHP_EOL, 
+            FILE_APPEND | LOCK_EX
+        );
+
+        $stmt = $pdo->prepare("
+            INSERT INTO chat_messages (chat_id, sender_type, sender_id, content, created_at)
+            VALUES (?, ?, ?, ?, NOW())
+        ");
+
+        $stmt->execute([
+            $chatId,
+            $senderType,
+            $data['sender_id'],
+            $data['content']
+        ]);
+    } catch (Exception $e) {
+        chatExceptionHandler($e);
+    }
+    
+    $messageId = $pdo->lastInsertId();
+    
+    // Actualizar last_message en chat
+    $stmt = $pdo->prepare("
+        UPDATE chats 
+        SET last_message = ?, updated_at = NOW() 
+        WHERE id = ?
+    ");
+    $stmt->execute([substr($data['content'], 0, 100), $chatId]);
+    
+    echo json_encode([
+        "id" => $messageId,
+        "success" => true
+    ]);
+    exit;
+}
+
+// ==============================================
+// PUT /chats/:id/typing
+// ==============================================
+if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'typing') {
+    $chatId = $parts[1];
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    // ✅ Aceptar tambien 'admin' aqui tambien
+    $field = in_array($data['sender_type'], ['visitor', 'visitante'])
+        ? 'is_visitor_typing' 
+        : 'is_agent_typing';
+    
+    $stmt = $pdo->prepare("UPDATE chats SET {$field} = ? WHERE id = ?");
+    $stmt->execute([$data['is_typing'] ? 1 : 0, $chatId]);
+    
+    echo json_encode(["success" => true]);
+    exit;
+}
+
+// ==============================================
+// PUT /chats/:id/read
+// ==============================================
+if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'read') {
+    $chatId = $parts[1];
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    // ✅ OPCIÓN 1: Aceptar todos los nombres posibles
+    $field = in_array($data['actor'], ['visitor', 'user', 'visitante']) 
+        ? 'unread_count_visitor' 
+        : 'unread_count_agent';
+    
+    $stmt = $pdo->prepare("UPDATE chats SET {$field} = 0 WHERE id = ?");
+    $stmt->execute([$chatId]);
+    
+    echo json_encode(["success" => true]);
+    exit;
+}
+
+// ==============================================
+// GET /chats (admin list)
+// ==============================================
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($parts[1])) {
+    $stmt = $pdo->query("
+        SELECT c.*, l.name as lead_name, l.email as lead_email 
+        FROM chats c
+        LEFT JOIN leads l ON c.visitor_id = l.guest_id
+        ORDER BY c.updated_at DESC
+    ");
+    $chats = $stmt->fetchAll();
+    
+    echo json_encode($chats);
+    exit;
+}
+
+http_response_code(404);
+echo json_encode(["error" => "Ruta no encontrada"]);

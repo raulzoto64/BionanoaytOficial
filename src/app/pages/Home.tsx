@@ -34,46 +34,6 @@ export function Home() {
   const menuAnchor = useMenuNavigation(pageContent, navigationType);
   const targetAnchor = restoredAnchor || menuAnchor;
 
-  // ✅ 2. Motor de Renderizado Progresivo
-  // Si hay ancla o caché, empezamos con todas las secciones para que el DOM esté listo
-  const [renderedSectionsCount, setRenderedSectionsCount] = useState<number>(() => {
-    const cached = supabaseAPI.getCachedData(`page-content-page-home-${language}`);
-    if (targetAnchor || cached) {
-      const sections = cached?.sections?.filter((s: any) => s.visible && s.type !== "hero") || [];
-      return sections.length || 0;
-    }
-    return 0;
-  });
-
-  useEffect(() => {
-    if (!pageContent) return;
-
-    const sections = pageContent.sections.filter(s => s.visible && s.type !== "hero");
-    const totalSections = sections.length;
-    
-    // Si hay ancla activa, forzamos render completo inmediatamente
-    if (targetAnchor) {
-      setRenderedSectionsCount(totalSections);
-      return;
-    }
-
-    if (renderedSectionsCount >= totalSections) return;
-
-    const step = navigationType === 'POP' ? 4 : 1;
-    const delay = navigationType === 'POP' ? 50 : 100;
-
-    const interval = setInterval(() => {
-      setRenderedSectionsCount(prev => {
-        if (prev >= totalSections) {
-          clearInterval(interval);
-          return prev;
-        }
-        return Math.min(prev + step, totalSections);
-      });
-    }, delay);
-
-    return () => clearInterval(interval);
-  }, [pageContent, navigationType, targetAnchor, renderedSectionsCount]);
 
   useEffect(() => {
     loadPageContent();
@@ -139,11 +99,10 @@ export function Home() {
         <Hero content={heroContent} />
       </div>
 
-      {pageContent ? (
+      {pageContent && (
         <>
           {pageContent.sections
             .filter((s: Section) => s.visible && s.type !== "hero")
-            .filter((_: Section, index: number) => index < renderedSectionsCount)
             .map((section: Section, index: number) => (
               <DynamicSection
                 key={section.id}
@@ -155,20 +114,6 @@ export function Home() {
               />
             ))}
         </>
-      ) : (
-        <div className="py-20 bg-white">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="grid md:grid-cols-3 gap-10">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="text-center">
-                  <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-[#F7F9CE] animate-pulse"></div>
-                  <div className="h-6 bg-[#1C5D15]/20 rounded-lg mb-4 animate-pulse"></div>
-                  <div className="h-16 bg-[#629960]/20 rounded-lg animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       )}
     </>
   );

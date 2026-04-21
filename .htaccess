@@ -1,6 +1,11 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # Excluir la carpeta bionano-api de las rutas de React
+  RewriteCond %{REQUEST_URI} ^/bionano-api/ [NC]
+  RewriteRule .* - [L]
+
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d

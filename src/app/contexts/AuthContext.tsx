@@ -1,7 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { User, supabaseAPI } from '../data/supabase';
-import { v4 as uuidv4 } from 'uuid';
-import { useVisitor } from '../hooks/useVisitor';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { User, supabaseAPI } from "../data/supabase";
+import { v4 as uuidv4 } from "uuid";
+import { useVisitor } from "../hooks/useVisitor";
 
 interface AuthContextType {
   user: User | null;
@@ -16,10 +22,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { setVisitorId } = useVisitor(); // Asegúrate de que useVisitor también provee setVisitorId
+  const { setVisitorId } = useVisitor();
 
   const getGuestId = useCallback(() => {
     let guestId = localStorage.getItem("guest_id");
@@ -30,31 +38,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return guestId;
   }, []);
 
+  // 🔥 FIX PRINCIPAL: ESCUCHAR LOGIN DESDE VERIFYCODE (SIN REFRESH)
   useEffect(() => {
-    // ✅ PRIMERO: Verificar si hay usuario guardado MANUALMENTE en localStorage (FUNCIONA SIEMPRE)
-    const savedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('auth_token');
+    const savedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("auth_token");
 
     if (savedUser && token) {
       try {
-        const parsedUser = JSON.parse(savedUser) as User;
-        setUser(parsedUser);
-      } catch (e) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('auth_token');
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem("user");
+        localStorage.removeItem("auth_token");
       }
     } else {
       getGuestId();
     }
-    
+
     setIsLoading(false);
+
+    // 🔥 NUEVO: escuchar login inmediato
+    const handleAuthUpdate = (e: any) => {
+      if (e?.detail) {
+        setUser(e.detail);
+        localStorage.setItem("user", JSON.stringify(e.detail));
+      }
+    };
+
+    window.addEventListener("auth-updated", handleAuthUpdate);
+
+    return () => {
+      window.removeEventListener("auth-updated", handleAuthUpdate);
+    };
   }, [getGuestId]);
 
-  const login = async (emailOrUser: string | User, password?: string) => {
+  const login = async (
+    emailOrUser: string | User,
+    password?: string
+  ) => {
     let email: string;
     let pass: string;
 
-    if (typeof emailOrUser === 'object') {
+    if (typeof emailOrUser === "object") {
       email = emailOrUser.email;
       pass = emailOrUser.password;
     } else {
@@ -63,35 +87,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (!pass) {
-      throw new Error('La contraseña es requerida para autenticar');
+      throw new Error("La contraseña es requerida para autenticar");
     }
 
     try {
-      // 1. Usar el nuevo método de login que se conecta a la API MySQL
       const userData = await supabaseAPI.loginUser(email, pass);
 
-      // 2. Actualizamos el estado local
       setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
 
-      // 3. Fusionar carrito
       const guestId = localStorage.getItem("guest_id");
+
       if (guestId && userData.id) {
         try {
           await supabaseAPI.mergeGuestCart(userData.id, guestId);
-          localStorage.removeItem("guest_id"); 
-          if (typeof setVisitorId === 'function') {
+          localStorage.removeItem("guest_id");
+
+          if (typeof setVisitorId === "function") {
             setVisitorId(null);
           }
-        } catch (error) {
-
-        }
+        } catch {}
       }
 
       window.dispatchEvent(new CustomEvent("cart-updated"));
-      
-      return userData;
 
+      return userData;
     } catch (error: any) {
       throw error;
     }
@@ -102,11 +122,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       localStorage.removeItem("user");
       localStorage.removeItem("auth_token");
-      getGuestId(); 
-      window.dispatchEvent(new CustomEvent("cart-updated"));
-    } catch (error) {
+      getGuestId();
 
-    }
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    } catch {}
   };
 
   const value = {
@@ -117,16 +136,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     guestId: getGuestId(),
     login,
     logout,
-    getGuestId
+    getGuestId,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  );
 };
 
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
+  if (!context) {
+    throw new Error("useAuthContext must be used within an AuthProvider");
   }
   return context;
 };

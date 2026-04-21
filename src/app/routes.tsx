@@ -41,6 +41,7 @@ const AdminActiveCarts = () => import("./pages/admin/sales/ActiveCarts").then(m 
 const AdminCheckoutLeads = () => import("./pages/admin/sales/CheckoutLeads").then(m => ({ Component: m.CheckoutLeads }));
 const AdminAnalytics = () => import("./pages/admin/sales/AnalyticsDashboard").then(m => ({ Component: m.AnalyticsDashboard }));
 
+const VerifyCode = () => import("./pages/VerifyCode").then(m => ({ Component: m.default }));
 const DynamicPage = () => import("./pages/DynamicPage").then(m => ({ Component: m.DynamicPage }));
 
 export const router = createBrowserRouter([
@@ -85,6 +86,10 @@ export const router = createBrowserRouter([
       {
         path: "cart",
         lazy: Cart,
+      },
+      {
+        path: "verificar-codigo",
+        lazy: VerifyCode,
       },
       {
         path: "ecosystem",

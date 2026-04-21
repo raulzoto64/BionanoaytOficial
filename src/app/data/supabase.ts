@@ -290,7 +290,7 @@ export interface Chat {
 export interface ChatMessage {
   id: number;
   chat_id: string;
-  sender_type: 'visitor' | 'admin';
+  sender_type: 'agent'
   sender_id: string;
   content: string;
   is_read: boolean;
@@ -1083,44 +1083,63 @@ export const supabaseAPI = {
     return handleApiResponse(res);
   },
 
-  // CHATS
+  // CHATS ✅ FLUJO CORRECTO: 1 chat = 1 visitante
+  initChat: async (visitorId: string) => {
+    // ✅ NO USAR CACHE PARA EL CHAT, PERO NO INVALIDAR EL RESTO
+    const res = await fetch(`${API_BASE_URL}/chats/init`, {
+      method: 'POST',
+      headers: getApiHeaders(),
+      body: JSON.stringify({ visitor_id: visitorId }),
+      // ✅ NO GUARDAR ESTA PETICION EN CACHE
+      cache: 'no-store'
+    });
+    return handleApiResponse(res);
+  },
+
+  getChatById: async (chatId: string) => {
+    const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, { headers: getApiHeaders() });
+    return handleApiResponse(res);
+  },
+
+  sendChatMessage: async (chatId: string, data: {
+    sender_type: 'agent'
+    sender_id: string;
+    content: string;
+  }) => {
+    const res = await fetch(`${API_BASE_URL}/chats/${chatId}/messages`, {
+      method: 'POST',
+      headers: getApiHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleApiResponse(res);
+  },
+
+  setTypingStatus: async (chatId: string, isTyping: boolean, senderType: 'visitor' | 'admin') => {
+    const res = await fetch(`${API_BASE_URL}/chats/${chatId}/typing`, {
+      method: 'PUT',
+      headers: getApiHeaders(),
+      body: JSON.stringify({ is_typing: isTyping, sender_type: senderType })
+    });
+    return handleApiResponse(res).catch(() => null);
+  },
+
+  markChatAsRead: async (chatId: string, actor: 'agent') => {
+    const res = await fetch(`${API_BASE_URL}/chats/${chatId}/read`, {
+      method: 'PUT',
+      headers: getApiHeaders(),
+      body: JSON.stringify({ actor })
+    });
+    return handleApiResponse(res);
+  },
+
   getChats: async () => {
     const res = await fetch(`${API_BASE_URL}/chats`, { headers: getApiHeaders() });
     return handleApiResponse(res);
   },
+
+  // DEPRECATED - MANTENIDO PARA COMPATIBILIDAD TEMPORAL
   getChatHistory: async (id: string, role: 'admin' | 'visitor' = 'visitor') => {
-    // id can be chat_id or visitor_id
-    const res = await fetch(`${API_BASE_URL}/chats/${id}?role=${role}`, { headers: getApiHeaders() });
-    return handleApiResponse(res);
-  },
-  sendChatMessage: async (data: { 
-    visitor_id?: string; 
-    sender_type: 'visitor' | 'admin'; 
-    content: string; 
-    sender_id?: string 
-  }) => {
-    const res = await fetch(`${API_BASE_URL}/chats`, { 
-      method: 'POST', 
-      headers: getApiHeaders(), 
-      body: JSON.stringify(data) 
-    });
-    return handleApiResponse(res);
-  },
-  markChatAsRead: async (chatId: string, target: 'admin' | 'visitor' = 'admin') => {
-    const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, { 
-      method: 'PUT', 
-      headers: getApiHeaders(), 
-      body: JSON.stringify({ target }) 
-    });
-    return handleApiResponse(res);
-  },
-  setTypingStatus: async (chatId: string, isTyping: boolean, role: 'admin' | 'visitor' = 'admin') => {
-    const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, { 
-      method: 'PATCH', 
-      headers: getApiHeaders(), 
-      body: JSON.stringify({ action: 'typing', role, is_typing: isTyping }) 
-    });
-    return handleApiResponse(res).catch(() => null); // Silently ignore typing errors
+    return await supabaseAPI.getChatById(id);
   },
 
   // ANALYTICS

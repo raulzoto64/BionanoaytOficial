@@ -3,6 +3,13 @@ import { MessageCircle, X, Send, User, Loader2 } from 'lucide-react';
 import { supabaseAPI, ChatMessage } from '../../data/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
+/**
+ * ✅ FLUJO CORRECTO IMPLEMENTADO:
+ * 1. Visitante carga página → se crea chat INMEDIATAMENTE
+ * 2. chatId está garantizado que existe ANTES de cualquier mensaje
+ * 3. NO HAY FALLBACKS a null o visitorId
+ * 4. Todas las operaciones usan chatId SIEMPRE
+ */
 export function ChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -12,6 +19,7 @@ export function ChatBubble() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdminTyping, setIsAdminTyping] = useState(false);
   const [isAdminOnline, setIsAdminOnline] = useState(false);
+  const [chatInitialized, setChatInitialized] = useState(false);
   const { user } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,8 +27,7 @@ export function ChatBubble() {
   const typingTimeoutRef = useRef<any>(null);
   const [isOverDarkBg, setIsOverDarkBg] = useState(false);
 
-
-  // Get or create visitor_id
+  // Get or create visitor_id (se mantiene igual)
   const getVisitorId = () => {
     let id = localStorage.getItem('guest_id');
     if (!id) {
@@ -32,18 +39,49 @@ export function ChatBubble() {
 
   const visitorId = getVisitorId();
 
-  // Initial load and polling
+  // ✅ PASO 1: INICIALIZAR CHAT EN SEGUNDO PLANO (SIN BLOQUEAR CARGA LAZY)
   useEffect(() => {
-    loadChat();
+    const initializeChat = async () => {
+      try {
+        // ✅ NO BLOQUEAR HILO PRINCIPAL
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // ✅ Crear/obtener chat EN SEGUNDO PLANO
+        const chatData = await supabaseAPI.initChat(visitorId);
+        setChatId(chatData.id);
+        setChatInitialized(true);
 
-    // Detección de fondo oscuro (para invertir colores cuando se solapa con el footer)
+        // ✅ Cargar mensajes SOLO SI el usuario ya abrio el chat
+        if (isOpen) {
+          await loadChat(chatData.id);
+        }
+
+        // ✅ Iniciar polling
+        pollInterval.current = setInterval(() => {
+          if (chatId && isOpen) {
+            loadChat(chatId, true);
+          }
+        }, 6000);
+
+      } catch (e) {
+        console.error('Error inicializando chat:', e);
+      }
+    };
+
+    // ✅ USAR requestIdleCallback PARA NO ROMPER LAZOS
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => initializeChat());
+    } else {
+      setTimeout(initializeChat, 200);
+    }
+
+    // Detección de fondo oscuro (mantenido igual)
     const handleScroll = () => {
       const bubble = containerRef.current;
       if (!bubble) return;
 
       const bubbleRect = bubble.getBoundingClientRect();
       
-      // Buscamos todas las secciones que tengan el fondo verde de marca
       const darkSections = document.querySelectorAll('footer, .bg-\\[\\#1C5D15\\]');
       let overlaps = false;
 
@@ -61,18 +99,10 @@ export function ChatBubble() {
       setIsOverDarkBg(overlaps);
     };
 
-
     const handleOpenExternal = () => setIsOpen(true);
     window.addEventListener('chat:open', handleOpenExternal);
-
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Verificación inicial
-    
-    // Poll for new messages every 4 seconds
-    pollInterval.current = setInterval(() => {
-      loadChat(true); // silent update
-    }, 4000);
+    handleScroll();
 
     return () => {
       if (pollInterval.current) clearInterval(pollInterval.current);
@@ -81,35 +111,36 @@ export function ChatBubble() {
     };
   }, []);
 
-
-  // Update unread count when chat is closed
+  // ✅ Marcar como leido cuando se abre el chat
   useEffect(() => {
     if (isOpen && chatId) {
-      markAsRead();
+      markAsRead(chatId);
     }
   }, [isOpen, chatId]);
 
-  // Auto-scroll to bottom
+  // ✅ Auto-scroll al fondo
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isAdminTyping]);
 
-  const loadChat = async (silent = false) => {
+  /**
+   * ✅ AHORA SIEMPRE RECIBE chatId
+   * NUNCA MAS se pasa visitorId
+   */
+  const loadChat = async (chatIdParam: string, silent = false) => {
     try {
-      const data = await supabaseAPI.getChatHistory(visitorId, 'visitor');
+      const data = await supabaseAPI.getChatById(chatIdParam);
       if (data && data.chat) {
         setChatId(data.chat.id);
         setMessages(data.messages);
         
-        // Advanced features logic
         setIsAdminTyping(!!data.chat.is_admin_typing);
         setIsAdminOnline(!!data.chat.is_admin_online);
 
         const newUnread = data.chat.unread_count_visitor || 0;
         
-        // AUTO-OPEN: if new messages from admin and bubble is closed
         if (!isOpen && newUnread > unreadCount && newUnread > 0) {
           setIsOpen(true);
         }
@@ -122,22 +153,21 @@ export function ChatBubble() {
   };
 
   const handleTyping = () => {
+    // ✅ SI NO HAY chatId, NO HACEMOS NADA
     if (!chatId) return;
     
-    // Inform API that visitor is typing
     supabaseAPI.setTypingStatus(chatId, true, 'visitor');
 
-    // Debounce: Clear flag after 3 seconds of no typing
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       supabaseAPI.setTypingStatus(chatId, false, 'visitor');
     }, 3000);
   };
 
-  const markAsRead = async () => {
-    if (!chatId) return;
+  const markAsRead = async (chatIdParam: string) => {
+    if (!chatIdParam) return;
     try {
-      await supabaseAPI.markChatAsRead(chatId, 'visitor');
+      await supabaseAPI.markChatAsRead(chatIdParam, 'agent');
       setUnreadCount(0);
     } catch (e) {}
   };
@@ -146,27 +176,44 @@ export function ChatBubble() {
     e.preventDefault();
     if (!message.trim()) return;
 
+    // ✅ BLOQUEO TOTAL: SI NO HAY chatId, NO SE ENVIA NADA
+    if (!chatId) return;
+
     const content = message.trim();
     setMessage('');
     setLoading(true);
     
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    supabaseAPI.setTypingStatus(chatId!, false, 'visitor');
+    supabaseAPI.setTypingStatus(chatId, false, 'visitor');
 
     try {
-      await supabaseAPI.sendChatMessage({
-        visitor_id: visitorId,
-        sender_type: 'visitor',
+      // ✅ AHORA SIEMPRE PASAMOS chatId COMO PRIMER PARAMETRO
+      await supabaseAPI.sendChatMessage(chatId, {
+        sender_type: 'agent',
         sender_id: user?.id || visitorId,
         content: content
       });
-      await loadChat();
+      await loadChat(chatId);
     } catch (e) {
       console.error('Error sending message:', e);
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ SI EL CHAT NO ESTA INICIALIZADO, MOSTRAR ESTADO DE CARGA
+  if (!chatInitialized) {
+    return (
+      <div className="fixed bottom-6 right-6 z-[9999]">
+        <button 
+          className="w-14 h-14 rounded-full bg-[#19FF00] flex items-center justify-center shadow-2xl"
+          disabled
+        >
+          <Loader2 className="w-6 h-6 text-[#1C5D15] animate-spin" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
@@ -194,7 +241,6 @@ export function ChatBubble() {
           </>
         )}
       </button>
-
 
       {/* Ventana de Chat */}
       {isOpen && (
@@ -230,7 +276,7 @@ export function ChatBubble() {
               </div>
             ) : (
               messages.map((msg, i) => {
-                const isMe = msg.sender_type === 'visitor';
+                const isMe = msg.sender_type === 'agent';
                 return (
                   <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${

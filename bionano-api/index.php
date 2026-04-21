@@ -35,6 +35,16 @@ $controller = "api/{$resource}.php";
 
 if (!empty($resource) && file_exists($controller)) {
     try {
+        // ✅ Pasar TODOS los parametros GET al contexto global del controlador
+        foreach ($_GET as $key => $value) {
+            $GLOBALS[$key] = $value;
+        }
+        
+        // Inyectar la variable action que espera auth.php
+        if (isset($_GET['action'])) {
+            $action = $_GET['action'];
+        }
+        
         require_once $controller;
     } catch (Throwable $e) {
         http_response_code(500);
