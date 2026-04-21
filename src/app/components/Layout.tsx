@@ -24,9 +24,7 @@ function LayoutInner() {
   const { showPopupId, setShowPopupId } = useExitIntent();
   useAnalytics(); // 🚀 Silently tracks page_views and session durations
 
-  useEffect(() => {
-    console.info("[LAYOUT] 🚀 Aplicación iniciada");
-  }, []);
+
   
   useEffect(() => {
     // Limpieza de rastro antiguo de Supabase (Solo una vez)

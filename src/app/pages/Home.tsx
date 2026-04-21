@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useLayoutEffect } from "react";
 import {
   PageContent,
   Section,
@@ -20,7 +20,6 @@ export function Home() {
 
   const [pageContent, setPageContent] = useState<PageContent | null>(() => {
     const cached = supabaseAPI.getCachedData(`page-content-page-home-${language}`);
-    if (cached) console.info("[SCROLL] pageContent obtenido de CACHÉ");
     return cached;
   });
   
@@ -36,13 +35,18 @@ export function Home() {
     
     // Si es un reload físico, ignorar anclas antiguas para empezar de cero a arriba
     if (navType === 'reload') {
-      console.debug("[SCROLL] Home.Initializer -> Reload detectado. Ignorando anclas.");
       return null;
     }
 
-    const anchor = sessionStorage.getItem('bx_return_section') || window.location.hash.replace('#', '');
+    // ✅ PRIORIDAD 1: sessionStorage (El lugar más seguro para POP/Atrás)
+    const sessionAnchor = sessionStorage.getItem('bx_return_section');
+    // ✅ PRIORIDAD 2: history.state (Push navigation)
+    // ✅ PRIORIDAD 3: URL Hash
+    const anchor = sessionAnchor || window.history.state?.returnSection || window.location.hash.replace('#', '');
+    
     if (anchor) {
-      console.info(`[SCROLL] Home.Initializer -> Encontrado: #${anchor} (Nav: ${navType})`);
+      // IMPORTANTE: NO borramos sessionStorage aquí.
+      // Si lo borramos ahora, ScrollToTop no lo verá en su useEffect y forzará un scroll al top.
     }
     return anchor || null;
   };
@@ -51,11 +55,10 @@ export function Home() {
   const [targetAnchor, setTargetAnchor] = useState<string | null>(initialAnchor);
 
   // ✅ Si hay ancla o caché, empezamos con todas las secciones para que el DOM esté listo
-  const [renderedSectionsCount, setRenderedSectionsCount] = useState(() => {
+  const [renderedSectionsCount, setRenderedSectionsCount] = useState<number>(() => {
     const cached = supabaseAPI.getCachedData(`page-content-page-home-${language}`);
     if (initialAnchor || cached) {
       const sections = cached?.sections?.filter((s: any) => s.visible && s.type !== "hero") || [];
-      console.debug(`[SCROLL] Home.Initializer -> Flash Mode ON (${sections.length} secciones)`);
       return sections.length || 0;
     }
     return 0;
@@ -70,8 +73,6 @@ export function Home() {
 
     if (isReload) {
       if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
-      sessionStorage.removeItem('bx_return_section');
-      sessionStorage.removeItem('bx_return_from');
       setTargetAnchor(null);
     }
 
@@ -87,9 +88,11 @@ export function Home() {
   useEffect(() => {
     if (navigationType === 'POP') {
       const anchorFromSession = sessionStorage.getItem('bx_return_section');
-      if (anchorFromSession) {
-        console.info(`[SCROLL] Navegación POP detectada. Cargando ancla: ${anchorFromSession}`);
-        setTargetAnchor(anchorFromSession);
+      const anchorFromHistory = window.history.state?.returnSection;
+      const target = anchorFromSession || anchorFromHistory;
+      
+      if (target) {
+        setTargetAnchor(target);
       }
     }
   }, [navigationType]);
@@ -105,7 +108,6 @@ export function Home() {
     if (renderedSectionsCount >= totalSections && !targetAnchor) return;
 
     if (targetAnchor) {
-      console.info("[SCROLL] Home.Engine -> Modo FLASH (Ancla detectada). Renderizando todo.");
       setRenderedSectionsCount(totalSections);
       return;
     }
@@ -131,32 +133,39 @@ export function Home() {
   }, [pageContent, navigationType, targetAnchor]);
 
   // ✅ 5. Motor de Scroll Automático Inteligente
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Si no hay ancla, el motor duerme
     if (!targetAnchor) {
-      const pending = sessionStorage.getItem('bx_return_section') || window.location.hash.replace('#', '');
-      if (pending) {
-        console.info(`[SCROLL] Motor -> Activando ancla pendiente: #${pending}`);
-        setTargetAnchor(pending);
-      }
+      setTimeout(() => {
+        const sessionAnchor = sessionStorage.getItem('bx_return_section');
+        const pending = sessionAnchor || window.history.state?.returnSection || window.location.hash.replace('#', '');
+        if (pending) {
+          setTargetAnchor(pending);
+        }
+      }, 0);
       return;
     }
 
     // Si no hay contenido aún, esperamos a la BD
     if (!pageContent) {
-      console.log(`[SCROLL] Motor -> Esperando pageContent para #${targetAnchor}`);
       return;
     }
-
-    console.info(`[SCROLL] 🔍 Iniciando búsqueda inteligente de: #${targetAnchor}`);
+    
     let attempts = 0;
-    const maxAttempts = 60; // 6 segundos máximo (100ms * 60)
+    const maxAttempts = 60; // 6 segundos
+    let activeScrollLocker: NodeJS.Timeout | null = null;
+
+    const breakLock = () => {
+      if (activeScrollLocker) clearInterval(activeScrollLocker);
+      setTargetAnchor(null);
+      console.log(`[SCROLL-LOCK] 🛑 Cerrojo liberado (Intervención del usuario o fin de tiempo)`);
+      window.removeEventListener('wheel', breakLock);
+      window.removeEventListener('touchstart', breakLock);
+    };
 
     const scrollToTarget = () => {
-      // 1. Limpiar el ancla de prefijos comunes para buscar por 'type'
       const cleanType = targetAnchor.replace(/^home-/, '').replace(/^store-/, '');
       
-      // 2. Buscador Multi-Criterio (Cascada)
       const element = 
         document.getElementById(targetAnchor) || 
         document.querySelector(`[data-section-type="${cleanType}"]`) ||
@@ -164,40 +173,31 @@ export function Home() {
         document.querySelector(`[data-section-type="${targetAnchor}"]`);
 
       if (element) {
-        const rect = element.getBoundingClientRect();
-        const absoluteTop = rect.top + window.pageYOffset;
-        const targetTop = Math.max(0, absoluteTop - 80); // 80px del header
-        
-        console.info(`[SCROLL] ✅ ORIGEN HALLADO: <${element.tagName.toLowerCase()} id="${element.id}" data-section-type="${element.getAttribute('data-section-type') || ''}"> a ${targetTop}px`);
-        
-        // Salto instantáneo primero para asegurar el área (evita ver el scroll bajar)
-        window.scrollTo({ top: targetTop, behavior: 'instant' as any });
-        
-        // Refuerzo suave después de un mini-frame para precisión fina
-        setTimeout(() => {
-          window.scrollTo({ top: targetTop, behavior: 'smooth' });
-        }, 50);
+        sessionStorage.removeItem('bx_return_section');
+        sessionStorage.removeItem('bx_return_from');
+        if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
 
-        // Verificación de estabilidad a largo plazo (Layout Shifts por imágenes)
-        setTimeout(() => {
+        let lockTime = 0;
+        const maxLockTime = 1500; 
+        const intervalMs = 25; 
+
+        // Si el usuario intenta hacer scroll manualmente, soltamos el ancla inmediatamente
+        window.addEventListener('wheel', breakLock, { passive: true });
+        window.addEventListener('touchstart', breakLock, { passive: true });
+
+        activeScrollLocker = setInterval(() => {
+          lockTime += intervalMs;
+          
           const freshRect = element.getBoundingClientRect();
-          const freshTop = freshRect.top + window.pageYOffset - 80;
-          const drift = Math.abs(freshTop - targetTop);
+          const freshTop = Math.max(0, freshRect.top + window.pageYOffset - 80);
           
-          if (drift > 10) {
-            console.warn(`[SCROLL] ⚡ Layout Shift detectado: El elemento se movió ${Math.round(drift)}px. Re-ajustando...`);
-            window.scrollTo({ top: freshTop, behavior: 'smooth' });
-          }
+          console.log(`[SCROLL-LOCK] 🔒 Forzando posición: ${freshTop}px`);
+          window.scrollTo({ top: freshTop, behavior: 'instant' as ScrollBehavior });
           
-          // Limpieza final si estamos en el rango correcto (+- 100px)
-          if (Math.abs(freshRect.top - 80) < 100) {
-            console.info(`[SCROLL] 🏁 Estabilidad lograda para #${targetAnchor}.`);
-            sessionStorage.removeItem('bx_return_section');
-            sessionStorage.removeItem('bx_return_from');
-            if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
-            setTargetAnchor(null);
+          if (lockTime >= maxLockTime) {
+            breakLock(); 
           }
-        }, 800);
+        }, intervalMs);
 
         return true;
       }
@@ -208,16 +208,19 @@ export function Home() {
       attempts++;
       if (scrollToTarget() || attempts >= maxAttempts) {
         if (attempts >= maxAttempts) {
-          console.error(`[SCROLL] ❌ Fallo crítico: No se encontró la sección para #${targetAnchor} tras 6 segundos.`);
-          console.error(`[SCROLL] DOM Actual:`, document.querySelectorAll('[data-section-type]'));
+          sessionStorage.removeItem('bx_return_section');
+          sessionStorage.removeItem('bx_return_from');
         }
         clearInterval(interval);
-      } else if (attempts % 10 === 0) {
-        console.log(`[SCROLL] Buscando en el DOM... (Intento ${attempts}/${maxAttempts})`);
       }
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (activeScrollLocker) clearInterval(activeScrollLocker);
+      window.removeEventListener('wheel', breakLock);
+      window.removeEventListener('touchstart', breakLock);
+    };
   }, [pageContent, targetAnchor]);
 
   useEffect(() => {

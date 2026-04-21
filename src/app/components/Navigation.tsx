@@ -24,10 +24,19 @@ export function Navigation() {
         window.dispatchEvent(new HashChangeEvent('hashchange'));
       }
     } else {
-      // ✅ Si no estamos en Home, guardamos el destino y navegamos.
-      // Al llegar a Home, el useEffect de targetAnchor lo detectará.
+      // ✅ Guardamos en AMBOS: history.state (PUSH) + sessionStorage (POP/Back)
+      // React Router pierde history.state en navegación POP (Back button).
+      // sessionStorage sobrevive a todo tipo de navegación.
+      console.log(`🔗 [NAVIGATION] Enviando a Home con ancla:`, cleanId);
+      
       sessionStorage.setItem('bx_return_section', cleanId);
-      navigate("/");
+      sessionStorage.setItem('bx_return_from', window.location.pathname);
+      
+      navigate("/", {
+        state: {
+          returnSection: cleanId
+        }
+      });
     }
     
     setMobileMenuOpen(false);

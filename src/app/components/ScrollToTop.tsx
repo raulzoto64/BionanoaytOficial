@@ -2,40 +2,36 @@ import { useEffect } from "react";
 import { useLocation, useNavigationType } from "react-router";
 
 export function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const navigationType = useNavigationType();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    
+    // Si el usuario navegó hacia atrás/adelante, no forzar scroll al top,
+    // dejar que el navegador o el motor de restauración de cada página lo haga.
+    if (navigationType === 'POP') return;
 
     const isHome = pathname === '/' || pathname === '';
-    
-    // ✅ Leer ancla de todas las fuentes posibles
+    const historyStateAnchor = window.history.state?.returnSection || null;
     const sessionAnchor = sessionStorage.getItem('bx_return_section');
-    const hashAnchor = window.location.hash.replace('#', '');
-    const hasAnyAnchor = sessionAnchor || hashAnchor;
+    const hashAnchor = hash.replace('#', '');
+    const hasAnyAnchor = historyStateAnchor || sessionAnchor || hashAnchor;
 
-    console.debug(`[SCROLL] global.ScrollToTop -> Path: ${pathname}, Nav: ${navigationType}, Ancla: ${hasAnyAnchor || 'N/A'}`);
-
-    // 🔥 REGLA DE ORO: Si es Home y hay ancla, NO SUBIR. Home se encarga de bajar.
     if (isHome && hasAnyAnchor) {
-      console.log(`[SCROLL] global.ScrollToTop SKIPPED (Motivo: Home con ancla: #${hasAnyAnchor})`);
       return;
     }
 
-    // ✅ SUBIR EN TODOS LOS DEMÁS CASOS (Navegación limpia, cambio de página, etc.)
     requestAnimationFrame(() => {
-      console.info(`[SCROLL] global.ScrollToTop EXECUTING (A TOPE 0,0). Path: ${pathname}`);
       window.scrollTo(0, 0);
       
-      // Refuerzo para asegurar el tope tras el renderizado de la nueva página
       setTimeout(() => {
         if (window.pageYOffset < 10 && !hasAnyAnchor) {
           window.scrollTo(0, 0);
         }
       }, 50);
     });
-  }, [pathname, navigationType]);
+  }, [pathname, hash]);
 
   return null;
 }
