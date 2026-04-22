@@ -271,13 +271,12 @@ export interface EcosystemMemberTranslation {
 }
 
 export interface Chat {
-  is_visitor_typing: any;
-  is_visitor_online: import("react/jsx-runtime").JSX.Element;
   id: string;
   visitor_id: string;
   user_id?: string;
   status: 'open' | 'closed' | 'archived';
   unread_count_admin: number;
+  unread_count_agent: number;
   unread_count_visitor: number;
   last_message: string;
   created_at: string;
@@ -285,6 +284,11 @@ export interface Chat {
   lead_name?: string;
   lead_email?: string;
   lead_status?: string;
+  is_visitor_typing: boolean;
+  is_visitor_online: boolean;
+  is_agent_typing: boolean;
+  is_admin_typing: boolean;
+  is_admin_online: boolean;
 }
 
 export interface ChatMessage {
@@ -293,7 +297,8 @@ export interface ChatMessage {
   sender_type: 'agent' | 'visitor' | 'user' | 'admin'
   sender_id: string;
   content: string;
-  is_read: boolean;
+  // ✅ MySQL devuelve INT 0/1, aceptamos ambos tipos para compatibilidad
+  is_read: boolean | number;
   created_at: string;
 }
 

@@ -89,8 +89,8 @@ export function AdminSidebar() {
         ]);
 
         const newLeadsCount = Array.isArray(leads) ? leads.filter((l: any) => l.status === 'new').length : 0;
-        const pendingChatsCount = Array.isArray(chats) ? chats.filter((c: any) => c.unread_count_admin > 0).length : 0;
-        
+        const pendingChatsCount = Array.isArray(chats) ? chats.reduce((sum: number, c: any) => sum + (parseInt(c.unread_count_agent) || 0), 0) : 0;
+
         setUnreadLeads(newLeadsCount);
         setUnreadChats(pendingChatsCount);
       } catch (e) {
@@ -99,7 +99,7 @@ export function AdminSidebar() {
     };
 
     fetchCounts();
-    const interval = setInterval(fetchCounts, 30000); // Cada 30 seg
+    const interval = setInterval(fetchCounts, 4000); // Cada 4 segundos en tiempo real
     return () => clearInterval(interval);
   }, []);
 

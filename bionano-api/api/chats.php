@@ -12,11 +12,6 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/../db.php';
 
-// ✅ LOG DE DEBUG para todos los requests
-file_put_contents(__DIR__ . '/../chat_debug.log', 
-    date('Y-m-d H:i:s') . " | " . $_SERVER['REQUEST_METHOD'] . " " . $_SERVER['REQUEST_URI'] . PHP_EOL, 
-    FILE_APPEND | LOCK_EX
-);
 
 // ✅ MANEJADOR DE ERRORES GLOBAL PARA ESTE CONTROLADOR
 function chatErrorHandler($errno, $errstr, $errfile, $errline) {
@@ -202,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'typing') {
         FILE_APPEND | LOCK_EX
     );
     
-    $stmt = $pdo->prepare("UPDATE chats SET {$field} = ? WHERE id = ?");
+$stmt = $pdo->prepare("UPDATE chats SET {$field} = ? WHERE id = ?");
     $stmt->execute([$data['is_typing'] ? 1 : 0, $chatId]);
     
     echo json_encode(["success" => true]);
@@ -214,23 +209,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'typing') {
 // ==============================================
 if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'read') {
     $chatId = $parts[1];
-    $data = json_decode(file_get_contents('php://input'), true);
     
+    if(empty($chatId)) {
+        http_response_code(400);
+        echo json_encode(["error" => "chat_id requerido"]);
+        exit;
+    }
+
+    // ✅ VALIDACION DEFENSIVA TOTAL, NUNCA MAS 500
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    
+    // ✅ ACEPTAR AMBOS NOMBRES: actor Y sender_type PARA COMPATIBILIDAD TOTAL
+    $actor = $data['actor'] ?? $data['sender_type'] ?? 'admin';
+
     // ✅ OPCIÓN 1: Aceptar todos los nombres posibles
-    $field = in_array($data['actor'], ['visitor', 'user', 'visitante']) 
+    $field = in_array($actor, ['visitor', 'user', 'visitante']) 
         ? 'unread_count_visitor' 
         : 'unread_count_agent';
     
     // LOG DEBUG
     file_put_contents(__DIR__ . '/../chat_debug.log', 
-        date('Y-m-d H:i:s') . " | MARK READ: actor={$data['actor']} -> campo={$field}" . PHP_EOL, 
+        date('Y-m-d H:i:s') . " | MARK READ: actor={$actor} -> campo={$field} chat={$chatId}" . PHP_EOL, 
         FILE_APPEND | LOCK_EX
     );
     
     $stmt = $pdo->prepare("UPDATE chats SET {$field} = 0 WHERE id = ?");
     $stmt->execute([$chatId]);
+
+    // ✅ MARCAR TODOS LOS MENSAJES COMO LEIDOS EN LA TABLA DE MENSAJES
+    try {
+        if($field === 'unread_count_agent') {
+            // Para Admin: marcar todos mensajes del visitante como leidos
+            $stmt = $pdo->prepare("UPDATE chat_messages SET is_read = 1 WHERE chat_id = ? AND sender_type = 'visitor' AND is_read = 0");
+            $stmt->execute([$chatId]);
+        } else {
+            // Para Visitante: marcar todos mensajes del admin/agente como leidos
+            $stmt = $pdo->prepare("UPDATE chat_messages SET is_read = 1 WHERE chat_id = ? AND sender_type = 'agent' AND is_read = 0");
+            $stmt->execute([$chatId]);
+        }
+    } catch (Exception $e) {
+        // SI FALLA POR CUALQUIER MOTIVO, CONTINUAR IGUAL, NO ROMPER
+        file_put_contents(__DIR__ . '/../chat_debug.log', 
+            date('Y-m-d H:i:s') . " | MARK READ WARNING: No se pudieron marcar mensajes individuales: {$e->getMessage()}" . PHP_EOL, 
+            FILE_APPEND | LOCK_EX
+        );
+    }
     
-    echo json_encode(["success" => true]);
+    echo json_encode(["success" => true, "chat_id" => $chatId, "actor" => $actor]);
     exit;
 }
 
@@ -239,7 +264,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $parts[2] ?? '' === 'read') {
 // ==============================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($parts[1])) {
     $stmt = $pdo->query("
-        SELECT c.*, l.name as lead_name, l.email as lead_email 
+        SELECT 
+            c.*, 
+            l.name as lead_name, 
+            l.email as lead_email,
+            (SELECT COUNT(*) FROM chat_messages cm 
+                WHERE cm.chat_id = c.id 
+                AND cm.sender_type = 'visitor' 
+                AND cm.is_read = 0
+            ) as unread_count_agent
         FROM chats c
         LEFT JOIN leads l ON c.visitor_id = l.visitor_id
         ORDER BY c.updated_at DESC

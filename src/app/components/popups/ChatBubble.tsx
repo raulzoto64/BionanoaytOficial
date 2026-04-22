@@ -50,18 +50,20 @@ export function ChatBubble() {
         const chatData = await supabaseAPI.initChat(visitorId);
         setChatId(chatData.id);
         setChatInitialized(true);
+        localStorage.setItem('last_chat_id', chatData.id);
 
         // ✅ Cargar mensajes SOLO SI el usuario ya abrio el chat
         if (isOpen) {
           await loadChat(chatData.id);
         }
 
-        // ✅ Iniciar polling
+        // ✅ Iniciar polling GLOBAL, incluso si el chat esta cerrado
         pollInterval.current = setInterval(() => {
-          if (chatId && isOpen) {
-            loadChat(chatId, true);
+          const storedChatId = localStorage.getItem('last_chat_id');
+          if (storedChatId) {
+            loadChat(storedChatId, true);
           }
-        }, 6000);
+        }, 3000);
 
       } catch (e) {
         console.error('Error inicializando chat:', e);
@@ -132,15 +134,30 @@ export function ChatBubble() {
   const loadChat = async (chatIdParam: string, silent = false) => {
     try {
       const data = await supabaseAPI.getChatById(chatIdParam);
+
       if (data && data.chat) {
         setChatId(data.chat.id);
-        setMessages(data.messages);
+        setMessages(prev => {
+          // ✅ Eliminar mensajes duplicados por ID
+          const uniqueMessages = Array.from(
+            new Map(data.messages.map((msg: ChatMessage) => [msg.id, msg])).values()
+          ) as ChatMessage[];
+
+          // ✅ ORDENAR MENSAJES EN ORDEN CRONOLÓGICO (MÁS VIEJO ARRIBA, MÁS NUEVO ABAJO)
+          const sortedMessages = uniqueMessages.sort((a, b) => 
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+          
+          // ✅ Solo actualizar si realmente hay cambios
+          const hasChanges = JSON.stringify(prev) !== JSON.stringify(sortedMessages);
+          return hasChanges ? sortedMessages : prev;
+        });
         
-        setIsAdminTyping(!!data.chat.is_admin_typing);
-        setIsAdminOnline(!!data.chat.is_admin_online);
+        setIsAdminTyping(!!data.chat.is_agent_typing);
+        setIsAdminOnline(false);
 
         const newUnread = data.chat.unread_count_visitor || 0;
-        
+
         if (!isOpen && newUnread > unreadCount && newUnread > 0) {
           setIsOpen(true);
         }
@@ -244,7 +261,7 @@ export function ChatBubble() {
 
       {/* Ventana de Chat */}
       {isOpen && (
-        <div className="absolute bottom-20 right-0 w-[350px] sm:w-[400px] h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div className="absolute bottom-20 right-0 w-[95vw] max-w-[350px] sm:max-w-[400px] h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
           {/* Header */}
           <div className="bg-[#1C5D15] p-4 flex items-center gap-3 text-white">
             <div className="w-10 h-10 rounded-full bg-[#19FF00]/20 flex items-center justify-center relative">
@@ -264,7 +281,14 @@ export function ChatBubble() {
           {/* Messages Area */}
           <div 
             ref={scrollRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50"
+            className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 bg-gray-50/50
+            [&::-webkit-scrollbar]:w-1
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:bg-gray-200/50
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            hover:[&::-webkit-scrollbar-thumb]:bg-gray-300/70
+            [scrollbar-width:thin]
+            [scrollbar-color:transparent_transparent]"
           >
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-6">
@@ -279,7 +303,7 @@ export function ChatBubble() {
                 const isMe = msg.sender_type === 'visitor' || msg.sender_type === 'user';
                 return (
                   <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${
+                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm break-words hyphens-auto ${
                       isMe 
                         ? 'bg-[#1C5D15] text-white rounded-tr-none' 
                         : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
@@ -310,7 +334,7 @@ export function ChatBubble() {
           </div>
 
           {/* Input Area */}
-          <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 flex gap-2">
+          <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 flex gap-2 overflow-x-hidden">
             <input
               type="text"
               value={message}

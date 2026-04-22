@@ -111,8 +111,8 @@ export function Timeline({ milestones, title, subtitle, description, ctaText, ct
 
       <div className="max-w-6xl mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
-          <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-6 text-[10px] font-black uppercase tracking-[0.2em] animate-fade-in">
-            {t("timeline.label") || "Nuestra Historia"}
+          <div className="inline-block px-4 py-2 bg-[#19FF00] text-[#1C5D15] rounded-full mb-4 font-bold text-sm">
+            Trayectoria
           </div>
           <h2 
             className="text-5xl md:text-6xl font-black text-white mb-6 tracking-tight"
@@ -147,7 +147,7 @@ export function Timeline({ milestones, title, subtitle, description, ctaText, ct
                 return (
                   <CarouselItem
                     key={index}
-                    className="pl-4 md:basis-1/2 lg:basis-1/3"
+                    className="pl-4 basis-full md:basis-1/2 lg:basis-1/3"
                   >
                     <div className="h-full p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-500 group">
                       <div className="flex items-center justify-between mb-8">

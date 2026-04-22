@@ -262,7 +262,7 @@ export function AdminTranslations() {
                       <div className="flex-1">
                         <h3 className="text-lg text-[#1C5D15] font-mono">{translation.key}</h3>
                         <Badge className={`${getCategoryBadgeColor(translation.category)} text-white`}>
-                          {translation.category.toUpperCase()}
+                          {(translation.category || 'general').toUpperCase()}
                         </Badge>
                       </div>
                     </div>

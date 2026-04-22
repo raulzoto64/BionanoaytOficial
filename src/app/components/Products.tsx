@@ -3,7 +3,6 @@ import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router";
 import { useLanguage } from "../contexts/LanguageContext";
 import { ProductTranslation } from "../data/supabase";
-import { handleAction } from "../utils/actions";
 
 interface ProductWithTranslation {
   id: string;
@@ -26,9 +25,8 @@ interface ProductsProps {
 }
 
 
-export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActionType, sectionId}: ProductsProps) {
+export function Products({ products, title, subtitle, sectionId}: ProductsProps) {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   
   // Limit to 3 featured products
   const displayedProducts = (products || []).slice(0, 3);
@@ -145,16 +143,6 @@ export function Products({ products, title, subtitle, ctaText, ctaLink, ctaActio
           ))}
         </div>
 
-        {/* Additional CTA */}
-        <div className="text-center mt-12">
-          <Button 
-            size="lg"
-            className="rounded-full px-8 uppercase text-sm tracking-wider h-12"
-            onClick={() => handleAction(ctaActionType, ctaLink || "/store", navigate, { from: 'home', sectionId: sectionId || 'products' })}
-          >
-            {ctaText || t('btn.view_full_catalog')}
-          </Button>
-        </div>
       </div>
     </section>
   );
