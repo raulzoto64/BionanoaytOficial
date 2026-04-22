@@ -102,7 +102,12 @@ export function ChatBubble() {
     };
 
     const handleOpenExternal = () => setIsOpen(true);
+    const handleCloseExternal = () => setIsOpen(false);
+    const handleToggleExternal = () => setIsOpen(prev => !prev);
+    
     window.addEventListener('chat:open', handleOpenExternal);
+    window.addEventListener('chat:close', handleCloseExternal);
+    window.addEventListener('chat:toggle', handleToggleExternal);
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
@@ -110,6 +115,8 @@ export function ChatBubble() {
       if (pollInterval.current) clearInterval(pollInterval.current);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('chat:open', handleOpenExternal);
+      window.removeEventListener('chat:close', handleCloseExternal);
+      window.removeEventListener('chat:toggle', handleToggleExternal);
     };
   }, []);
 

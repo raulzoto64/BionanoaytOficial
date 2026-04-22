@@ -48,6 +48,48 @@ function LayoutInner() {
     BackgroundPreload.start(language);
   }, [language]);
 
+  // ✅ INTERCEPTADOR GLOBAL: Cualquier enlace a /chat abre el chat directamente SIN NAVEGAR
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      // Buscar el elemento <a> mas cercano al click
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      
+      if (link) {
+        const href = link.getAttribute('href');
+        
+        // ✅ Detectar CUALQUIER variante de chat, absoluta o relativa
+        if (href && (
+          href === '/chat' || 
+          href === '#chat' || 
+          href.includes('/chat') || 
+          href === 'chat' ||
+          href === 'https://chat/' ||
+          link.dataset.chat !== undefined
+        )) {
+          console.log('✅ CHAT DETECTADO - Cancelando navegación y abriendo chat directamente', href);
+          
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          
+          // Abrir el chat globalmente
+          window.dispatchEvent(new Event('chat:open'));
+          
+          return false;
+        }
+      }
+    };
+
+    // Agregar listener al documento con capture true para atrapar ANTES que cualquier otro evento
+    document.addEventListener('click', handleGlobalClick, { capture: true, passive: false });
+
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, true);
+    };
+    
+    console.log('✅ Interceptador de chat instalado globalmente');
+  }, []);
+
   const handleSubmitPopup = async (data: any) => {
 
 

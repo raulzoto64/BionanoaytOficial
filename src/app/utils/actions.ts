@@ -53,6 +53,11 @@ export const handleAction = (type: string | undefined, value: string | undefined
   if (normalizedType === 'popup') {
     // OPEN POPUP — fire custom event; Layout's useExitIntent listens to this
     window.dispatchEvent(new CustomEvent('popup:open', { detail: { popupId: value } }));
+  } else if (normalizedType === 'chat' || value === '/chat' || value === 'chat' || value.includes('/chat')) {
+    // ✅ ABRIR CHAT DIRECTAMENTE - NUNCA NAVEGAR
+    // ✅ Cualquier variante de chat abre la burbuja, no la ruta
+    window.dispatchEvent(new Event('chat:open'));
+    return;
   } else if (normalizedType === 'route') {
     // INTERNAL NAVIGATION (path or anchor)
     if (value.startsWith('#')) {
@@ -60,9 +65,6 @@ export const handleAction = (type: string | undefined, value: string | undefined
       if (el) { el.scrollIntoView({ behavior: 'smooth' }); return; }
     }
     navigate(value, { state });
-  } else if (normalizedType === 'chat') {
-    // OPEN CHAT BUBBLE
-    window.dispatchEvent(new CustomEvent('chat:open'));
   } else {
     // EXTERNAL URL
     let url = value;
