@@ -38,27 +38,75 @@ export function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      if (isLogin) {
-        if (!formData.email || !formData.password) {
-          toast.error("Por favor complete todos los campos");
-          setIsLoading(false);
-          return;
-        }
-
-        const user = await login(formData.email, formData.password);
-
-        toast.success(`¡Bienvenido ${user.name}!`);
-
-        setTimeout(() => {
-          if (user.role === 'admin' || user.role === 'editor' || user.role === 'manager' || user.role === 'viewer') {
-            navigate('/admin');
-          } else {
-            navigate('/');
+      try {
+        if (isLogin) {
+          if (!formData.email || !formData.password) {
+            toast.error("Por favor complete todos los campos");
+            setIsLoading(false);
+            return;
           }
-        }, 1500);
 
-      } else {
+          console.log('📤 Enviando solicitud de login:', {
+            email: formData.email
+          });
+
+          console.log('📡 URL del API:', `${API_URL}/auth?action=login`);
+
+          const response = await fetch(`${API_URL}/auth?action=login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password
+            })
+          });
+
+          console.log('📥 Respuesta del servidor recibida');
+          console.log('⏱️ Estado HTTP:', response.status, response.statusText);
+
+          const rawText = await response.text();
+          console.log('📝 RESPUESTA CRUDA DEL SERVIDOR:', rawText);
+
+          // ✅ evitar crash si viene vacío
+          if (!rawText) {
+            throw new Error('El servidor no devolvió respuesta');
+          }
+
+          let result;
+          try {
+            result = JSON.parse(rawText);
+          } catch (e) {
+            console.error('❌ ERROR AL PARSEAR JSON:', e);
+            console.error('❌ CONTENIDO RECIBIDO:', rawText);
+            throw new Error('Respuesta invalida del servidor: ' + rawText);
+          }
+
+          console.log('📦 Respuesta JSON:', result);
+
+          // ✅ validar HTTP status
+          if (!response.ok) {
+            throw new Error(result.message || 'Error del servidor');
+          }
+
+          if (result.status === 'success') {
+            toast.success(`¡Bienvenido ${result.user.name}!`);
+            console.log('✅ Login exitoso:', result);
+
+            // ✅ Guardar en contexto de autenticacion
+            await login(result.user, result.token);
+
+            setTimeout(() => {
+              if (result.user.role === 'admin' || result.user.role === 'editor' || result.user.role === 'manager' || result.user.role === 'viewer') {
+                navigate('/admin');
+              } else {
+                navigate('/');
+              }
+            }, 1500);
+          } else {
+            throw new Error(result.message);
+          }
+
+        } else {
 
         if (!formData.email || !formData.password || !formData.name) {
           toast.error("Por favor complete todos los campos");

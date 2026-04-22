@@ -301,7 +301,17 @@ echo json_encode([
 
     logDebug("ERROR", ['msg' => $e->getMessage()]);
 
-    http_response_code(500);
+    // ✅ SOLO 500 PARA ERRORES DEL SERVIDOR, PARA EL RESTO 400 BAD REQUEST
+    $statusCode = 400;
+
+    // Si es error verdadero del sistema devolvemos 500
+    if (str_contains($e->getMessage(), 'SQLSTATE') 
+        || str_contains($e->getMessage(), 'Error fatal') 
+        || str_contains($e->getMessage(), 'Excepción no controlada')) {
+        $statusCode = 500;
+    }
+
+    http_response_code($statusCode);
 
     echo json_encode([
         'status' => 'error',

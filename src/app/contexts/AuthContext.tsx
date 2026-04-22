@@ -72,49 +72,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [getGuestId]);
 
   const login = async (
-    emailOrUser: string | User,
-    password?: string
+    userData: any,
+    token?: string
   ) => {
-    let email: string;
-    let pass: string;
+    // ✅ NUEVO LOGIN: solo guarda el usuario ya obtenido desde el API
+    // NO LLAMA MAS A SUPABASE NUNCA MAS
 
-    if (typeof emailOrUser === "object") {
-      email = emailOrUser.email;
-      pass = emailOrUser.password;
-    } else {
-      email = emailOrUser;
-      pass = password!;
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    if (token) {
+      localStorage.setItem("auth_token", token);
     }
 
-    if (!pass) {
-      throw new Error("La contraseña es requerida para autenticar");
+    const guestId = localStorage.getItem("guest_id");
+
+    if (guestId && userData.id) {
+      try {
+        await supabaseAPI.mergeGuestCart(userData.id, guestId);
+        localStorage.removeItem("guest_id");
+
+        if (typeof setVisitorId === "function") {
+          setVisitorId(null);
+        }
+      } catch {}
     }
 
-    try {
-      const userData = await supabaseAPI.loginUser(email, pass);
+    window.dispatchEvent(new CustomEvent("cart-updated"));
+    window.dispatchEvent(new CustomEvent("auth-updated", { detail: userData }));
 
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      const guestId = localStorage.getItem("guest_id");
-
-      if (guestId && userData.id) {
-        try {
-          await supabaseAPI.mergeGuestCart(userData.id, guestId);
-          localStorage.removeItem("guest_id");
-
-          if (typeof setVisitorId === "function") {
-            setVisitorId(null);
-          }
-        } catch {}
-      }
-
-      window.dispatchEvent(new CustomEvent("cart-updated"));
-
-      return userData;
-    } catch (error: any) {
-      throw error;
-    }
+    return userData;
   };
 
   const logout = async () => {
